@@ -1,21 +1,19 @@
-# Dockerfile inside backend-admin
-
 FROM python:3.10-slim
 
-# Set working directory
 WORKDIR /app
 
-# Copy requirements from the current context
-COPY requirements.txt .
+# Install build dependencies for psycopg2
+RUN apt-get update && apt-get install -y \
+    gcc \
+    libpq-dev \
+    && rm -rf /var/lib/apt/lists/*
 
-# Install dependencies
+# Copy requirements and install
+COPY backend-admin/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy all project files from the current context
-COPY . .
+# Copy project files
+COPY backend-admin/ .
 
-# Expose Django port
 EXPOSE 8000
-
-# Run Django development server
 CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
