@@ -35,19 +35,20 @@ pipeline {
                 }
             }
         }
-
         stage('Deploy Backend Admin Container') {
             steps {
                 script {
-                    echo "Stopping and removing old container if exists..."
+                    def containerName = "campushostels-backend-admin-container"
+
+                    // Stop and remove old container if exists
                     sh """
-                        if [ \$(docker ps -aq -f name=${env.CONTAINER_NAME}) ]; then
-                            docker rm -f ${env.CONTAINER_NAME}
+                        if [ \$(docker ps -aq -f name=${containerName}) ]; then
+                            docker rm -f ${containerName}
                         fi
                     """
 
-                    echo "Starting new container..."
-                    sh "docker run -d --name ${env.CONTAINER_NAME} -p 8000:8000 ${env.BACKEND_ADMIN_IMAGE}"
+                    // Run new container, optionally on a different port
+                    sh "docker run -d --name ${containerName} -p 8080:8000 ${env.BACKEND_ADMIN_IMAGE}"
                 }
             }
         }
