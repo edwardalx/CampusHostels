@@ -6,9 +6,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'replace-me-in-prod')
 
-DEBUG = os.getenv('DEBUG', 'False') == 'True'
+# Make sure DEBUG is a proper boolean
+DEBUG = os.getenv('DEBUG', 'False').lower() in ('true', '1')
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', '192.168.0.72', 'hostels.bookshelfgh.duckdns.org']  # add your server IP or domain
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', '192.168.0.72', 'hostels.bookshelfgh.duckdns.org']
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -66,9 +67,9 @@ else:
         )
     }
 
-# Static files
+# STATIC FILES
 STATIC_URL = '/static/'
-STATIC_ROOT = BASE_DIR / 'staticfiles'  # collectstatic will put all assets here
+STATIC_ROOT = str(BASE_DIR / 'staticfiles')  # <-- convert to string
 
 # Security (recommended for production)
 CSRF_TRUSTED_ORIGINS = ['http://192.168.0.72', 'https://campushostels.local']
