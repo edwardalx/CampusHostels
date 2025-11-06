@@ -8,7 +8,7 @@ SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'replace-me-in-prod')
 
 DEBUG = os.getenv('DEBUG', 'False') == 'True'
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', '192.168.0.72', 'campushostels.local']  # add your server IP or domain
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', '192.168.0.72', 'hostels.bookshelfgh.duckdns.org']  # add your server IP or domain
 
 INSTALLED_APPS = [
     'django.contrib.admin',
