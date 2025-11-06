@@ -9,8 +9,13 @@ SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'replace-me-in-prod')
 # Make sure DEBUG is a proper boolean
 DEBUG = os.getenv('DEBUG', 'False').lower() in ('true', '1')
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', '192.168.0.72', 'hostels.bookshelfgh.duckdns.org']
-
+ALLOWED_HOSTS = [
+    'localhost',
+    '127.0.0.1',
+    '192.168.0.72',           # your server IP
+    'hostels.bookshelfgh.duckdns.org',
+    '82.30.170.169',          # your public IP from logs
+]
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
