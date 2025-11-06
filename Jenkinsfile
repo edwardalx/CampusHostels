@@ -39,23 +39,19 @@ pipeline {
         stage('Deploy Backend Admin Container') {
             steps {
                 script {
-                    echo "Stopping existing container (if any)..."
+                    echo "Stopping and removing old container if exists..."
                     sh """
-                        if [ \$(docker ps -q -f name=${env.CONTAINER_NAME}) ]; then
-                            docker stop ${env.CONTAINER_NAME}
-                            docker rm ${env.CONTAINER_NAME}
+                        if [ \$(docker ps -aq -f name=${env.CONTAINER_NAME}) ]; then
+                            docker rm -f ${env.CONTAINER_NAME}
                         fi
                     """
 
                     echo "Starting new container..."
-                    sh """
-                        docker run -d --name ${env.CONTAINER_NAME} \\
-                        -p 8000:8000 \\
-                        ${env.BACKEND_ADMIN_IMAGE}
-                    """
+                    sh "docker run -d --name ${env.CONTAINER_NAME} -p 8000:8000 ${env.BACKEND_ADMIN_IMAGE}"
                 }
             }
         }
+
     }
 
     post {
