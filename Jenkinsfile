@@ -3,15 +3,18 @@ pipeline {
 
     environment {
         BACKEND_ADMIN_IMAGE = "campushostels-backend-admin"
-        BACKEND_API_IMAGE   = "campushostels-backend-api"
-        FRONTEND_IMAGE      = "campushostels-frontend"
+        CONTAINER_NAME = "campushostels-backend-admin-container"
+        REPO_DIR = "/home/eobkwaku/jenkins-docker/CampusHostels"
     }
 
     stages {
         stage('Checkout Repository') {
             steps {
                 echo "Checking out repository..."
-                checkout scm
+                // Make sure Jenkins workspace is correct
+                dir("${env.REPO_DIR}") {
+                    checkout scm
+                }
             }
         }
 
@@ -19,37 +22,37 @@ pipeline {
             steps {
                 script {
                     echo "Building Backend Admin Docker image..."
-                    sh "docker build -t ${env.BACKEND_ADMIN_IMAGE} ./backend-admin"
+                    sh "docker build -t ${env.BACKEND_ADMIN_IMAGE} ${env.REPO_DIR}/backend-admin"
                 }
             }
         }
 
-        stage('Build Backend API Docker Image') {
-            steps {
-                echo "Skipping Backend API Docker build for now (csproj missing)"
-            }
-        }
-
-        stage('Build Frontend Docker Image') {
-            steps {
-                echo "Skipping Frontend Docker build for now"
-            }
-        }
-
-        stage('Run Tests') {
+        stage('Run Backend Admin Tests') {
             steps {
                 script {
-                    echo "Add your test commands here, e.g., Django tests, React tests"
-                    // Example: sh "docker run --rm ${env.BACKEND_ADMIN_IMAGE} python manage.py test"
+                    echo "Running Django tests..."
+                    sh "docker run --rm ${env.BACKEND_ADMIN_IMAGE} python manage.py test"
                 }
             }
         }
 
-        stage('Deploy') {
+        stage('Deploy Backend Admin Container') {
             steps {
                 script {
-                    echo "Deploy stage: push images or deploy containers"
-                    // Example: sh "docker-compose up -d"
+                    echo "Stopping existing container (if any)..."
+                    sh """
+                        if [ \$(docker ps -q -f name=${env.CONTAINER_NAME}) ]; then
+                            docker stop ${env.CONTAINER_NAME}
+                            docker rm ${env.CONTAINER_NAME}
+                        fi
+                    """
+
+                    echo "Starting new container..."
+                    sh """
+                        docker run -d --name ${env.CONTAINER_NAME} \\
+                        -p 8000:8000 \\
+                        ${env.BACKEND_ADMIN_IMAGE}
+                    """
                 }
             }
         }
