@@ -24,23 +24,17 @@ pipeline {
             }
         }
 
-        // stage('Build Backend API Docker Image') {
-        //     steps {
-        //         script {
-        //             echo "Building Backend API Docker image..."
-        //             sh "docker build -t ${env.BACKEND_API_IMAGE} ./backend-api"
-        //         }
-        //     }
-        // }
+        stage('Build Backend API Docker Image') {
+            steps {
+                echo "Skipping Backend API Docker build for now (csproj missing)"
+            }
+        }
 
-        // stage('Build Frontend Docker Image') {
-        //     steps {
-        //         script {
-        //             echo "Building Frontend Docker image..."
-        //             sh "docker build -t ${env.FRONTEND_IMAGE} ./frontend"
-        //         }
-        //     }
-        // }
+        stage('Build Frontend Docker Image') {
+            steps {
+                echo "Skipping Frontend Docker build for now"
+            }
+        }
 
         stage('Run Tests') {
             steps {
