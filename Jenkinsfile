@@ -24,23 +24,23 @@ pipeline {
             }
         }
 
-        stage('Build Backend API Docker Image') {
-            steps {
-                script {
-                    echo "Building Backend API Docker image..."
-                    sh "docker build -t ${env.BACKEND_API_IMAGE} ./backend-api"
-                }
-            }
-        }
+        // stage('Build Backend API Docker Image') {
+        //     steps {
+        //         script {
+        //             echo "Building Backend API Docker image..."
+        //             sh "docker build -t ${env.BACKEND_API_IMAGE} ./backend-api"
+        //         }
+        //     }
+        // }
 
-        stage('Build Frontend Docker Image') {
-            steps {
-                script {
-                    echo "Building Frontend Docker image..."
-                    sh "docker build -t ${env.FRONTEND_IMAGE} ./frontend"
-                }
-            }
-        }
+        // stage('Build Frontend Docker Image') {
+        //     steps {
+        //         script {
+        //             echo "Building Frontend Docker image..."
+        //             sh "docker build -t ${env.FRONTEND_IMAGE} ./frontend"
+        //         }
+        //     }
+        // }
 
         stage('Run Tests') {
             steps {
