@@ -6,8 +6,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'replace-me-in-prod')
 
-# Make sure DEBUG is a proper boolean
-DEBUG = os.getenv('DEBUG', 'False').lower() in ('true', '1')
+# Make sure DEBUG is a proper boolean   $env:DEBUG = "True"    
+DEBUG = os.getenv('DEBUG', 'False').lower() in ('true', '1')    
 
 ALLOWED_HOSTS = [
     'localhost',
@@ -74,7 +74,7 @@ else:
 
 # STATIC FILES
 STATIC_URL = '/static/'
-STATIC_ROOT = str(BASE_DIR / 'staticfiles')  # <-- convert to string
+STATIC_ROOT = BASE_DIR / 'staticfiles' # <-- convert to string
 
 # Security (recommended for production)
 CSRF_TRUSTED_ORIGINS = ['http://192.168.0.72', 'https://campushostels.local']
