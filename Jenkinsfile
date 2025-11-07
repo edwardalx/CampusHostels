@@ -2,110 +2,77 @@ pipeline {
     agent any
 
     environment {
-        BACKEND_ADMIN_IMAGE = "campushostels-backend-admin:v${BUILD_NUMBER}"
+        BACKEND_ADMIN_IMAGE = "campushostels-backend-admin"
         BACKEND_ADMIN_CONTAINER = "campushostels-backend-admin-container"
-        BACKEND_API_IMAGE = "campushostels-backend-api:v${BUILD_NUMBER}"
-        BACKEND_API_CONTAINER = "campushostels-backend-api-container"
         REPO_DIR = "/home/eobkwaku/jenkins-docker/CampusHostels"
     }
 
     stages {
-        stage('Cleanup Everything') {
+        stage('Cleanup Previous Deployment') {
             steps {
                 script {
-                    echo "🧹 Complete cleanup..."
+                    echo "🧹 Cleaning up previous deployment..."
                     sh """
-                        # Stop and remove containers
                         docker stop ${env.BACKEND_ADMIN_CONTAINER} || true
                         docker rm ${env.BACKEND_ADMIN_CONTAINER} || true
-                        docker stop ${env.BACKEND_API_CONTAINER} || true
-                        docker rm ${env.BACKEND_API_CONTAINER} || true
-                        docker stop backend_admin || true
-                        docker rm backend_admin || true
-
-                        # Remove ALL campushostels images
-                        docker images | grep campushostels | awk '{print \$3}' | xargs docker rmi -f || true
-                        
-                        # Clean system
-                        docker system prune -f
+                        # Keep the image to speed up builds
                     """
                 }
             }
         }
 
-        stage('Checkout Fresh Code') {
+        stage('Checkout Code') {
             steps {
+                echo "📥 Checking out latest code..."
                 dir("${env.REPO_DIR}") {
                     checkout scm
-                    sh '''
-                        git reset --hard HEAD
-                        git clean -fd
-                        git pull origin main
-                    '''
                 }
             }
         }
 
-        stage('Build with Version Tags') {
+        stage('Build Backend Admin') {
             steps {
                 script {
-                    echo "🔨 Building images with version tags..."
-                    
+                    echo "🔨 Building Backend Admin Docker image..."
                     sh """
                         cd ${env.REPO_DIR}/backend-admin
                         docker build -t ${env.BACKEND_ADMIN_IMAGE} .
-                        # Also tag as latest for convenience
-                        docker tag ${env.BACKEND_ADMIN_IMAGE} campushostels-backend-admin:latest
-                    """
-                    
-                    sh """
-                        cd ${env.REPO_DIR}/backend-api
-                        docker build -t ${env.BACKEND_API_IMAGE} .
-                        docker tag ${env.BACKEND_API_IMAGE} campushostels-backend-api:latest
                     """
                 }
             }
         }
 
-        stage('Verify Fresh Builds') {
+        stage('Deploy Backend Admin') {
             steps {
                 script {
-                    echo "🔍 Verifying fresh builds..."
+                    echo "🚀 Deploying Backend Admin..."
                     sh """
-                        echo "=== Current Docker Images ==="
-                        docker images | grep campushostels
-                        
-                        echo "=== Image Sizes ==="
-                        docker images --format "table {{.Repository}}\t{{.Tag}}\t{{.Size}}" | grep campushostels
-                    """
-                }
-            }
-        }
-
-        stage('Deploy Fresh Containers') {
-            steps {
-                script {
-                    echo "🚀 Deploying fresh containers..."
-                    
-                    sh """
-                        docker run -d \\
-                            --name ${env.BACKEND_ADMIN_CONTAINER} \\
-                            -p 8081:8000 \\
+                        docker run -d \
+                            --name ${env.BACKEND_ADMIN_CONTAINER} \
+                            -p 8081:8000 \
+                            --restart unless-stopped \
                             ${env.BACKEND_ADMIN_IMAGE}
                     """
                     
+                    echo "⏳ Waiting for application to start..."
+                    sleep 15
+                }
+            }
+        }
+
+        stage('Verify Deployment') {
+            steps {
+                script {
+                    echo "✅ Verifying deployment..."
                     sh """
-                        docker run -d \\
-                            --name ${env.BACKEND_API_CONTAINER} \\
-                            -p 8082:8000 \\
-                            ${env.BACKEND_API_IMAGE}
-                    """
-                    
-                    sleep 10
-                    
-                    sh """
-                        echo "=== Deployment Status ==="
-                        docker ps --format "table {{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}" | grep campushostels
+                        echo "=== Container Status ==="
+                        docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}" | grep campushostels
+                        
+                        echo "=== Health Check ==="
+                        curl -s -o /dev/null -w "Django Admin HTTP Status: %{http_code}\\n" http://localhost:8081/
+                        
+                        echo "=== Recent Logs ==="
+                        docker logs --tail 10 ${env.BACKEND_ADMIN_CONTAINER}
                     """
                 }
             }
@@ -114,10 +81,21 @@ pipeline {
 
     post {
         success {
-            echo "✅ FRESH DEPLOYMENT SUCCESSFUL!"
+            echo "🎉 BACKEND ADMIN SUCCESSFULLY DEPLOYED!"
+            echo "=========================================="
+            echo "🌐 Your Django application is running at:"
+            echo "   http://your-server-ip:8081"
+            echo ""
+            echo "🔧 Django Admin panel:"
+            echo "   http://your-server-ip:8081/admin"
+            echo "=========================================="
+        }
+        failure {
+            echo "❌ Deployment failed"
             sh """
-                echo "=== Final Image List ==="
-                docker images | grep campushostels
+                echo "=== Debug Information ==="
+                docker ps -a
+                docker logs ${env.BACKEND_ADMIN_CONTAINER} || echo "Container not running"
             """
         }
     }
