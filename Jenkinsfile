@@ -2,77 +2,111 @@ pipeline {
     agent any
 
     environment {
-        BACKEND_ADMIN_IMAGE = "campushostels-backend-admin"
-        CONTAINER_NAME = "campushostels-backend-admin-container"
+        BACKEND_ADMIN_IMAGE = "campushostels-backend-admin:v${BUILD_NUMBER}"
+        BACKEND_ADMIN_CONTAINER = "campushostels-backend-admin-container"
+        BACKEND_API_IMAGE = "campushostels-backend-api:v${BUILD_NUMBER}"
+        BACKEND_API_CONTAINER = "campushostels-backend-api-container"
         REPO_DIR = "/home/eobkwaku/jenkins-docker/CampusHostels"
-        // Use a different port than Jenkins
-        DEPLOY_PORT = "8081"
     }
 
     stages {
-        stage('Checkout Repository') {
+        stage('Cleanup Everything') {
             steps {
-                echo "Checking out repository..."
+                script {
+                    echo "🧹 Complete cleanup..."
+                    sh """
+                        # Stop and remove containers
+                        docker stop ${env.BACKEND_ADMIN_CONTAINER} || true
+                        docker rm ${env.BACKEND_ADMIN_CONTAINER} || true
+                        docker stop ${env.BACKEND_API_CONTAINER} || true
+                        docker rm ${env.BACKEND_API_CONTAINER} || true
+                        docker stop backend_admin || true
+                        docker rm backend_admin || true
+
+                        # Remove ALL campushostels images
+                        docker images | grep campushostels | awk '{print \$3}' | xargs docker rmi -f || true
+                        
+                        # Clean system
+                        docker system prune -f
+                    """
+                }
+            }
+        }
+
+        stage('Checkout Fresh Code') {
+            steps {
                 dir("${env.REPO_DIR}") {
                     checkout scm
+                    sh '''
+                        git reset --hard HEAD
+                        git clean -fd
+                        git pull origin main
+                    '''
                 }
             }
         }
 
-        stage('Build Backend Admin Docker Image') {
+        stage('Build with Version Tags') {
             steps {
                 script {
-                    echo "Building Backend Admin Docker image..."
-                    sh "docker build -t ${env.BACKEND_ADMIN_IMAGE} ${env.REPO_DIR}/backend-admin"
-                }
-            }
-        }
-
-        stage('Run Backend Admin Tests') {
-            steps {
-                script {
-                    echo "Running Django tests..."
-                    sh "docker run --rm ${env.BACKEND_ADMIN_IMAGE} python manage.py test"
-                }
-            }
-        }
-
-        stage('Deploy Backend Admin Container') {
-            steps {
-                script {
-                    echo "Deploying Backend Admin container on port ${env.DEPLOY_PORT}..."
+                    echo "🔨 Building images with version tags..."
                     
-                    // Stop and remove old container if exists
                     sh """
-                        docker stop ${env.CONTAINER_NAME} || true
-                        docker rm ${env.CONTAINER_NAME} || true
+                        cd ${env.REPO_DIR}/backend-admin
+                        docker build -t ${env.BACKEND_ADMIN_IMAGE} .
+                        # Also tag as latest for convenience
+                        docker tag ${env.BACKEND_ADMIN_IMAGE} campushostels-backend-admin:latest
                     """
-
-                    // Run new container on different port
+                    
                     sh """
-                        docker run -d \
-                            --name ${env.CONTAINER_NAME} \
-                            -p ${env.DEPLOY_PORT}:8000 \
+                        cd ${env.REPO_DIR}/backend-api
+                        docker build -t ${env.BACKEND_API_IMAGE} .
+                        docker tag ${env.BACKEND_API_IMAGE} campushostels-backend-api:latest
+                    """
+                }
+            }
+        }
+
+        stage('Verify Fresh Builds') {
+            steps {
+                script {
+                    echo "🔍 Verifying fresh builds..."
+                    sh """
+                        echo "=== Current Docker Images ==="
+                        docker images | grep campushostels
+                        
+                        echo "=== Image Sizes ==="
+                        docker images --format "table {{.Repository}}\t{{.Tag}}\t{{.Size}}" | grep campushostels
+                    """
+                }
+            }
+        }
+
+        stage('Deploy Fresh Containers') {
+            steps {
+                script {
+                    echo "🚀 Deploying fresh containers..."
+                    
+                    sh """
+                        docker run -d \\
+                            --name ${env.BACKEND_ADMIN_CONTAINER} \\
+                            -p 8081:8000 \\
                             ${env.BACKEND_ADMIN_IMAGE}
                     """
                     
-                    echo "✅ Application deployed successfully!"
-                    echo "🌐 Access your application at: http://your-server-ip:${env.DEPLOY_PORT}"
-                }
-            }
-        }
-
-        stage('Health Check') {
-            steps {
-                script {
-                    echo "Performing health check..."
-                    // Wait for container to start
+                    sh """
+                        docker run -d \\
+                            --name ${env.BACKEND_API_CONTAINER} \\
+                            -p 8082:8000 \\
+                            ${env.BACKEND_API_IMAGE}
+                    """
+                    
                     sleep 10
                     
-                    // Check if container is running
-                    sh "docker ps | grep ${env.CONTAINER_NAME}"
-                    
-                    echo "✅ Container is running successfully on port ${env.DEPLOY_PORT}"
+                    sh """
+                        echo "=== Deployment Status ==="
+                        docker ps --format "table {{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}" | grep campushostels
+                    """
                 }
             }
         }
@@ -80,15 +114,10 @@ pipeline {
 
     post {
         success {
-            echo "✅ Pipeline completed successfully!"
-            echo "Backend Admin is running on port ${env.DEPLOY_PORT}"
-        }
-        failure {
-            echo "❌ Pipeline failed. Check logs for errors."
-            // Cleanup on failure
+            echo "✅ FRESH DEPLOYMENT SUCCESSFUL!"
             sh """
-                docker stop ${env.CONTAINER_NAME} || true
-                docker rm ${env.CONTAINER_NAME} || true
+                echo "=== Final Image List ==="
+                docker images | grep campushostels
             """
         }
     }
