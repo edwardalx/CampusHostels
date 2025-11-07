@@ -65,12 +65,12 @@ if DEBUG:
         }
     }
 else:
-    DATABASES = {
-        'default': dj_database_url.config(
-            default="postgres://campushostels_user:StrongPassword123@localhost:5432/campushostels_admin",
-            conn_max_age=600,
-        )
-    }
+  DATABASES = {
+    'default': dj_database_url.config(
+        default="postgres://campushostels_user:Kwakubonsu@postgres:5433/campushostels",
+        conn_max_age=600,
+    )
+}
 
 # STATIC FILES
 STATIC_URL = '/static/'
