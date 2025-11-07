@@ -4,75 +4,88 @@ pipeline {
     environment {
         BACKEND_ADMIN_IMAGE = "campushostels-backend-admin"
         BACKEND_ADMIN_CONTAINER = "campushostels-backend-admin-container"
+        POSTGRES_CONTAINER = "campus_postgres"
+        DOCKER_NETWORK = "campushostels_campus_network"
         REPO_DIR = "/home/eobkwaku/jenkins-docker/CampusHostels"
     }
 
     stages {
-        stage('Cleanup Previous Deployment') {
+        stage('Cleanup') {
+            steps {
+                sh """
+                    docker stop ${env.BACKEND_ADMIN_CONTAINER} || true
+                    docker rm ${env.BACKEND_ADMIN_CONTAINER} || true
+                """
+            }
+        }
+
+        stage('Build') {
+            steps {
+                sh """
+                    cd ${env.REPO_DIR}/backend-admin
+                    docker build -t ${env.BACKEND_ADMIN_IMAGE} .
+                """
+            }
+        }
+
+        stage('Setup Database') {
             steps {
                 script {
-                    echo "🧹 Cleaning up previous deployment..."
+                    echo "🗄️ Setting up PostgreSQL database..."
                     sh """
-                        docker stop ${env.BACKEND_ADMIN_CONTAINER} || true
-                        docker rm ${env.BACKEND_ADMIN_CONTAINER} || true
-                        # Keep the image to speed up builds
+                        # Create database if it doesn't exist
+                        docker exec ${env.POSTGRES_CONTAINER} psql -U postgres -c "CREATE DATABASE campushostels;" || echo "Database might already exist"
                     """
                 }
             }
         }
 
-        stage('Checkout Code') {
-            steps {
-                echo "📥 Checking out latest code..."
-                dir("${env.REPO_DIR}") {
-                    checkout scm
-                }
-            }
-        }
-
-        stage('Build Backend Admin') {
+        stage('Deploy on Correct Network') {
             steps {
                 script {
-                    echo "🔨 Building Backend Admin Docker image..."
-                    sh """
-                        cd ${env.REPO_DIR}/backend-admin
-                        docker build -t ${env.BACKEND_ADMIN_IMAGE} .
-                    """
-                }
-            }
-        }
-
-        stage('Deploy Backend Admin') {
-            steps {
-                script {
-                    echo "🚀 Deploying Backend Admin..."
+                    echo "🚀 Deploying Django on ${env.DOCKER_NETWORK} network..."
                     sh """
                         docker run -d \
                             --name ${env.BACKEND_ADMIN_CONTAINER} \
                             -p 8081:8000 \
-                            --restart unless-stopped \
+                            --network ${env.DOCKER_NETWORK} \
+                            -e DATABASE_URL=postgresql://postgres@${env.POSTGRES_CONTAINER}:5432/campushostels \
                             ${env.BACKEND_ADMIN_IMAGE}
                     """
-                    
-                    echo "⏳ Waiting for application to start..."
-                    sleep 15
+                    echo "⏳ Waiting for Django to start..."
+                    sleep 30
                 }
             }
         }
 
-        stage('Verify Deployment') {
+        stage('Run Migrations') {
+            steps {
+                script {
+                    echo "📦 Running Django migrations..."
+                    sh """
+                        docker exec ${env.BACKEND_ADMIN_CONTAINER} python manage.py migrate || echo "Migrations might have run already"
+                    """
+                    sleep 10
+                }
+            }
+        }
+
+        stage('Verify') {
             steps {
                 script {
                     echo "✅ Verifying deployment..."
                     sh """
                         echo "=== Container Status ==="
-                        docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}" | grep campushostels
+                        docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+                        
+                        echo "=== Network Information ==="
+                        docker inspect ${env.BACKEND_ADMIN_CONTAINER} | grep -A 10 Networks
+                        
+                        echo "=== Application Logs ==="
+                        docker logs --tail 20 ${env.BACKEND_ADMIN_CONTAINER}
                         
                         echo "=== Health Check ==="
-                        curl -s -o /dev/null -w "Django Admin HTTP Status: %{http_code}\\n" http://localhost:8081/
-                        
-                        echo "=== Recent Logs ==="
-                        docker logs --tail 10 ${env.BACKEND_ADMIN_CONTAINER}
+                        curl -f http://localhost:8081 && echo "✅ Django is running with PostgreSQL!" || echo "❌ Application not accessible"
                     """
                 }
             }
@@ -81,21 +94,16 @@ pipeline {
 
     post {
         success {
-            echo "🎉 BACKEND ADMIN SUCCESSFULLY DEPLOYED!"
-            echo "=========================================="
-            echo "🌐 Your Django application is running at:"
-            echo "   http://your-server-ip:8081"
-            echo ""
-            echo "🔧 Django Admin panel:"
-            echo "   http://your-server-ip:8081/admin"
-            echo "=========================================="
+            echo "🎉 DJANGO SUCCESSFULLY DEPLOYED WITH POSTGRESQL!"
+            echo "🌐 Access at: http://your-server-ip:8081"
         }
         failure {
             echo "❌ Deployment failed"
             sh """
                 echo "=== Debug Information ==="
-                docker ps -a
-                docker logs ${env.BACKEND_ADMIN_CONTAINER} || echo "Container not running"
+                docker logs ${env.BACKEND_ADMIN_CONTAINER}
+                echo "=== Network Debug ==="
+                docker network inspect ${env.DOCKER_NETWORK}
             """
         }
     }
