@@ -4,41 +4,6 @@ pipeline {
     environment {
         SERVER_DIR = "/home/eobkwaku/jenkins-docker/CampusHostels/backend-admin"
         VENV_PATH = "/home/eobkwaku/venv"
-    }
-
-    stages {
-        stage('Checkout Code') {
-            steps {
-                git branch: 'main', 
-                url: 'https://github.com/edwardalx/CampusHostels.git'
-            }
-        }
-
-        stage('Deploy to Production') {
-            steps {
-                sh """
-                    echo "🚀 DEPLOYING TO ACTUAL PRODUCTION SYSTEM..."
-                    
-                    # Copy code from Jenkins workspace to production directory
-                    echo "📦 Copying code to production..."
-                    rsync -av --delete ./backend-admin/ ${env.SERVER_DIR}/
-                    
-                    # Fix permissions
-                    chown -R eobkwaku:eobkwaku ${env.SERVER_DIR}
-                    
-                    echo "📦 Installing dependencies..."
-                    sudo -u eobkwaku bash -c '
-                        source ${env.VENV_PATH}/bin/activate
-                        cd ${env.SERVER_DIR}
-                        pip install -r requirements.txt
-                    '
-                    
-                    echo "🗄️ Running database migrations..."pipeline {
-    agent any
-
-    environment {
-        SERVER_DIR = "/home/eobkwaku/jenkins-docker/CampusHostels/backend-admin"
-        VENV_PATH = "/home/eobkwaku/venv"
         HOST_IP = "192.168.0.72"
     }
 
@@ -55,28 +20,28 @@ pipeline {
                 sh """
                     echo "🚀 DEPLOYING TO ACTUAL PRODUCTION SYSTEM"
                     
-                    ssh -o StrictHostKeyChecking=no eobkwaku@${env.HOST_IP} "
-                        echo '📦 Pulling latest code...'
+                    ssh -o StrictHostKeyChecking=no eobkwaku@${env.HOST_IP} '
+                        echo "📦 Pulling latest code..."
                         cd /home/eobkwaku/jenkins-docker/CampusHostels
                         git pull origin main
                         
-                        echo '📦 Installing dependencies...'
+                        echo "📦 Installing dependencies..."
                         source ${env.VENV_PATH}/bin/activate
                         cd ${env.SERVER_DIR}
                         pip install -r requirements.txt
                         
-                        echo '🗄️ Running database migrations...'
+                        echo "🗄️ Running database migrations..."
                         python manage.py migrate
                         
-                        echo '📁 Collecting static files...'
+                        echo "📁 Collecting static files..."
                         python manage.py collectstatic --noinput
                         
-                        echo '🔄 Restarting production services...'
+                        echo "🔄 Restarting production services..."
                         sudo systemctl restart gunicorn
                         sudo systemctl reload nginx
                         
-                        echo '✅ SUCCESS! Code deployed to ACTUAL PRODUCTION!'
-                    "
+                        echo "✅ SUCCESS! Code deployed to ACTUAL PRODUCTION!"
+                    '
                 """
             }
         }
@@ -85,17 +50,17 @@ pipeline {
             steps {
                 sh """
                     echo "=== PRODUCTION VERIFICATION ==="
-                    ssh -o StrictHostKeyChecking=no eobkwaku@${env.HOST_IP} "
-                        echo ''
-                        echo '📊 Gunicorn Status:'
+                    ssh -o StrictHostKeyChecking=no eobkwaku@${env.HOST_IP} '
+                        echo ""
+                        echo "📊 Gunicorn Status:"
                         sudo systemctl status gunicorn --no-pager | head -5
-                        echo ''
-                        echo '🌐 Production Site Test:'
-                        curl -s -o /dev/null -w 'HTTP Status: %{http_code}' http://localhost/admin
-                        echo ''
-                        echo '🎯 PRODUCTION URL: http://hostels.bookshelfgh.duckdns.org/admin'
-                        echo '✅ Code changes are now LIVE!'
-                    "
+                        echo ""
+                        echo "🌐 Production Site Test:"
+                        curl -s -o /dev/null -w "HTTP Status: %{http_code}" http://localhost/admin
+                        echo ""
+                        echo "🎯 PRODUCTION URL: http://hostels.bookshelfgh.duckdns.org/admin"
+                        echo "✅ Code changes are now LIVE!"
+                    '
                 """
             }
         }
