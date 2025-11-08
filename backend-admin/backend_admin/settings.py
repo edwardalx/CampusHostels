@@ -4,10 +4,11 @@ import dj_database_url
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'replace-me-in-prod')
+# SECURITY WARNING: keep the secret key used in production secret!
+SECRET_KEY = 'django-insecure-5j$cjl6t(r0z2%2j-r2%jr35la&1yyd%gv3y=o+81(11ow5zmk'
 
 # Make sure DEBUG is a proper boolean   $env:DEBUG = "True"    
-DEBUG = os.getenv('DEBUG', 'False').lower() in ('true', '1')    
+DEBUG = False
 
 ALLOWED_HOSTS = [
     'localhost',
@@ -15,6 +16,7 @@ ALLOWED_HOSTS = [
     '192.168.0.72',           # your server IP
     'hostels.bookshelfgh.duckdns.org',
     '82.30.170.169',          # your public IP from logs
+    '.bookshelfgh.duckdns.org',
 ]
 INSTALLED_APPS = [
     'jazzmin',
@@ -73,20 +75,31 @@ if DEBUG:
         }
     }
 else:
-  DATABASES = {
-    'default': dj_database_url.config(
-        default="postgres://campushostels_user:Kwakubonsu@postgres:5432/campushostels",
-        conn_max_age=600,
-    )
-}
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': 'campushostels',
+            'USER': 'campushostels_user',
+            'PASSWORD': 'Kwakubonsu',
+            'HOST': 'localhost',  # Since PostgreSQL is exposed to host
+            'PORT': '5433',       # Use the exposed port 5433, not 5432
+        }
+    }
 
 # STATIC FILES
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles' # <-- convert to string
 
 # Security (recommended for production)
-CSRF_TRUSTED_ORIGINS = ['http://192.168.0.72', 'https://campushostels.local']
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 SESSION_COOKIE_SECURE = False
 CSRF_COOKIE_SECURE = False
+CSRF_TRUSTED_ORIGINS = [
+    'http://hostels.bookshelfgh.duckdns.org',
+    'https://hostels.bookshelfgh.duckdns.org',
+    'http://bookshelfgh.duckdns.org', 
+    'https://bookshelfgh.duckdns.org',
+    'http://192.168.0.72', 
+    'https://campushostels.local'
+]
