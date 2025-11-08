@@ -1,3 +1,4 @@
+*.sqlite3
 # Gradle files
 .gradle/
 build/
@@ -32,3 +33,50 @@ google-services.json
 
 # Android Profiling
 *.hprof
+**/staticfiles/
+# Python
+*.pyc
+__pycache__/
+*.pyo
+*.pyd
+*.env
+*.venv
+venv/
+ENV/
+env/
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Django
+*.sqlite3
+db.sqlite3
+
+# Static files
+staticfiles/
+media/
+
+# Logs
+*.log
+
+# Docker
+*.pid
+*.sock
+docker-compose.override.yml
+
+# IDEs
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Gunicorn socket & PID files
+gunicorn.sock
+gunicorn.pid
+
+# Other server-specific configs
+*.env
+*.local
