@@ -7,7 +7,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'replace-me-in-prod')
 
 # Make sure DEBUG is a proper boolean   $env:DEBUG = "True"    
-DEBUG = os.getenv('DEBUG', 'False').lower() in ('true', '1')    
+DEBUG = True   
 
 ALLOWED_HOSTS = [
     'localhost',
@@ -17,14 +17,22 @@ ALLOWED_HOSTS = [
     '82.30.170.169',          # your public IP from logs
 ]
 INSTALLED_APPS = [
+    'jazzmin',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'hostel_admin',
+    'hostel_admin',   
 ]
+JAZZMIN_SETTINGS = {
+    "site_title": "Your Admin",
+    "site_header": "Your Administration",
+    "site_brand": "Your Site",
+    "welcome_sign": "Welcome to the administration",
+    "show_ui_builder": True,
+}
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
