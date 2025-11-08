@@ -2,108 +2,94 @@ pipeline {
     agent any
 
     environment {
-        BACKEND_ADMIN_IMAGE = "campushostels-backend-admin"
-        BACKEND_ADMIN_CONTAINER = "campushostels-backend-admin-container"
-        POSTGRES_CONTAINER = "campus_postgres"
-        DOCKER_NETWORK = "campushostels_campus_network"
-        REPO_DIR = "/home/eobkwaku/jenkins-docker/CampusHostels"
+        SERVER_DIR = "/home/eobkwaku/jenkins-docker/CampusHostels/backend-admin"
+        VENV_PATH = "/home/eobkwaku/venv"
     }
 
     stages {
-        stage('Cleanup') {
+        stage('Checkout Code') {
+            steps {
+                git branch: 'main', 
+                url: 'https://github.com/edwardalx/CampusHostels.git'
+            }
+        }
+
+        stage('Deploy to Production') {
             steps {
                 sh """
-                    docker stop ${env.BACKEND_ADMIN_CONTAINER} || true
-                    docker rm ${env.BACKEND_ADMIN_CONTAINER} || true
+                    echo "🚀 DEPLOYING TO ACTUAL PRODUCTION SYSTEM..."
+                    
+                    # Copy code from Jenkins workspace to production directory
+                    echo "📦 Copying code to production..."
+                    rsync -av --delete ./backend-admin/ ${env.SERVER_DIR}/
+                    
+                    # Fix permissions
+                    chown -R eobkwaku:eobkwaku ${env.SERVER_DIR}
+                    
+                    echo "📦 Installing dependencies..."
+                    sudo -u eobkwaku bash -c '
+                        source ${env.VENV_PATH}/bin/activate
+                        cd ${env.SERVER_DIR}
+                        pip install -r requirements.txt
+                    '
+                    
+                    echo "🗄️ Running database migrations..."
+                    sudo -u eobkwaku bash -c '
+                        source ${env.VENV_PATH}/bin/activate
+                        cd ${env.SERVER_DIR}
+                        python manage.py migrate
+                    '
+                    
+                    echo "📁 Collecting static files..."
+                    sudo -u eobkwaku bash -c '
+                        source ${env.VENV_PATH}/bin/activate
+                        cd ${env.SERVER_DIR}
+                        python manage.py collectstatic --noinput
+                    '
+                    
+                    echo "🔄 Restarting production services..."
+                    sudo systemctl restart gunicorn
+                    sudo systemctl reload nginx
+                    
+                    echo "✅ SUCCESS! Code deployed to ACTUAL PRODUCTION!"
                 """
             }
         }
 
-        stage('Build') {
+        stage('Verify Production Deployment') {
             steps {
                 sh """
-                    cd ${env.REPO_DIR}/backend-admin
-                    docker build -t ${env.BACKEND_ADMIN_IMAGE} .
+                    echo "=== PRODUCTION VERIFICATION ==="
+                    echo ""
+                    echo "📊 Gunicorn Status:"
+                    sudo systemctl status gunicorn --no-pager | head -5
+                    echo ""
+                    echo "🌐 Testing Production Site:"
+                    curl -s -o /dev/null -w "HTTP Status: %{http_code}\\n" http://localhost/admin
+                    echo ""
+                    echo "📝 Recent Application Logs:"
+                    sudo journalctl -u gunicorn -n 5 --no-pager
+                    echo ""
+                    echo "🎯 PRODUCTION URL: http://hostels.bookshelfgh.duckdns.org/admin"
+                    echo "✅ Code changes are now LIVE for all users!"
                 """
-            }
-        }
-
-        stage('Setup Database') {
-            steps {
-                script {
-                    echo "🗄️ Setting up PostgreSQL database..."
-                    sh """
-                        # Create database if it doesn't exist
-                        docker exec ${env.POSTGRES_CONTAINER} psql -U postgres -c "CREATE DATABASE campushostels;" || echo "Database might already exist"
-                    """
-                }
-            }
-        }
-
-        stage('Deploy on Correct Network') {
-            steps {
-                script {
-                    echo "🚀 Deploying Django on ${env.DOCKER_NETWORK} network..."
-                    sh """
-                        docker run -d \
-                            --name ${env.BACKEND_ADMIN_CONTAINER} \
-                            -p 8081:8000 \
-                            --network ${env.DOCKER_NETWORK} \
-                            -e DATABASE_URL=postgresql://postgres@${env.POSTGRES_CONTAINER}:5432/campushostels \
-                            ${env.BACKEND_ADMIN_IMAGE}
-                    """
-                    echo "⏳ Waiting for Django to start..."
-                    sleep 30
-                }
-            }
-        }
-
-        stage('Run Migrations') {
-            steps {
-                script {
-                    echo "📦 Running Django migrations..."
-                    sh """
-                        docker exec ${env.BACKEND_ADMIN_CONTAINER} python manage.py migrate || echo "Migrations might have run already"
-                    """
-                    sleep 10
-                }
-            }
-        }
-
-        stage('Verify') {
-            steps {
-                script {
-                    echo "✅ Verifying deployment..."
-                    sh """
-                        echo "=== Container Status ==="
-                        docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
-                        
-                        echo "=== Network Information ==="
-                        docker inspect ${env.BACKEND_ADMIN_CONTAINER} | grep -A 10 Networks
-                        
-                        echo "=== Application Logs ==="
-                        docker logs --tail 20 ${env.BACKEND_ADMIN_CONTAINER}
-                        
-                        echo "=== Health Check ==="
-                        curl -f http://localhost:8081 && echo "✅ Django is running with PostgreSQL!" || echo "❌ Application not accessible"
-                    """
-                }
             }
         }
     }
 
     post {
         success {
-            echo "🎉 DJANGO SUCCESSFULLY DEPLOYED WITH POSTGRESQL!"
-            echo "🌐 Access at: http://your-server-ip:8081"
+            echo "🎉 SUCCESS! PRODUCTION DEPLOYMENT COMPLETE!"
+            echo "👀 Users can now see changes at: http://hostels.bookshelfgh.duckdns.org"
+            echo "🔧 Admin panel: http://hostels.bookshelfgh.duckdns.org/admin"
         }
         failure {
-            echo "❌ Deployment failed"
+            echo "❌ Production deployment failed"
             sh """
-                echo "=== Debug Information ==="
-                docker logs ${env.BACKEND_ADMIN_CONTAINER}
-                echo "=== Network Debug ==="
-                docker network inspect ${env.DOCKER_NETWORK}
+                echo "=== TROUBLESHOOTING INFO ==="
+                sudo journalctl -u gunicorn -n 20 --no-pager
+                echo "=== NGINX STATUS ==="
+                sudo systemctl status nginx --no-pager
             """
         }
     }

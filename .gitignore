@@ -80,3 +80,4 @@ gunicorn.pid
 # Other server-specific configs
 *.env
 *.local
+settings.py
