@@ -46,7 +46,10 @@ render.experimental.xml
 
 # Google Services (e.g. APIs or Firebase)
 google-services.json
-
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
 # Android Profiling
 *.hprof
 **/staticfiles/
@@ -96,4 +99,4 @@ gunicorn.pid
 # Other server-specific configs
 *.env
 *.local
-
+# *settings.py
