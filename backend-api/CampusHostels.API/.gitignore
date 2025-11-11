@@ -1,0 +1,94 @@
+# ----------------------
+# Build results
+# ----------------------
+bin/
+obj/
+out/
+*.exe
+*.dll
+*.pdb
+*.app
+*.appref-ms
+*.dll.config
+*.cache
+*.zip
+*.tar.gz
+
+# ----------------------
+# User-specific files
+# ----------------------
+*.user
+*.userosscache
+*.suo
+*.sln.docstates
+*.pidb
+*.svd
+*.ncb
+*.aps
+*.pfx
+*.key
+
+# ----------------------
+# Rider, VS, VSCode
+# ----------------------
+.vscode/
+.vs/
+.idea/
+
+# ----------------------
+# Logs and databases
+# ----------------------
+*.log
+*.sql
+*.sqlite
+*.db
+
+# ----------------------
+# ASP.NET / .NET Core
+# ----------------------
+appsettings.Development.json
+appsettings.Local.json
+*.db
+*.seed
+wwwroot/
+*.publishsettings
+*.nupkg
+
+# ----------------------
+# Dotnet temp files
+# ----------------------
+*.DotSettings
+*.dotCover
+*.dotMemory
+*.coverage
+*.coveragexml
+_ReSharper*/
+_ReSharper.*
+*.resharper
+*.sln.cache
+TestResults/
+*.trx
+
+# ----------------------
+# NuGet packages
+# ----------------------
+*.nupkg
+# NuGet Packages folder
+packages/
+# NuGet v3
+*.nuget.props
+*.nuget.targets
+
+# ----------------------
+# Docker
+# ----------------------
+Dockerfile
+docker-compose*.yml
+*.env
+
+# ----------------------
+# Other
+# ----------------------
+*.tmp
+*.bak
+*.swp
