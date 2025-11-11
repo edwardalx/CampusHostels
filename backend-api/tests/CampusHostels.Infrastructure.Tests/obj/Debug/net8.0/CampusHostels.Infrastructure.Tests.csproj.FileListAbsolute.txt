@@ -1,0 +1,6 @@
+c:\Users\obedd\MyAlxProjects\CampusHostels\backend-api\tests\CampusHostels.Infrastructure.Tests\obj\Debug\net8.0\CampusHostels.Infrastructure.Tests.csproj.AssemblyReference.cache
+c:\Users\obedd\MyAlxProjects\CampusHostels\backend-api\tests\CampusHostels.Infrastructure.Tests\obj\Debug\net8.0\CampusHostels.Infrastructure.Tests.GeneratedMSBuildEditorConfig.editorconfig
+c:\Users\obedd\MyAlxProjects\CampusHostels\backend-api\tests\CampusHostels.Infrastructure.Tests\obj\Debug\net8.0\CampusHostels.Infrastructure.Tests.AssemblyInfoInputs.cache
+c:\Users\obedd\MyAlxProjects\CampusHostels\backend-api\tests\CampusHostels.Infrastructure.Tests\obj\Debug\net8.0\CampusHostels.Infrastructure.Tests.AssemblyInfo.cs
+c:\Users\obedd\MyAlxProjects\CampusHostels\backend-api\tests\CampusHostels.Infrastructure.Tests\obj\Debug\net8.0\CampusHostels.Infrastructure.Tests.csproj.CoreCompileInputs.cache
+c:\Users\obedd\MyAlxProjects\CampusHostels\backend-api\tests\CampusHostels.Infrastructure.Tests\obj\Debug\net8.0\CampusHostels.Infrastructure.Tests.sourcelink.json

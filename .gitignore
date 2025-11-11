@@ -1,3 +1,19 @@
+# Ignore build outputs
+/bin/
+/obj/
+
+# VS Code
+.vscode/
+
+# User files
+*.user
+*.suo
+
+# Rider
+.idea/
+
+# Mac
+.DS_Store
 *.sqlite3
 # Gradle files
 .gradle/

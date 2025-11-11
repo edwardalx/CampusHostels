@@ -3,20 +3,59 @@ using CampusHostels.API.API.Middleware;
 using CampusHostels.API.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
+using AutoMapper;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.WebHost.UseUrls("http://localhost:5077", "https://localhost:7102");
 // Add services to the container
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
+// AutoMapper (manual registration to avoid extension dependency issues)
+builder.Services.AddSingleton(provider =>
+{
+    var config = new MapperConfiguration(cfg => cfg.AddProfile(new CampusHostels.API.Application.Mapping.MappingProfile()));
+    return config.CreateMapper();
+});
+// Register repositories
+builder.Services.AddScoped<CampusHostels.API.Infrastructure.Repositories.IPropertyRepository, CampusHostels.API.Infrastructure.Repositories.EfPropertyRepository>();
+builder.Services.AddScoped<CampusHostels.API.Infrastructure.Repositories.IUnitRepository, CampusHostels.API.Infrastructure.Repositories.EfUnitRepository>();
+builder.Services.AddScoped<CampusHostels.API.Infrastructure.Repositories.ITenancyRepository, CampusHostels.API.Infrastructure.Repositories.EfTenancyRepository>();
+// Token service
+builder.Services.AddScoped<CampusHostels.API.Application.Interfaces.ITokenService, CampusHostels.API.Application.Services.TokenService>();
 builder.Services.AddSwaggerGen();
 
 // Database Configuration - Auto-detect based on environment
+// Resolve relative SQLite paths to absolute paths so tests and different working directories can open the DB file.
 if (builder.Environment.IsDevelopment())
 {
     Console.WriteLine("🚀 DEVELOPMENT: Using SQLite database");
+    var originalConn = builder.Configuration.GetConnectionString("DefaultConnection") ?? string.Empty;
+    var resolvedConn = originalConn;
+    try
+    {
+        const string dataSourceKey = "Data Source=";
+        var idx = originalConn.IndexOf(dataSourceKey, StringComparison.OrdinalIgnoreCase);
+        if (idx >= 0)
+        {
+            var pathPart = originalConn.Substring(idx + dataSourceKey.Length);
+            var semicolon = pathPart.IndexOf(';');
+            var relativePath = semicolon >= 0 ? pathPart.Substring(0, semicolon) : pathPart;
+            relativePath = relativePath.Trim();
+            if (!string.IsNullOrEmpty(relativePath) && !Path.IsPathRooted(relativePath))
+            {
+                var basePath = builder.Environment.ContentRootPath ?? AppContext.BaseDirectory;
+                var abs = Path.GetFullPath(Path.Combine(basePath, relativePath));
+                resolvedConn = dataSourceKey + abs + (semicolon >= 0 ? pathPart.Substring(semicolon) : string.Empty);
+            }
+        }
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"⚠️ Failed to resolve SQLite path: {ex.Message}");
+    }
+
     builder.Services.AddDbContext<ApplicationDbContext>(options =>
-        options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
+        options.UseSqlite(resolvedConn));
 }
 else
 {
@@ -44,6 +83,10 @@ builder.Services.AddCors(options =>
     });
 });
 
+// Register validators as services (we'll invoke them manually in controllers)
+builder.Services.AddTransient<FluentValidation.IValidator<CampusHostels.API.Application.DTOs.UnitCreateDto>, CampusHostels.API.Application.Validators.UnitCreateDtoValidator>();
+builder.Services.AddTransient<FluentValidation.IValidator<CampusHostels.API.Application.DTOs.TenancyCreateDto>, CampusHostels.API.Application.Validators.TenancyCreateDtoValidator>();
+
 // Serilog Configuration
 builder.Host.UseSerilog((context, configuration) =>
     configuration.ReadFrom.Configuration(context.Configuration));
@@ -61,8 +104,33 @@ if (app.Environment.IsDevelopment())
     using (var scope = app.Services.CreateScope())
     {
         var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        dbContext.Database.Migrate();
-        Console.WriteLine("✅ SQLite database created/migrated");
+        try
+        {
+            dbContext.Database.Migrate();
+            Console.WriteLine("✅ SQLite database created/migrated");
+        }
+        catch (InvalidOperationException ex)
+        {
+            // EF throws if there are pending model changes not represented in migrations.
+            // In the test/dev environment we prefer to create the database schema instead
+            // of failing the whole application start. Log and fall back to EnsureCreated.
+            var message = ex.Message ?? string.Empty;
+            if (message.Contains("PendingModelChangesWarning"))
+            {
+                Console.WriteLine("⚠️ Pending EF model changes detected. Skipping automatic migrations and using EnsureCreated() for dev/test.");
+                dbContext.Database.EnsureCreated();
+            }
+            else
+            {
+                // rethrow other unexpected InvalidOperationExceptions
+                throw;
+            }
+        }
+        catch (Exception e)
+        {
+            // Don't let unexpected errors stop the app during development startup; surface the error and continue.
+            Console.WriteLine($"⚠️ Exception while applying migrations: {e.Message}");
+        }
     }
 }
 else
@@ -83,3 +151,6 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+// Expose Program type for integration tests
+public partial class Program { }
