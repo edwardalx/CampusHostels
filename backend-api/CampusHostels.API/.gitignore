@@ -1,6 +1,12 @@
 # ----------------------
 # Build results
 # ----------------------
+# Build and cache
+bin/
+obj/
+__pycache__/
+*.pyc
+
 bin/
 obj/
 out/
@@ -92,3 +98,19 @@ docker-compose*.yml
 *.tmp
 *.bak
 *.swp
+# Build artifacts
+bin/
+obj/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# VS and Rider files
+.vs/
+*.user
+*.suo
+
+# OS files
+.DS_Store
+Thumbs.db
