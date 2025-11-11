@@ -1,11 +1,6 @@
 using CampusHostels.API.Application.DTOs;
 using CampusHostels.API.Application.Interfaces;
-using CampusHostels.API.Domain.Entities;
-using CampusHostels.API.Infrastructure.Data;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using System.Security.Cryptography;
-using System.Text;
 
 namespace CampusHostels.API.API.Controllers;
 
@@ -13,67 +8,38 @@ namespace CampusHostels.API.API.Controllers;
 [Route("api/[controller]")]
 public class AccountsController : ControllerBase
 {
-    private readonly ApplicationDbContext _db;
-    private readonly ITokenService _tokenService;
+    private readonly IAccountService _accountService;
 
-    public AccountsController(ApplicationDbContext db, ITokenService tokenService)
+    public AccountsController(IAccountService accountService)
     {
-        _db = db;
-        _tokenService = tokenService;
+        _accountService = accountService;
     }
 
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] RegisterDto dto)
     {
-        if (await _db.Users.AnyAsync(u => u.Username == dto.Username || u.Email == dto.Email))
-            return Conflict("User with username or email already exists.");
-
-        var user = new User
+        try
         {
-            Username = dto.Username,
-            Email = dto.Email,
-            Role = dto.Role
-        };
-
-        user.PasswordHash = HashPassword(dto.Password);
-        _db.Users.Add(user);
-        await _db.SaveChangesAsync();
-
-        return CreatedAtAction(null, new { id = user.Id });
+            var response = await _accountService.RegisterAsync(dto);
+            return CreatedAtAction(null, new { id = response.Username }, response);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Conflict(new { error = ex.Message });
+        }
     }
 
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginDto dto)
     {
-        var user = await _db.Users.FirstOrDefaultAsync(u => u.Username == dto.Username || u.Email == dto.Username);
-        if (user == null) return Unauthorized();
-
-        if (!VerifyPassword(dto.Password, user.PasswordHash)) return Unauthorized();
-
-        var token = _tokenService.CreateToken(user, out var expires);
-        user.RefreshToken = GenerateRefreshToken();
-        user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
-        await _db.SaveChangesAsync();
-
-        return Ok(new AuthResponseDto { Token = token, Username = user.Username, Email = user.Email, Role = user.Role, Expires = expires });
-    }
-
-    // Simple password hash using SHA256 (replace with stronger algorithm in production)
-    private static string HashPassword(string pwd)
-    {
-        using var sha = SHA256.Create();
-        var bytes = sha.ComputeHash(Encoding.UTF8.GetBytes(pwd));
-        return Convert.ToBase64String(bytes);
-    }
-
-    private static bool VerifyPassword(string pwd, string hash)
-    {
-        return HashPassword(pwd) == hash;
-    }
-
-    private static string GenerateRefreshToken()
-    {
-        var random = RandomNumberGenerator.GetBytes(64);
-        return Convert.ToBase64String(random);
+        try
+        {
+            var response = await _accountService.LoginAsync(dto);
+            return Ok(response);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Unauthorized(new { error = ex.Message });
+        }
     }
 }
