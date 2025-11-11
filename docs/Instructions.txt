@@ -1,0 +1,31 @@
+I want the APIs in  this project in Django to be converted to dot net webapi.
+
+
+Scan through the entire project and produce me a document of step by step implementation tasks  which will make this Django to dotnet achievable. 
+
+Phase 1:  Scan through the entire code
+
+Phase 2:  Make me a diagram of all the models >> serilizers and views
+
+Phase 3: Check how the models a related 
+
+Phase 4:  Write me a comprehensive documentation of your findings of the models and relations that will suite my .net project architecture
+
+Phase 5: Write me a documentation of efficient Implementation plan and tech tasks to make this acheivable
+
+Note: No code changes in this work.  Just a documentation and ask for approval and clarifications after every phase because you progress.
+
+This is the architecture of my .Net WebApi project
+
+ /Domain
+/Application
+/Infrastructure
+/API
+
+
+Setup global exception handling & logging (Serilog or built-in logger)
+
+
+Configure CORS policy for your upcoming React/Vue frontend
+
+

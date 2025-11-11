@@ -9,7 +9,7 @@ SECRET_KEY = 'django-insecure-5j$cjl6t(r0z2%2j-r2%jr35la&1yyd%gv3y=o+81(11ow5zmk
 
 # Make sure DEBUG is a proper boolean   $env:DEBUG = "True"    
 
-DEBUG = False   
+DEBUG = True   
 
 ALLOWED_HOSTS = [
     'localhost',
