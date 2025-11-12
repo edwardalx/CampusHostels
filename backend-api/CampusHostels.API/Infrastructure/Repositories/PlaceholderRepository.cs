@@ -4,6 +4,6 @@ namespace CampusHostels.API.Infrastructure.Repositories
 {
     public class PlaceholderRepository
     {
-        public Tenant GetSample() => new Tenant { Id = System.Guid.NewGuid(), UserName = "repo-sample" };
+        public User GetSample() => new User { Username = "repo-sample" };
     }
 }

@@ -30,16 +30,15 @@ public class PaymentServiceTests
         var tenancy = new TenancyAgreement
         {
             UnitId = 1,
-            TenantId = 1,
-            StartDate = DateTime.UtcNow.AddDays(-10),
-            EndDate = DateTime.UtcNow.AddDays(20),
-            MonthlyRent = 500m
+            TenantId = Guid.NewGuid(),
+            ContractStartDate = DateTime.UtcNow.AddDays(-10),
+            ContractDurationMonths = 1
         };
         context.TenancyAgreements.Add(tenancy);
         await context.SaveChangesAsync();
 
         // Act
-        var (reference, authUrl) = await service.InitializePaymentAsync(tenancy.Id, 500m);
+    var (reference, authUrl) = await service.InitializePaymentAsync(tenancy.Id, 500m);
 
         // Assert
         Assert.NotNull(reference);
@@ -49,8 +48,8 @@ public class PaymentServiceTests
 
         var payment = await context.Payments.FirstOrDefaultAsync(p => p.Reference == reference);
         Assert.NotNull(payment);
-        Assert.Equal(500m, payment.Amount);
-        Assert.Equal("pending", payment.Status);
+    Assert.Equal(500m, payment.Amount);
+    Assert.Equal(PaymentStatus.Pending, payment.Status);
     }
 
     [Fact]
@@ -75,10 +74,9 @@ public class PaymentServiceTests
         var tenancy = new TenancyAgreement
         {
             UnitId = 1,
-            TenantId = 1,
-            StartDate = DateTime.UtcNow.AddDays(-10),
-            EndDate = DateTime.UtcNow.AddDays(20),
-            MonthlyRent = 500m
+            TenantId = Guid.NewGuid(),
+            ContractStartDate = DateTime.UtcNow.AddDays(-10),
+            ContractDurationMonths = 1
         };
         context.TenancyAgreements.Add(tenancy);
         await context.SaveChangesAsync();
@@ -90,15 +88,15 @@ public class PaymentServiceTests
 
         // Assert
         Assert.NotNull(verified);
-        Assert.Equal("success", verified.Status);
-        Assert.NotNull(verified.PaidAt);
+    Assert.Equal(PaymentStatus.Success, verified.Status);
+    Assert.NotEqual(default, verified.CreatedAt);
 
         // Check PaymentSummary was created/updated
         var summary = await context.PaymentSummaries
             .FirstOrDefaultAsync(s => s.TenancyAgreementId == tenancy.Id);
         Assert.NotNull(summary);
-        Assert.Equal(500m, summary.TotalPaid);
-        Assert.Equal(1, summary.PaymentCount);
+    Assert.Equal(500m, summary.TotalAmountPaid);
+        Assert.NotNull(summary.LastPaymentDate);
     }
 
     [Fact]
@@ -111,17 +109,16 @@ public class PaymentServiceTests
         var tenancy = new TenancyAgreement
         {
             UnitId = 1,
-            TenantId = 1,
-            StartDate = DateTime.UtcNow.AddDays(-10),
-            EndDate = DateTime.UtcNow.AddDays(20),
-            MonthlyRent = 500m
+            TenantId = Guid.NewGuid(),
+            ContractStartDate = DateTime.UtcNow.AddDays(-10),
+            ContractDurationMonths = 1
         };
         context.TenancyAgreements.Add(tenancy);
         await context.SaveChangesAsync();
 
         // Create multiple payments
-        await service.InitializePaymentAsync(tenancy.Id, 250m);
-        await service.InitializePaymentAsync(tenancy.Id, 250m);
+    await service.InitializePaymentAsync(tenancy.Id, 250m);
+    await service.InitializePaymentAsync(tenancy.Id, 250m);
 
         // Act
         var payments = await service.GetPaymentsByTenancyAsync(tenancy.Id);

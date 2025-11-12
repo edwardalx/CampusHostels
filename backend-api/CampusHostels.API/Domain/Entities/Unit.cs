@@ -15,7 +15,7 @@ public class Unit
     public int Floor { get; set; }
     public string? RoomNumber { get; set; }
     public string? ImageUrl { get; set; }
-    public int? Cost { get; set; }
+    public decimal? Cost { get; set; }
     public int? MaxNoOfPeople { get; set; }
     public bool Availability { get; set; } = true;
     public UnitType UnitType { get; set; } = UnitType.Single;

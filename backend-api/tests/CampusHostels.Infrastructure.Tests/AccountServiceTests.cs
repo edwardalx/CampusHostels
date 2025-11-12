@@ -86,16 +86,16 @@ public class AccountServiceTests
         var tokenService = new MockTokenService();
         var service = new AccountService(context, tokenService);
 
-        // Create a user (hashed password: SHA256 of "Password123!")
-        var user = new User
+        // Register a user so password hashing is consistent with AccountService
+        var registerDto = new RegisterDto
         {
             Username = "testuser",
             Email = "test@example.com",
-            PasswordHash = "z34pBJZv4MNeFFM6t2jqR73qp+6mV3F1cL8VL2aKwLw=", // Hash of "Password123!"
+            Password = "Password123!",
             Role = "tenant"
         };
-        context.Users.Add(user);
-        await context.SaveChangesAsync();
+
+        await service.RegisterAsync(registerDto);
 
         var dto = new LoginDto
         {
@@ -120,15 +120,15 @@ public class AccountServiceTests
         var tokenService = new MockTokenService();
         var service = new AccountService(context, tokenService);
 
-        var user = new User
+        var registerDto = new RegisterDto
         {
             Username = "testuser",
             Email = "test@example.com",
-            PasswordHash = "z34pBJZv4MNeFFM6t2jqR73qp+6mV3F1cL8VL2aKwLw=",
+            Password = "Password123!",
             Role = "tenant"
         };
-        context.Users.Add(user);
-        await context.SaveChangesAsync();
+
+        await service.RegisterAsync(registerDto);
 
         var dto = new LoginDto
         {

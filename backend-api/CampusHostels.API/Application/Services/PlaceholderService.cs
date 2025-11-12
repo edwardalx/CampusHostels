@@ -5,9 +5,9 @@ namespace CampusHostels.API.Application.Services
 {
     public class PlaceholderService
     {
-        public Tenant CreateSampleTenant()
+        public User CreateSampleUser()
         {
-            return new Tenant { Id = Guid.NewGuid(), UserName = "sample", Email = "sample@example.com" };
+            return new User { Username = "sample", Email = "sample@example.com" };
         }
     }
 }

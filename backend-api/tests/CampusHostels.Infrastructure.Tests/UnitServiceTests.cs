@@ -40,12 +40,12 @@ public class UnitServiceTests
         var repo = new EfUnitRepository(context);
         var service = new UnitService(repo, mapper);
 
-        var property = new Property { Name = "Test Property", Address = "123 Main", Owner = "Owner" };
+    var property = new Property { Name = "Test Property", Location = "123 Main" };
         context.Properties.Add(property);
         await context.SaveChangesAsync();
 
-        var unit1 = new Unit { PropertyId = property.Id, RoomNumber = "101", Cost = 500m };
-        var unit2 = new Unit { PropertyId = property.Id, RoomNumber = "102", Cost = 500m };
+    var unit1 = new Unit { PropertyId = property.Id, RoomNumber = "101", Cost = 500m };
+    var unit2 = new Unit { PropertyId = property.Id, RoomNumber = "102", Cost = 500m };
         context.Units.AddRange(unit1, unit2);
         await context.SaveChangesAsync();
 
@@ -66,7 +66,7 @@ public class UnitServiceTests
         var repo = new EfUnitRepository(context);
         var service = new UnitService(repo, mapper);
 
-        var property = new Property { Name = "Test Property", Address = "123 Main", Owner = "Owner" };
+        var property = new Property { Name = "Test Property", Location = "123 Main" };
         context.Properties.Add(property);
         await context.SaveChangesAsync();
 
@@ -74,7 +74,8 @@ public class UnitServiceTests
         {
             RoomNumber = "201",
             Cost = 600m,
-            Description = "Spacious room"
+            Floor = 2,
+            MaxNoOfPeople = 2
         };
 
         // Act
@@ -83,6 +84,6 @@ public class UnitServiceTests
         // Assert
         Assert.NotNull(result);
         Assert.Equal("201", result.RoomNumber);
-        Assert.Equal(600m, result.Cost);
+    Assert.Equal(600m, result.Cost);
     }
 }

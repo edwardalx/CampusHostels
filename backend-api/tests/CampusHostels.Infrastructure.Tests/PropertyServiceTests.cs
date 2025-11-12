@@ -40,8 +40,8 @@ public class PropertyServiceTests
         var repo = new EfPropertyRepository(context);
         var service = new PropertyService(repo, mapper);
 
-        var prop1 = new Property { Name = "Property 1", Address = "123 Main St", Owner = "Owner 1" };
-        var prop2 = new Property { Name = "Property 2", Address = "456 Oak Ave", Owner = "Owner 2" };
+    var prop1 = new Property { Name = "Property 1", Location = "123 Main St" };
+    var prop2 = new Property { Name = "Property 2", Location = "456 Oak Ave" };
         context.Properties.AddRange(prop1, prop2);
         await context.SaveChangesAsync();
 
@@ -65,8 +65,7 @@ public class PropertyServiceTests
         var dto = new PropertyCreateDto
         {
             Name = "New Property",
-            Address = "789 Elm St",
-            Owner = "New Owner"
+            Location = "789 Elm St",
         };
 
         // Act
@@ -75,6 +74,6 @@ public class PropertyServiceTests
         // Assert
         Assert.NotNull(result);
         Assert.Equal("New Property", result.Name);
-        Assert.Equal("789 Elm St", result.Address);
+        Assert.Equal("789 Elm St", result.Location);
     }
 }

@@ -31,7 +31,7 @@ public class PaymentService : IPaymentService
         var payment = new Payment
         {
             TenancyAgreementId = tenancyId,
-            Amount = (int)amount,
+            Amount = amount,
             Status = PaymentStatus.Pending,
             Reference = Guid.NewGuid().ToString("N").Substring(0, 16), // Placeholder reference
             CreatedAt = DateTime.UtcNow
@@ -72,7 +72,7 @@ public class PaymentService : IPaymentService
                 TenancyAgreementId = payment.TenancyAgreementId ?? 0,
                 TotalAmountPaid = payment.Amount,
                 LastPaymentDate = DateTime.UtcNow,
-                AmountLeft = 0 // This would be calculated from tenancy rent - total paid
+                AmountLeft = 0m // This would be calculated from tenancy rent - total paid
             };
             _db.PaymentSummaries.Add(summary);
         }

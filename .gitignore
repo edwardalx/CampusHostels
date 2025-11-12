@@ -100,3 +100,10 @@ gunicorn.pid
 *.env
 *.local
 # *settings.py
+
+**/bin/
+**/obj/
+*.user
+*.suo
+*.pyc
+__pycache__/
