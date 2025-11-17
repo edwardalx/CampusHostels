@@ -18,7 +18,10 @@ ALLOWED_HOSTS = [
     'hostels.bookshelfgh.duckdns.org',
     '82.30.170.169',          # your public IP from logs
     '.bookshelfgh.duckdns.org',
+    'campushostels.duckdns.org',  # ← ADD THIS
+    '.duckdns.org',           # ← OR ADD WILDCARD FOR ALL DUCK DNS
 ]
+
 INSTALLED_APPS = [
     'jazzmin',
     'django.contrib.admin',
@@ -82,8 +85,8 @@ else:
             'NAME': 'campushostels',
             'USER': 'campushostels_user',
             'PASSWORD': 'Kwakubonsu',
-            'HOST': 'localhost',  # Since PostgreSQL is exposed to host
-            'PORT': '5433',       # Use the exposed port 5433, not 5432
+            'HOST': 'db',  # Since PostgreSQL is exposed to host
+            'PORT': '5432',       # Use the exposed port 5433, not 5432
         }
     }
 
@@ -94,13 +97,17 @@ STATIC_ROOT = BASE_DIR / 'staticfiles' # <-- convert to string
 # Security (recommended for production)
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
-SESSION_COOKIE_SECURE = False
-CSRF_COOKIE_SECURE = False
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
 CSRF_TRUSTED_ORIGINS = [
     'http://hostels.bookshelfgh.duckdns.org',
     'https://hostels.bookshelfgh.duckdns.org',
     'http://bookshelfgh.duckdns.org', 
     'https://bookshelfgh.duckdns.org',
     'http://192.168.0.72', 
-    'https://campushostels.local'
+    'https://campushostels.local',
+    'https://campushostels.duckdns.org',  # ← ADD FOR APP2
+    'http://campushostels.duckdns.org',   # ← ADD FOR APP2
+    'https://www.campushostels.duckdns.org',
+    'http://www.campushostels.duckdns.org',
 ]
