@@ -80,4 +80,11 @@ gunicorn.pid
 # Other server-specific configs
 *.env
 *.local
-
+*.save
+#.net
+**/bin/
+**/obj/
+*.user
+*.suo
+*.pyc
+__pycache__/
