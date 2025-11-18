@@ -6,7 +6,10 @@ using Serilog;
 using AutoMapper;
 
 var builder = WebApplication.CreateBuilder(args);
-builder.WebHost.UseUrls("http://localhost:5077", "https://localhost:7102");
+if (builder.Environment.IsDevelopment())
+{
+    builder.WebHost.UseUrls("http://localhost:5077", "https://localhost:7102");
+}
 // Add services to the container
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
@@ -142,9 +145,12 @@ foreach (var url in app.Urls)
 {
     Console.WriteLine($"🚀 API running at: {url}");
 }
-
+// Only use HTTPS redirection in Development
+if (app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
 app.UseMiddleware<ExceptionHandlingMiddleware>();
-app.UseHttpsRedirection();
 app.UseCors("AllowReactApp");
 app.UseAuthentication();
 app.UseAuthorization();
