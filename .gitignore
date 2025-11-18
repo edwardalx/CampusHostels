@@ -107,3 +107,7 @@ gunicorn.pid
 *.suo
 *.pyc
 __pycache__/
+db.sqlite3.bak
+inspect_schema.py
+*.sln
+
