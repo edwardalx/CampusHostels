@@ -1,4 +1,3 @@
-
 services:
   db:
     image: postgres:15
@@ -50,14 +49,24 @@ services:
     depends_on:
       - db
     command: >
-      gunicorn
-      --access-logfile -
-      --workers 3
-      --bind 0.0.0.0:8000
-      backend_admin.wsgi:application
+      gunicorn --access-logfile - --workers 3 --bind 0.0.0.0:8000 backend_admin.wsgi:application
     networks:
       - campushostels_net
-
+  backend_api:
+    build:
+      context: ./backend-api
+      dockerfile: Dockerfile
+    container_name: campushostels_backend_api
+    environment:
+      ASPNETCORE_URLS: "http://0.0.0.0:5000"
+      ConnectionStrings__DefaultConnection: "Host=db;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD};"
+    ports:
+      - "5000:5000"
+    depends_on:
+      - mssql
+    networks:
+      - campushostels_net
+    restart: always
   app1:
     build:
       context: /var/www/book-shelf-be
@@ -98,7 +107,7 @@ volumes:
   postgres_data:
   mssql_data:
 
+
 networks:
   campushostels_net:
     driver: bridge
-

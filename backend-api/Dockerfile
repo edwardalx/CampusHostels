@@ -1,27 +1,24 @@
-# backend-api/Dockerfile
+# ----------------------------
+# Build Stage
+# ----------------------------
+FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
+WORKDIR /src
 
-# Use the official .NET SDK image for building
-FROM mcr.microsoft.com/dotnet/sdk:7.0 AS build
+# Copy everything
+COPY . .
 
-WORKDIR /app
-
-# Copy csproj and restore dependencies
-COPY *.csproj ./
+# Restore and publish
 RUN dotnet restore
+RUN dotnet publish -c Release -o /app
 
-# Copy the rest of the code
-COPY . ./
-
-# Build the application
-RUN dotnet publish -c Release -o out
-
-# Use a runtime image
-FROM mcr.microsoft.com/dotnet/aspnet:7.0 AS runtime
+# ----------------------------
+# Runtime Stage
+# ----------------------------
+FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS final
 WORKDIR /app
-COPY --from=build /app/out .
 
-# Expose port
+COPY --from=build /app .
+
 EXPOSE 5000
 
-# Run the API
-ENTRYPOINT ["dotnet", "YourBackendApi.dll"]
+ENTRYPOINT ["dotnet", "BackendApi.dll"]
