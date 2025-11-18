@@ -2,15 +2,14 @@ pipeline {
     agent any
 
     environment {
-        SERVER_DIR = "/home/eobkwaku/jenkins-docker/CampusHostels/backend-admin"
-        VENV_PATH = "/home/eobkwaku/venv"
         HOST_IP = "192.168.0.72"
+        PROJECT_DIR = "/home/eobkwaku/jenkins-docker/CampusHostels"
     }
 
     stages {
         stage('Checkout Code') {
             steps {
-                git branch: 'main', 
+                git branch: 'main',
                 url: 'https://github.com/edwardalx/CampusHostels.git'
             }
         }
@@ -18,48 +17,47 @@ pipeline {
         stage('Deploy to Production') {
             steps {
                 sh """
-                    echo "🚀 DEPLOYING TO ACTUAL PRODUCTION SYSTEM"
-                    
+                    echo "🚀 Deploying using Docker Compose..."
+
                     ssh -o StrictHostKeyChecking=no eobkwaku@${env.HOST_IP} '
-                        echo "📦 Pulling latest code..."
-                        cd /home/eobkwaku/jenkins-docker/CampusHostels
+                        echo "📦 Pulling latest repository…"
+                        cd ${env.PROJECT_DIR}
                         git pull origin main
-                        
-                        echo "📦 Installing dependencies..."
-                        source ${env.VENV_PATH}/bin/activate
-                        cd ${env.SERVER_DIR}
-                        pip install -r requirements.txt
-                        
-                        echo "🗄️ Running database migrations..."
-                        python manage.py migrate
-                        
-                        echo "📁 Collecting static files..."
-                        python manage.py collectstatic --noinput
-                        
-                        echo "🔄 Restarting production services..."
-                        sudo systemctl restart gunicorn
-                        sudo systemctl reload nginx
-                        
-                        echo "✅ SUCCESS! Code deployed to ACTUAL PRODUCTION!"
+
+                        echo "🔨 Rebuilding images…"
+                        docker compose build
+
+                        echo "🔄 Restarting services…"
+                        docker compose down
+                        docker compose up -d
+
+                        echo "🗄️ Applying Django migrations…"
+                        docker compose exec web python manage.py migrate --noinput
+
+                        echo "📁 Collecting static files…"
+                        docker compose exec web python manage.py collectstatic --noinput
+
+                        echo "🔃 Restarting specific services…"
+                        docker compose restart web
+                        docker compose restart backend_api
+
+                        echo "✅ Deployment completed successfully!"
                     '
                 """
             }
         }
 
-        stage('Verify Production Deployment') {
+        stage('Verify Deployment') {
             steps {
                 sh """
-                    echo "=== PRODUCTION VERIFICATION ==="
                     ssh -o StrictHostKeyChecking=no eobkwaku@${env.HOST_IP} '
-                        echo ""
-                        echo "📊 Gunicorn Status:"
-                        sudo systemctl status gunicorn --no-pager | head -5
-                        echo ""
-                        echo "🌐 Production Site Test:"
+                        echo "🌐 Checking running containers..."
+                        docker compose ps
+
+                        echo "⚡ Testing Django Admin..."
                         curl -s -o /dev/null -w "HTTP Status: %{http_code}" http://localhost/admin
-                        echo ""
-                        echo "🎯 PRODUCTION URL: http://hostels.bookshelfgh.duckdns.org/admin"
-                        echo "✅ Code changes are now LIVE!"
+
+                        echo "🎯 Final URL: http://hostels.bookshelfgh.duckdns.org/admin"
                     '
                 """
             }
@@ -68,11 +66,10 @@ pipeline {
 
     post {
         success {
-            echo "🎉 SUCCESS! PRODUCTION DEPLOYMENT COMPLETE!"
-            echo "👀 Users can now see changes at: http://hostels.bookshelfgh.duckdns.org"
+            echo "🎉 Docker deployment successful!"
         }
         failure {
-            echo "❌ Production deployment failed"
+            echo "❌ Deployment failed!"
         }
     }
 }
