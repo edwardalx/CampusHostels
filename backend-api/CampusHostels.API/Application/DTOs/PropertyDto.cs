@@ -1,0 +1,12 @@
+namespace CampusHostels.API.Application.DTOs;
+
+public class PropertyDto
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string Location { get; set; } = string.Empty;
+    public string? ImageUrl { get; set; }
+    public int? NoOfUnits { get; set; }
+    public int? NoOfFloors { get; set; }
+    public bool Availability { get; set; }
+}

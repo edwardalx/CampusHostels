@@ -1,0 +1,462 @@
+Purpose
+-------
+This document captures the deliverable requested: a step-by-step technical implementation plan to convert the existing Django REST API (project under `rent_in/`) into a .NET 7+ Web API organized into the requested layered architecture (/Domain, /Application, /Infrastructure, /API). No code changes are made here — this is a migration/implementation plan and a precise mapping of Django models, serializers and views to .NET artifacts.
+
+Summary of discovered Django models (inventory)
+------------------------------------------------
+Files referenced: `rent_in/accounts/models.py`, `rent_in/my_properties/models.py`, `rent_in/my_tenancy/models.py`, `rent_in/my_payments/models.py`
+
+1) Tenant (in `rent_in/accounts/models.py`)
+	 - Inherits: `AbstractUser`
+	 - Fields: `id_image: ImageField` (nullable), `age: IntegerField` (nullable)
+	 - Relations: standard AbstractUser fields (username, email, first_name, last_name), ManyToMany to Group/Permission via overridden related_name
+	 - Notes: used as the project user model (AUTH_USER_MODEL)
+
+2) AuthToken (in `rent_in/accounts/models.py`)
+	 - Fields: `user: OneToOneField` -> Tenant, `token: CharField(unique)`, `created_at: DateTimeField(auto_now_add)`
+	 - Purpose: stores issued access token string (used in some logout flows)
+
+3) Manager (in `rent_in/accounts/models.py`)
+	 - Fields: `user: OneToOneField` -> Tenant
+
+4) Property (in `rent_in/my_properties/models.py`)
+	 - Fields: `name: CharField(unique)`, `location: CharField`, `image_url: URLField`, `no_of_units: IntegerField (nullable)`, `no_of_floors: IntegerField (nullable)`, `availability: BooleanField`
+	 - Relations: has many `Unit` and many `Image` (via related_name)
+
+5) Unit (in `rent_in/my_properties/models.py`)
+	 - Fields: `property: ForeignKey(Property)`, `floor: IntegerField`, `room_number: CharField(nullable)`, `image_url: URLField`, `cost: IntegerField (nullable)`, `max_no_of_people: IntegerField (nullable)`, `availability: BooleanField(default=True)`, `unit_type: CharField(choices)`
+	 - Constraints: UniqueConstraint on (`property`, `room_number`) named `unique_unit_per_property`
+
+6) Image (in `rent_in/my_properties/models.py`)
+	 - Fields: `property: FK(Property, nullable)`, `unit: FK(Unit, nullable)`, `description: CharField`, `photo: ImageField`
+
+7) Tenancy_Agreement (in `rent_in/my_tenancy/models.py`)
+	 - Fields: `contract_start_date: DateField`, `contract_duration: IntegerField` (months), `contract_end_date: DateField (nullable)`, `tenant: FK(Tenant)`, `property: FK(Property)`, `unit: FK(Unit)`, `total_amount_paid: IntegerField (nullable)`
+	 - Business logic: `save()` calculates `contract_end_date = contract_start_date + contract_duration` (using dateutil.relativedelta). `amount_left()` returns `unit.cost - total_amount_paid`.
+
+8) Payment (in `rent_in/my_payments/models.py`)
+	 - Fields: `email: EmailField`, `amount: IntegerField` (amount in smallest unit), `currency: CharField`, `phone: CharField`, `provider: CharField (choices)`, `reference: CharField(unique)`, `status: CharField` (pending/success/completed), `channel: CharField`, `created_at: DateTimeField(auto_now_add)`
+	 - Relations: `unit: FK(Unit)`, `tenant: FK(Tenant)`, `tenancy_agreement: FK(Tenancy_Agreement, nullable)`
+
+9) PaymentSummary (in `rent_in/my_payments/models.py`)
+	 - Fields: `tenancy_agreement: OneToOneField(Tenancy_Agreement)`, `total_amount_paid: IntegerField`, `amount_left: IntegerField`, `last_payment_date: DateField(nullable)`
+	 - Business logic: `save()` aggregates payments related to the tenancy agreement and updates `tenancy_agreement.total_amount_paid` and computes `amount_left`.
+
+
+ER Diagram (PlantUML source)
+--------------------------------
+@startuml
+entity Tenant {
+	* Id : Guid (from AbstractUser)
+	--
+	username
+	email
+	first_name
+	last_name
+	age : int?
+}
+
+entity Property {
+	* Id : int
+	name : string
+	location : string
+	image_url : string
+	no_of_units : int?
+	no_of_floors : int?
+	availability : bool
+}
+
+entity Unit {
+	* Id : int
+	property_id : int
+	floor : int
+	room_number : string
+	image_url : string
+	cost : int?
+	max_no_of_people : int?
+	availability : bool
+	unit_type : string
+}
+
+entity Image {
+	* Id : int
+	property_id : int?
+	unit_id : int?
+	description : string
+	photo : string
+}
+
+entity Tenancy_Agreement {
+	* Id : int
+	contract_start_date : date
+	contract_duration : int
+	contract_end_date : date?
+	tenant_id : Guid
+	property_id : int
+	unit_id : int
+	total_amount_paid : int?
+}
+
+entity Payment {
+	* Id : int
+	email : string
+	amount : int
+	currency : string
+	phone : string
+	provider : string
+	reference : string
+	status : string
+	channel : string
+	created_at : datetime
+	unit_id : int
+	tenant_id : Guid
+	tenancy_agreement_id : int?
+}
+
+entity PaymentSummary {
+	* Id : int
+	tenancy_agreement_id : int
+	total_amount_paid : int
+	amount_left : int
+	last_payment_date : date?
+}
+
+Tenant ||--o{ Tenancy_Agreement : "tenant"
+Property ||--o{ Unit : "units"
+Property ||--o{ Image : "images"
+Unit ||--o{ Image : "images"
+Property ||--o{ Tenancy_Agreement : "tenancy_agreements"
+Unit ||--o{ Tenancy_Agreement : "tenancy_agreements"
+Tenant ||--o{ Payment : "payments"
+Unit ||--o{ Payment : "payments"
+Tenancy_Agreement ||--o{ Payment : "payments"
+Tenancy_Agreement ||--|| PaymentSummary : "1:1"
+@enduml
+
+
+Mapping: Django -> .NET (high level)
+------------------------------------
+- Django Model -> Domain Entity (Domain/Entities)
+- Django Serializer -> DTOs (Application/DTOs), use AutoMapper profiles
+- Django View/ViewSet -> API Controllers (API/Controllers) that call Application services
+- Business logic in serializer.save() or model.save() -> Application Services (Application/Services) or Domain methods
+- Django ORM -> EF Core (Infrastructure/Data)
+- Authentication (DRF SimpleJWT) -> ASP.NET Core JWT Bearer (with ASP.NET Identity or custom user store)
+- Middleware -> ASP.NET Core middleware pipeline (Global exception handler + Serilog)
+
+
+Concrete .NET Entities (C# sketch — for planning only)
+-----------------------------------------------------
+- Domain/Entities/Tenant.cs
+	- Properties: Id (Guid), UserName, Email, FirstName, LastName, Age (int?), IdImageUrl (string?)
+
+- Domain/Entities/Property.cs
+	- Id (int), Name, Location, ImageUrl, NoOfUnits (int?), NoOfFloors (int?), Availability (bool)
+	- Navigation: ICollection<Unit> Units, ICollection<Image> Images
+
+- Domain/Entities/Unit.cs
+	- Id (int), PropertyId (int), Floor (int), RoomNumber (string), ImageUrl (string), Cost (int?), MaxNoOfPeople (int?), Availability (bool), UnitType (enum)
+	- Navigation: Property Property, ICollection<Image> Images, ICollection<Payment> Payments, ICollection<TenancyAgreement> TenancyAgreements
+	- Unique index on (PropertyId, RoomNumber)
+
+- Domain/Entities/Image.cs
+	- Id (int), PropertyId (int?), UnitId (int?), Description (string), PhotoUrl (string)
+
+- Domain/Entities/TenancyAgreement.cs
+	- Id (int), ContractStartDate (DateOnly), ContractDurationMonths (int), ContractEndDate (DateOnly?), TenantId (Guid), PropertyId (int), UnitId (int), TotalAmountPaid (int?)
+	- Domain logic: Compute ContractEndDate = ContractStartDate.AddMonths(ContractDurationMonths)
+
+- Domain/Entities/Payment.cs
+	- Id (int), Email (string), Amount (int), Currency (string), Phone (string), Provider (enum), Reference (string unique), Status (enum), Channel (string), CreatedAt (DateTimeOffset), UnitId (int), TenantId (Guid), TenancyAgreementId (int?)
+
+- Domain/Entities/PaymentSummary.cs
+	- Id (int), TenancyAgreementId (int), TotalAmountPaid (int), AmountLeft (int), LastPaymentDate (DateOnly?)
+	- Computation performed in Application service or via EF computed column / trigger equivalent
+
+
+DTOs and AutoMapper
+-------------------
+- Create DTOs for each public API surface (Create/Update/Read variants where serializer had different behavior):
+	- TenantDto, TenantCreateDto (password write-only), TenantReadDto
+	- PropertyDto, PropertyCreateDto, UnitDto, UnitCreateDto
+	- TenancyAgreementDto, TenancyAgreementCreateDto (contract_start_date, contract_duration, unit_id, property_id, tenant_id)
+	- PaymentDto, PaymentCreateDto
+	- PaymentSummaryDto
+- Create AutoMapper profiles mapping Domain <-> DTOs and any flattening (e.g., PaymentSummary property name from related tenancy agreement)
+
+
+Repository & Service Layer (Application + Infrastructure responsibilities)
+---------------------------------------------------------------------
+- Repositories (Infrastructure implementations, injected via interfaces in Application):
+	- IPropertyRepository, IUnitRepository, ITenancyRepository, IPaymentRepository, ITenantRepository
+- Application Services (business flows):
+	- IPropertyService (CRUD + search/filtering)
+	- IUnitService (get units by property, select unit, mark unavailable)
+	- ITenancyService (create agreement, compute end date, amount left)
+	- IPaymentService (initialize payment, verify payment, webhook processing). Payment gateway adapter pattern: IPaymentGateway + PaystackGateway implementation.
+
+
+Controllers and routing (API layer mapping)
+-----------------------------------------
+- Controllers approximate mapping (use attribute routing):
+	- API/Controllers/PropertiesController -> routes:
+			GET /api/v1/property (list) -> ListView
+			GET /api/v1/property/{id} -> DetailView
+			POST /api/v1/property -> Create
+			PUT /api/v1/property/{id} -> Update
+			DELETE /api/v1/property/{id} -> Delete
+	- API/Controllers/UnitsController -> GET /api/v1/property/{propertyId}/units
+	- API/Controllers/ImagesController -> /api/image CRUD
+	- API/Controllers/AccountsController -> /api/tenant (register/login endpoints). Use Microsoft.Identity for tokens; match response shape (access/refresh + user info)
+	- API/Controllers/PaymentsController -> /api/payments/* and webhook /api/payments/webhook
+	- API/Controllers/TenanciesController -> /api/tenancy/*
+
+
+Authentication & Authorization mapping
+------------------------------------
+- Use ASP.NET Core Identity for user persistence (or custom IUserStore if you prefer to map Tenant onto IdentityUser). Recommended: extend IdentityUser to TenantUser.
+- Configure JWT Bearer authentication using Microsoft.AspNetCore.Authentication.JwtBearer and issue tokens via a TokenService. Optionally use refresh token storage in DB (like `AuthToken`) to support revocation/blacklist behavior.
+- Map Django cookie-setting logic (if required) to issuing HttpOnly cookies in .NET as needed.
+
+
+Payment gateway & webhook
+-------------------------
+- Implement IPaymentGateway interface and Paystack adapter (InitializeTransactionAsync, VerifyTransactionAsync, HandleWebhookAsync).
+- Webhook endpoint must verify signature (HMAC SHA512) using the configured secret (same as Django code). Ensure immediate idempotency checks and safe handling of concurrent webhook calls.
+
+
+EF Core (Infrastructure/Data) recommendations
+--------------------------------------------
+- Use separate project `Infrastructure` with `Data` folder containing `AppDbContext : DbContext`.
+- Configure entities with Fluent API in `EntityTypeConfiguration<T>` classes for:
+	- Unique constraint on (PropertyId, RoomNumber) for Unit
+	- One-to-many and one-to-one relationships
+	- Indexes on Payment.Reference unique, TenancyAgreement lookups
+- Consider using `decimal` for currency in C# if you later need fractions; currently amounts are integer smallest unit (pesewas) and can map to `int` or `long`.
+
+
+Data migration / seeding strategy
+-------------------------------
+- Option A (recommended for parity): Use the existing SQLite DB (`rent_in/db.sqlite3`) as the source-of-truth for data. Write a small data import tool that reads from SQLite (via EF Core SQLite or direct SQLite connection) and writes to the new DB (Postgres or SQL Server). This avoids manual data loss.
+- Option B: Recreate schema in EF Core and re-seed essential test data using seeders.
+
+
+Implementation Plan (detailed, sprint-oriented tasks)
+----------------------------------------------------
+Sprint 0 — Scaffolding & basic infra (1–2 days)
+	1. Create Visual Studio solution and projects: Domain, Application, Infrastructure, API (ASP.NET Core Web API).
+	2. Add packages: Microsoft.EntityFrameworkCore, Npgsql/SqlServer provider, AutoMapper.Extensions.Microsoft.DependencyInjection, Serilog.AspNetCore, Swashbuckle, FluentValidation, Microsoft.AspNetCore.Authentication.JwtBearer.
+	3. Configure appsettings.json (connection strings, Paystack secret placeholder) and environment secrets.
+	4. Add Serilog and global exception middleware.
+
+Sprint 1 — Core domain & EF mapping (3–7 days)
+	1. Implement Domain entities for Tenant, Property, Unit, Image, TenancyAgreement, Payment, PaymentSummary.
+	2. Implement Infrastructure DbContext + EntityTypeConfigurations (Fluent API). Add unique constraints and required indexes.
+	3. Create initial EF migration and verify schema in chosen DB engine.
+
+Sprint 2 — DTOs, mapping & basic repos (2–4 days)
+	1. Create DTO classes for each model and AutoMapper profiles.
+	2. Implement repository interfaces and basic CRUD repository implementations.
+	3. Add unit tests for repository CRUD using in-memory provider or test DB.
+
+Sprint 3 — Services & Controllers (3–7 days)
+	1. Implement Application services (Tenancy, Payment, Property) with unit tests.
+	2. Implement Controllers exposing endpoints matching Django routes.
+	3. Implement model validation with FluentValidation and map to ProblemDetails responses.
+
+Sprint 4 — Authentication & payments (2–5 days)
+	1. Implement Identity + JWT token generation and verify token response shape.
+	2. Implement payment gateway adapter and initialize/verify endpoints.
+	3. Implement webhook endpoint with signature verification and idempotency.
+
+Sprint 5 — Tests, docs & deployment (2–4 days)
+	1. Add controller/service integration tests (xUnit) and CI workflow (GitHub Actions).
+	2. Add Swagger and example request schemas.
+	3. Configure CORS for the frontend origin(s).
+
+
+Edge cases & important notes
+---------------------------
+- Nested serializer logic in Django (for example PaymentSummary returning nested payments) should be mapped to DTOs and service-layer queries (include related entities to avoid N+1).
+- Model.save() logic in Django (e.g., Tenancy_Agreement.save computes end date, PaymentSummary.save aggregates payments) should move into Application services or Domain methods called by services; avoid putting heavy logic in DbContext save triggers.
+- Unique constraints and on-delete semantics must be explicitly specified in EF Core Fluent API to match Django behavior.
+- Authentication: if you rely on Django's `AuthToken` table for token invalidation, replicate a refresh-token / blacklist pattern in .NET (store hashed tokens, support revocation).
+
+
+Acceptance criteria
+-------------------
+For the migration to be accepted at handover:
+	- Every public Django endpoint has a mapped .NET controller action with equivalent request/response schema.
+	- Domain model fields, relationships and constraints are implemented in EF Core and validated by unit tests.
+	- Authentication flows (login, token issuance, logout/blacklist) are functional and documented.
+	- Payment initialization, verification and webhook processing implemented with idempotency and tests or simulation steps.
+	- Serilog logging and global exception handling in place. CORS is configured for the frontend.
+
+
+Next steps / Questions
+----------------------
+1) Please confirm acceptance of this document. After approval I will start Phase 2 (diagram generation) and produce a downloadable PlantUML PNG/SVG, plus a relationship matrix.
+2) Which RDBMS do you want for production in .NET (Postgres, SQL Server)? I used neutral SQL guidance above; picking one now helps shape EF provider and connection/CI steps.
+3) Do you want to use ASP.NET Identity for user management (recommended) or a custom JWT+user table mapping directly to the current `Tenant` structure?
+
+Files changed/created by this deliverable
+---------------------------------------
+- `implementation.txt` (this file) — contains the full plan, model mapping, PlantUML, and implementation steps.
+
+Completion summary
+------------------
+I scanned the repository models, serializers and views, produced an entity inventory and a detailed implementation plan for converting to a .NET Web API using your architecture boundaries (/Domain, /Application, /Infrastructure, /API). The `implementation.txt` file was updated with an ER PlantUML, mapping of each Django model to domain entities, DTOs, services, controllers, EF Core guidance, payment gateway integration, authentication recommendations, sprint tasks and acceptance criteria.
+
+Next action I will wait for: your approval or clarifying answers to the 3 questions above; on approval I'll proceed to Phase 2 and produce the diagram artifacts (PlantUML PNG/SVG) and a relationship matrix.
+
+Database selection (confirmed)
+--------------------------------
+You requested: development on SQLite and production on PostgreSQL. The guidance below assumes this setup.
+
+Dev (SQLite)
+- Keep the existing `rent_in/db.sqlite3` for development and quick iterations.
+- Use EF Core SQLite provider for local development and testing: `Microsoft.EntityFrameworkCore.Sqlite`.
+
+Production (PostgreSQL)
+- Use PostgreSQL in production and use the Npgsql EF Core provider: `Npgsql.EntityFrameworkCore.PostgreSQL`.
+- Advantages: reliable migrations, support for JSONB, strong community support on Linux containers.
+
+appsettings.json examples
+------------------------
+Development (appsettings.Development.json)
+{
+  "ConnectionStrings": {
+	 "DefaultConnection": "Data Source=rent_in/db.sqlite3"
+  }
+}
+
+Production (appsettings.Production.json)
+{
+  "ConnectionStrings": {
+	 "DefaultConnection": "Host=your-db-host;Port=5432;Database=rentin;Username=youruser;Password=yourpassword"
+  }
+}
+
+EF Core / Npgsql setup steps (high level)
+----------------------------------------
+1. Add projects to the solution: Domain, Application, Infrastructure, API.
+2. In `Infrastructure` project add package references:
+	- `Microsoft.EntityFrameworkCore`
+	- `Npgsql.EntityFrameworkCore.PostgreSQL`
+	- `Microsoft.EntityFrameworkCore.Design` (for migrations)
+	- `Microsoft.EntityFrameworkCore.Sqlite` (dev convenience)
+3. Implement `AppDbContext : DbContext` and register it in the API project's `Program.cs` / `Startup.cs`.
+	- Use `UseSqlite(Configuration.GetConnectionString("DefaultConnection"))` in Development.
+	- Use `UseNpgsql(Configuration.GetConnectionString("DefaultConnection"))` in Production.
+4. Enable design-time services by creating a `DesignTimeDbContextFactory` if needed for migrations.
+5. Create initial migration (dev using sqlite) then switch provider to Npgsql and create production-compatible migrations, or create migrations targeted at the chosen production provider to avoid provider-specific differences.
+
+Typical commands (PowerShell / Windows)
+-------------------------------------
+# From solution root, target the Infrastructure project for migrations
+dotnet add .\Infrastructure\Infrastructure.csproj package Npgsql.EntityFrameworkCore.PostgreSQL
+dotnet add .\Infrastructure\Infrastructure.csproj package Microsoft.EntityFrameworkCore.Design
+
+# Create initial migration (dev)
+dotnet ef migrations add InitialCreate -p .\Infrastructure\Infrastructure.csproj -s .\API\API.csproj -o Data/Migrations
+
+# Apply migration to dev sqlite (optional)
+dotnet ef database update -p .\Infrastructure\Infrastructure.csproj -s .\API\API.csproj
+
+# When deploying to postgres, ensure connection string points to Postgres and run:
+dotnet ef database update -p .\Infrastructure\Infrastructure.csproj -s .\API\API.csproj
+
+Data migration from existing SQLite to Postgres (recommended approach)
+------------------------------------------------------------------
+Option 1 — Data import tool (recommended):
+  - Create a small console app or EF Core import tool in `Infrastructure/Tools/DataImporter` that:
+	 1. Connects to the existing SQLite DB (use separate EF Core DbContext configured with SQLite).
+	 2. Reads entities in a deterministic order (Tenant -> Property -> Unit -> TenancyAgreement -> Payment -> PaymentSummary) to preserve FK references.
+	 3. Writes to the production EF Core DbContext configured for Postgres (or to a staging Postgres instance) in batches and within transactions.
+	 4. For large datasets consider bulk operations or COPY for performance. For small projects EF Core SaveChanges() is fine.
+  - Validate counts and referential integrity after import.
+
+Option 2 — Export/Import SQL
+  - Dump SQLite data to CSV and use Postgres COPY to import into tables after creating the schema.
+  - This requires mapping differences (GUIDs, identity sequences) and handling unique constraints carefully.
+
+Relationship matrix (fields, multiplicity, on-delete and nullable flags)
+----------------------------------------------------------------
+| From Model | FK Field | To Model | Multiplicity | OnDelete | Nullable | Notes |
+|------------|----------|----------|--------------|----------|---------|-------|
+| Tenancy_Agreement | tenant_id | Tenant | Many-to-One (Tenant 1 -> N Tenancy) | Cascade | False | tenant is required |
+| Unit | property_id | Property | Many-to-One | Cascade | False | unit belongs to property |
+| Image | property_id | Property | Many-to-One | Cascade | True | images can be property or unit-level |
+| Image | unit_id | Unit | Many-to-One | Cascade | True | nullable, image may attach to either |
+| Tenancy_Agreement | property_id | Property | Many-to-One | Cascade | False | tenancy references property |
+| Tenancy_Agreement | unit_id | Unit | Many-to-One | Cascade | False | tenancy references unit |
+| Payment | tenant_id | Tenant | Many-to-One | Cascade | False | payments belong to tenant |
+| Payment | unit_id | Unit | Many-to-One | Cascade | False | payments belong to a unit |
+| Payment | tenancy_agreement_id | Tenancy_Agreement | Many-to-One | Cascade | True | optional until linked by webhook/verify |
+| Tenancy_Agreement | payment_summary_id (reverse) | PaymentSummary | One-to-One | Cascade | False | PaymentSummary.tenancy_agreement OneToOne |
+
+Notes on mapping multiplicity and cascading
+- Django's default `on_delete=models.CASCADE` maps naturally to EF Core's `DeleteBehavior.Cascade` for required FKs.
+- For nullable FKs (e.g., Payment.tenancy_agreement), map to `int?` or the proper nullable type in C# and configure `DeleteBehavior.SetNull` if desired, else `Cascade` if you want orphaned payments deleted.
+- Ensure `Unit`'s unique constraint on (PropertyId, RoomNumber) is implemented as a unique index in EF Core.
+
+Detailed technical steps to achieve the .NET WebAPI project (ordered)
+------------------------------------------------------------------
+1. Create solution and projects
+	- dotnet new sln -n RentIn
+	- dotnet new classlib -n Domain
+	- dotnet new classlib -n Application
+	- dotnet new classlib -n Infrastructure
+	- dotnet new webapi -n API
+	- dotnet sln add Domain\Domain.csproj Application\Application.csproj Infrastructure\Infrastructure.csproj API\API.csproj
+
+2. Add package references
+	- In `Infrastructure`: Npgsql, EFCore.Design, EFCore.Sqlite
+	- In `API`: AutoMapper.Extensions.Microsoft.DependencyInjection, Serilog.AspNetCore, Swashbuckle.AspNetCore, Microsoft.AspNetCore.Authentication.JwtBearer, FluentValidation.AspNetCore
+
+3. Implement Domain entities (map fields exactly, prefer `decimal` for money if you need fractional units)
+
+4. Implement Infrastructure/AppDbContext and EntityTypeConfiguration classes
+	- Configure keys, relationships, unique constraints and indexes
+	- Provide `DesignTimeDbContextFactory` to enable `dotnet ef` tooling
+
+5. Implement Application DTOs and Service Interfaces
+	- Define IPropertyService, IUnitService, ITenancyService, IPaymentService, IAuthService
+
+6. Implement Infrastructure repositories which implement the Application interfaces
+
+7. Implement API Controllers (PropertiesController, UnitsController, AccountsController, PaymentsController, TenanciesController)
+	- Keep route paths aligned to Django ones for parity; e.g., GET `/api/v1/property/` etc.
+	- Use DTOs as input/output models and AutoMapper inside controllers
+
+8. Authentication
+	- Extend IdentityUser with Tenant fields or create TenantUser mapping
+	- Implement TokenService that issues JWTs (access & refresh) and stores refresh tokens in `AuthTokens` table for revocation
+	- Implement logout endpoint to revoke tokens
+
+9. Payments & Webhook
+	- Implement IPaymentGateway and PaystackGateway (InitializeTransactionAsync, VerifyTransactionAsync, HandleWebhookAsync)
+	- Webhook verifies HMAC SHA512 signature and processes `charge.success` events
+	- Ensure idempotency by checking Payment.Reference and Payment.Status before processing
+
+10. Data import
+	- Create `Infrastructure.Tools.DataImporter` console app
+	- Map SQLite model instances to Domain entities and save to Postgres via Infrastructure DbContext
+
+11. Tests & CI
+	- Add xUnit test project and tests for Application services and Controllers (integration tests using TestServer)
+	- Add GitHub Actions workflow to build, run tests, and optionally run EF migrations against a Postgres test container
+
+12. Deployment
+	- Prepare Dockerfile for API, compose file for Postgres (or managed Postgres in cloud)
+	- On deploy, run `dotnet ef database update` against Postgres or include migration step in CI/CD
+
+What I changed in the repo
+-------------------------
+- Updated `implementation.txt` with your DB choice (dev: SQLite, prod: Postgres), relationship matrix, and detailed step-by-step EF Core and migration instructions.
+
+Progress update
+---------------
+- `implementation.txt` updated (Phase 1 documented). The todo list will be updated to mark the implementation document complete and Phase 2 (diagram) in-progress.
+
+

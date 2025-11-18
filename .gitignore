@@ -1,3 +1,19 @@
+# Ignore build outputs
+/bin/
+/obj/
+
+# VS Code
+.vscode/
+
+# User files
+*.user
+*.suo
+
+# Rider
+.idea/
+
+# Mac
+.DS_Store
 *.sqlite3
 # Gradle files
 .gradle/
@@ -30,7 +46,10 @@ render.experimental.xml
 
 # Google Services (e.g. APIs or Firebase)
 google-services.json
-
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
 # Android Profiling
 *.hprof
 **/staticfiles/
@@ -82,9 +101,14 @@ gunicorn.pid
 *.local
 *.save
 #.net
+# *settings.py
+
 **/bin/
 **/obj/
 *.user
 *.suo
 *.pyc
 __pycache__/
+db.sqlite3.bak
+inspect_schema.py
+*.sln
