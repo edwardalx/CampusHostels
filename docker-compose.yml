@@ -62,8 +62,8 @@ services:
       ConnectionStrings__DefaultConnection: "Host=db;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD};"
     ports:
       - "5000:5000"
-    depends_on:
-      - mssql
+    db:
+      condition: service_healthy
     networks:
       - campushostels_net
     restart: always
