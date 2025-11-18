@@ -29,13 +29,6 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'hostel_admin',   
 ]
-JAZZMIN_SETTINGS = {
-    "site_title": "Your Admin",
-    "site_header": "Your Administration",
-    "site_brand": "Your Site",
-    "welcome_sign": "Welcome to the administration",
-    "show_ui_builder": True,
-}
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
