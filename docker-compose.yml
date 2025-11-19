@@ -14,11 +14,11 @@ services:
       - campushostels_net
 
   # -------------------------------------------------------
-  # MSSQL Express for the .NET App
+  # MSSQL Express for the .NET App - FIXED VERSION
   # -------------------------------------------------------
   mssql:
-    image: mcr.microsoft.com/mssql/server:2019-latest
-    container_name: mssql_express
+    image: mcr.microsoft.com/mssql/server:2019-latest  # ✅ Use MSSQL image
+    container_name: mssql_express  # ✅ Unique container name
     environment:
       ACCEPT_EULA: "Y"
       SA_PASSWORD: ${MSSQL_SA_PASSWORD}
@@ -30,12 +30,7 @@ services:
     networks:
       - campushostels_net
     restart: always
-    healthcheck:
-      test: /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P "$$MSSQL_SA_PASSWORD" -Q "SELECT 1" || exit 1
-      interval: 10s
-      timeout: 3s
-      retries: 10
-      start_period: 30s
+
   web:
     build:
       context: ./backend-admin
@@ -57,6 +52,7 @@ services:
       gunicorn --access-logfile - --workers 3 --bind 0.0.0.0:8000 backend_admin.wsgi:application
     networks:
       - campushostels_net
+
   backend_api:
     build:
       context: ./backend-api
@@ -74,6 +70,7 @@ services:
     networks:
       - campushostels_net
     restart: always
+
   app1:
     build:
       context: /var/www/book-shelf-be
@@ -84,8 +81,7 @@ services:
     ports:
       - "6001:6001"
     depends_on:
-      mssql:
-        condition: service_healthy
+      - mssql
     networks:
       - campushostels_net
 
@@ -114,7 +110,6 @@ services:
 volumes:
   postgres_data:
   mssql_data:
-
 
 networks:
   campushostels_net:
