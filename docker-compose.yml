@@ -14,21 +14,22 @@ services:
       - campushostels_net
 
   # -------------------------------------------------------
-  # MSSQL Express for the .NET App
+  # MSSQL Express for the .NET App - FIXED VERSION
   # -------------------------------------------------------
   mssql:
-    build:
-      context: /var/www/book-shelf-be
-    container_name: app1_dotnet
-    restart: always
+    image: mcr.microsoft.com/mssql/server:2019-latest  # ✅ Use MSSQL image
+    container_name: mssql_express  # ✅ Unique container name
     environment:
-      ConnectionStrings__DefaultConnection: "Server=mssql,1433;Database=BookShelf;User Id=sa;Password=${MSSQL_SA_PASSWORD};TrustServerCertificate=True"
+      ACCEPT_EULA: "Y"
+      SA_PASSWORD: ${MSSQL_SA_PASSWORD}
+      MSSQL_PID: "Express"
     ports:
-      - "6001:6001"      
-    networks:
-      - campushostels_net
+      - "1433:1433"
     volumes:
       - mssql_data:/var/opt/mssql
+    networks:
+      - campushostels_net
+    restart: always
 
   web:
     build:
@@ -51,6 +52,7 @@ services:
       gunicorn --access-logfile - --workers 3 --bind 0.0.0.0:8000 backend_admin.wsgi:application
     networks:
       - campushostels_net
+
   backend_api:
     build:
       context: ./backend-api
@@ -68,13 +70,14 @@ services:
     networks:
       - campushostels_net
     restart: always
+
   app1:
     build:
       context: /var/www/book-shelf-be
     container_name: app1_dotnet
     restart: always
     environment:
-      ConnectionStrings__DefaultConnection: "Server=mssql,1433;Database=BookShelf;User Id=sa;Password=${MSSQL_SA_PASSWORD};TrustServerCertificate=True"
+      ConnectionStrings__DefaultConnection: "Server=mssql,1433;Database=BookShelf;User Id=sa;Password=${MSSQL_SA_PASSWORD};TrustServerCertificate=True;Encrypt=false"
     ports:
       - "6001:6001"
     depends_on:
@@ -107,7 +110,6 @@ services:
 volumes:
   postgres_data:
   mssql_data:
-
 
 networks:
   campushostels_net:
