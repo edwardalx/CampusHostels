@@ -25,8 +25,6 @@ services:
       ConnectionStrings__DefaultConnection: "Server=mssql,1433;Database=BookShelf;User Id=sa;Password=${MSSQL_SA_PASSWORD};TrustServerCertificate=True"
     ports:
       - "6001:6001"
-    depends_on:
-      - mssql
     networks:
       - campushostels_net
     volumes:
