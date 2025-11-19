@@ -17,18 +17,19 @@ services:
   # MSSQL Express for the .NET App
   # -------------------------------------------------------
   mssql:
-    build:
-      context: /var/www/book-shelf-be
-    container_name: app1_dotnet
-    restart: always
+    image: mcr.microsoft.com/mssql/server:2019-latest
+    container_name: mssql_express
     environment:
-      ConnectionStrings__DefaultConnection: "Server=mssql,1433;Database=BookShelf;User Id=sa;Password=${MSSQL_SA_PASSWORD};TrustServerCertificate=True"
+      ACCEPT_EULA: "Y"
+      SA_PASSWORD: ${MSSQL_SA_PASSWORD}
+      MSSQL_PID: "Express"
     ports:
-      - "6001:6001"
-    networks:
-      - campushostels_net
+      - "1433:1433"
     volumes:
       - mssql_data:/var/opt/mssql
+    networks:
+      - campushostels_net
+    restart: always
 
   web:
     build:
