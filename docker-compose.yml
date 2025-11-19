@@ -30,7 +30,6 @@ services:
     networks:
       - campushostels_net
     restart: always
-
   web:
     build:
       context: ./backend-admin
