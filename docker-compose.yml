@@ -30,6 +30,12 @@ services:
     networks:
       - campushostels_net
     restart: always
+    healthcheck:
+      test: /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P "$$MSSQL_SA_PASSWORD" -Q "SELECT 1" || exit 1
+      interval: 10s
+      timeout: 3s
+      retries: 10
+      start_period: 30s
   web:
     build:
       context: ./backend-admin
@@ -74,11 +80,12 @@ services:
     container_name: app1_dotnet
     restart: always
     environment:
-      ConnectionStrings__DefaultConnection: "Server=mssql,1433;Database=BookShelf;User Id=sa;Password=${MSSQL_SA_PASSWORD};TrustServerCertificate=True"
+      ConnectionStrings__DefaultConnection: "Server=mssql,1433;Database=BookShelf;User Id=sa;Password=${MSSQL_SA_PASSWORD};TrustServerCertificate=True;Encrypt=false"
     ports:
       - "6001:6001"
     depends_on:
-      - mssql
+      mssql:
+        condition: service_healthy
     networks:
       - campushostels_net
 
