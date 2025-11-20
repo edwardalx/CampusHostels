@@ -28,7 +28,15 @@ pipeline {
                             set -e  # Exit on any error
                             echo "📦 Pulling latest repository…"
                             cd ${env.PROJECT_DIR}
+                            
+                            # Handle any local changes - stash them or reset
+                            git stash || echo "No changes to stash"
                             git pull origin main
+                            
+                            # If you want to forcefully reset instead of stashing, use:
+                            # git reset --hard HEAD
+                            # git clean -fd
+                            # git pull origin main
 
                             echo "🔨 Rebuilding images…"
                             docker compose build
