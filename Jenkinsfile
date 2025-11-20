@@ -16,11 +16,15 @@ pipeline {
 
         stage('Deploy to Production') {
             steps {
-                sshagent(credentials: ['be7af895-440a-4af4-ad0a-685416674053']) {
+                withCredentials([sshUserPrivateKey(
+                    credentialsId: 'be7af895-440a-4af4-ad0a-685416674053',
+                    keyFileVariable: 'SSH_KEY',
+                    usernameVariable: 'SSH_USERNAME'
+                )]) {
                     sh """
                         echo "🚀 Deploying using Docker Compose..."
 
-                        ssh -o StrictHostKeyChecking=no eobkwaku@${env.HOST_IP} '
+                        ssh -o StrictHostKeyChecking=no -i ${SSH_KEY} ${SSH_USERNAME}@${env.HOST_IP} '
                             set -e  # Exit on any error
                             echo "📦 Pulling latest repository…"
                             cd ${env.PROJECT_DIR}
@@ -36,10 +40,10 @@ pipeline {
                             sleep 10  # Wait for services to start
 
                             echo "🗄️ Applying Django migrations…"
-                            docker compose exec web python manage.py migrate --noinput
+                            docker compose exec -T web python manage.py migrate --noinput
 
                             echo "📁 Collecting static files…"
-                            docker compose exec web python manage.py collectstatic --noinput
+                            docker compose exec -T web python manage.py collectstatic --noinput
 
                             echo "🔃 Restarting specific services…"
                             docker compose restart web
@@ -54,9 +58,13 @@ pipeline {
 
         stage('Verify Deployment') {
             steps {
-                sshagent(credentials: ['be7af895-440a-4af4-ad0a-685416674053']) {
+                withCredentials([sshUserPrivateKey(
+                    credentialsId: 'be7af895-440a-4af4-ad0a-685416674053',
+                    keyFileVariable: 'SSH_KEY',
+                    usernameVariable: 'SSH_USERNAME'
+                )]) {
                     sh """
-                        ssh -o StrictHostKeyChecking=no eobkwaku@${env.HOST_IP} '
+                        ssh -o StrictHostKeyChecking=no -i ${SSH_KEY} ${SSH_USERNAME}@${env.HOST_IP} '
                             echo "🌐 Checking running containers..."
                             docker compose ps
 
