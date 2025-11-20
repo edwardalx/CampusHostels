@@ -7,6 +7,7 @@ pipeline {
     }
 
     stages {
+
         stage('Checkout Code') {
             steps {
                 git branch: 'main',
@@ -16,50 +17,54 @@ pipeline {
 
         stage('Deploy to Production') {
             steps {
-                sh """
-                    echo "🚀 Deploying using Docker Compose..."
+                sshagent(credentials: ['campus_ssh_key']) {
+                    sh """
+                        echo "🚀 Deploying using Docker Compose..."
 
-                    ssh -o StrictHostKeyChecking=no eobkwaku@${env.HOST_IP} '
-                        echo "📦 Pulling latest repository…"
-                        cd ${env.PROJECT_DIR}
-                        git pull origin main
+                        ssh -o StrictHostKeyChecking=no eobkwaku@${env.HOST_IP} '
+                            echo "📦 Pulling latest repository…"
+                            cd ${env.PROJECT_DIR}
+                            git pull origin main
 
-                        echo "🔨 Rebuilding images…"
-                        docker compose build
+                            echo "🔨 Rebuilding images…"
+                            docker compose build
 
-                        echo "🔄 Restarting services…"
-                        docker compose down
-                        docker compose up -d
+                            echo "🔄 Restarting services…"
+                            docker compose down
+                            docker compose up -d
 
-                        echo "🗄️ Applying Django migrations…"
-                        docker compose exec web python manage.py migrate --noinput
+                            echo "🗄️ Applying Django migrations…"
+                            docker compose exec web python manage.py migrate --noinput
 
-                        echo "📁 Collecting static files…"
-                        docker compose exec web python manage.py collectstatic --noinput
+                            echo "📁 Collecting static files…"
+                            docker compose exec web python manage.py collectstatic --noinput
 
-                        echo "🔃 Restarting specific services…"
-                        docker compose restart web
-                        docker compose restart backend_api
+                            echo "🔃 Restarting specific services…"
+                            docker compose restart web
+                            docker compose restart backend_api
 
-                        echo "✅ Deployment completed successfully!"
-                    '
-                """
+                            echo "✅ Deployment completed successfully!"
+                        '
+                    """
+                }
             }
         }
 
         stage('Verify Deployment') {
             steps {
-                sh """
-                    ssh -o StrictHostKeyChecking=no eobkwaku@${env.HOST_IP} '
-                        echo "🌐 Checking running containers..."
-                        docker compose ps
+                sshagent(credentials: ['campus_ssh_key']) {
+                    sh """
+                        ssh -o StrictHostKeyChecking=no eobkwaku@${env.HOST_IP} '
+                            echo "🌐 Checking running containers..."
+                            docker compose ps
 
-                        echo "⚡ Testing Django Admin..."
-                        curl -s -o /dev/null -w "HTTP Status: %{http_code}" http://localhost/admin
+                            echo "⚡ Testing Django Admin..."
+                            curl -s -o /dev/null -w "HTTP Status: %{http_code}" http://localhost/admin
 
-                        echo "🎯 Final URL: http://hostels.bookshelfgh.duckdns.org/admin"
-                    '
-                """
+                            echo "🎯 Final URL: http://hostels.bookshelfgh.duckdns.org/admin"
+                        '
+                    """
+                }
             }
         }
     }
