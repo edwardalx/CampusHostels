@@ -1,5 +1,3 @@
-# backend-api/Dockerfile
-
 # ----------------------------
 # Build stage
 # ----------------------------
@@ -10,8 +8,14 @@ WORKDIR /src
 COPY CampusHostels.API/CampusHostels.API.csproj ./CampusHostels.API/
 RUN dotnet restore ./CampusHostels.API/CampusHostels.API.csproj
 
+# Install dotnet-ef globally to be used for migrations
+RUN dotnet tool install --global dotnet-ef
+
+# Add dotnet tools to PATH
+ENV PATH="$PATH:/root/.dotnet/tools"
+
 # Copy all source code
-COPY . .
+COPY . . 
 
 # Publish the application
 RUN dotnet publish ./CampusHostels.API/CampusHostels.API.csproj -c Release -o /app
@@ -21,9 +25,11 @@ RUN dotnet publish ./CampusHostels.API/CampusHostels.API.csproj -c Release -o /a
 # ----------------------------
 FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS runtime
 WORKDIR /app
-COPY --from=build /app ./
 
-# Expose port
+# Copy the published app from the build stage
+COPY --from=build /app ./ 
+
+# Expose the necessary port
 EXPOSE 5000
 
 # Run the API
