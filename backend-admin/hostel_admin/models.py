@@ -27,7 +27,7 @@ class Tenant(models.Model):
     is_active = models.BooleanField(default=True, db_column='IsActive')
 
     class Meta:
-        db_table = 'Users'
+        db_table = 'users'
         managed = False
         verbose_name = 'Tenant'
         verbose_name_plural = 'Tenants'
@@ -51,7 +51,7 @@ class Property(models.Model):
   availability = models.IntegerField(null=True, blank=True, db_column='Availability')
 
   class Meta:
-    db_table = 'Properties'
+    db_table = 'properties'
     managed = False
     verbose_name = 'Property'
     verbose_name_plural = 'Properties'
@@ -76,7 +76,7 @@ class Unit(models.Model):
   unit_type = models.IntegerField(null=True, blank=True, db_column='UnitType')
 
   class Meta:
-    db_table = 'Units'
+    db_table = 'units'
     managed = False
     verbose_name = 'Unit'
     verbose_name_plural = 'Units'
@@ -98,7 +98,7 @@ class Tenancy(models.Model):
   total_amount_paid = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, db_column='TotalAmountPaid')
 
   class Meta:
-    db_table = 'TenancyAgreements'
+    db_table = 'tenancyagreements'
     managed = False
     verbose_name = 'Tenancy Agreement'
     verbose_name_plural = 'Tenancy Agreements'
@@ -125,7 +125,7 @@ class Payment(models.Model):
   currency = models.CharField(max_length=10, null=True, blank=True, db_column='Currency')
 
   class Meta:
-    db_table = 'Payments'
+    db_table = 'payments'
     managed = False
     verbose_name = 'Payment'
     verbose_name_plural = 'Payments'
