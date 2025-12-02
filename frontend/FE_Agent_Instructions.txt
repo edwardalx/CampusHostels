@@ -1,0 +1,59 @@
+Copilot — Quick Instructions (summary)
+
+Short, direct steps your agent should follow when turning the image into a responsive React + Tailwind page.
+
+Analyse (stop for approval)
+
+Inspect the provided image and extract: exact text, color palette (hex), gradients, fonts (closest match), spacing, icons and other assets.
+
+Produce a 1-page analysis summary (text + palette + asset list + suggested components).
+
+Do not proceed until user/captain explicitly approves the analysis.
+
+Build components (stop for approval)
+
+Implement reusable React components with Tailwind (mobile-first). Each component must be configurable via props and responsive.
+
+Add small README or prop comment for each component.
+
+Provide a short preview (screenshot or sandbox link).
+
+Wait for approval before composing the page.
+
+Compose page (stop for approval)
+
+Create the final page by composing the approved components. Ensure breakpoints (sm, md, lg, xl) are handled and layout matches the image at desktop while remaining usable on mobile.
+
+Include fallback/loading states where relevant.
+
+Provide screenshots of mobile + desktop.
+
+Stop and request approval before integration.
+
+Integrate in App.jsx and deliver
+
+Add route or render the page in App.jsx.
+
+Include run instructions (install, start) and a short QA checklist (responsiveness, a11y, basic performance).
+
+Announce completion and attach artifacts.
+
+Non-negotiables
+
+Use React + Tailwind only.
+
+Always ask for explicit approval after each main step. No implicit continuation.
+
+Prioritise responsiveness and accessibility (semantic HTML, focus states, alt text, contrast).
+
+Keep components small, reusable, and documented.
+
+Output format for approvals
+
+For each approval request include:
+
+One-line summary of work done.
+
+1-page artifact (analysis or component list or screenshots).
+
+Two choices: Approve → Proceed or Request changes → List.

@@ -2,6 +2,8 @@ services:
   db:
     image: postgres:15
     container_name: campushostels_db
+    env_file:
+      - .env
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
@@ -12,13 +14,13 @@ services:
       - "${DB_PORT}:5432"
     networks:
       - campushostels_net
+    restart: always
 
-  # -------------------------------------------------------
-  # MSSQL Express for the .NET App - FIXED VERSION
-  # -------------------------------------------------------
   mssql:
-    image: mcr.microsoft.com/mssql/server:2019-latest  # ✅ Use MSSQL image
-    container_name: mssql_express  # ✅ Unique container name
+    image: mcr.microsoft.com/mssql/server:2019-latest
+    container_name: mssql_express
+    env_file:
+      - .env
     environment:
       ACCEPT_EULA: "Y"
       SA_PASSWORD: ${MSSQL_SA_PASSWORD}
@@ -36,9 +38,10 @@ services:
       context: ./backend-admin
     container_name: campushostels_web
     restart: always
+    env_file:
+      - .env
     environment:
       DJANGO_SETTINGS_MODULE: backend_admin.settings
-      DEBUG: "False"
       DATABASE_HOST: db
       DATABASE_PORT: ${DB_PORT}
       DATABASE_NAME: ${POSTGRES_DB}
@@ -49,7 +52,9 @@ services:
     depends_on:
       - db
     command: >
-      gunicorn --access-logfile - --workers 3 --bind 0.0.0.0:8000 backend_admin.wsgi:application
+      sh -c "python manage.py migrate &&
+             python manage.py collectstatic --noinput &&
+             gunicorn --access-logfile - --workers 3 --bind 0.0.0.0:8000 backend_admin.wsgi:application"
     networks:
       - campushostels_net
 
@@ -58,6 +63,8 @@ services:
       context: ./backend-api
       dockerfile: Dockerfile
     container_name: campushostels_backend_api
+    env_file:
+      - .env
     environment:
       ASPNETCORE_URLS: "http://0.0.0.0:5000"
       ASPNETCORE_ENVIRONMENT: "Production"
@@ -76,6 +83,8 @@ services:
       context: /var/www/book-shelf-be
     container_name: app1_dotnet
     restart: always
+    env_file:
+      - .env
     environment:
       ConnectionStrings__DefaultConnection: "Server=mssql,1433;Database=BookShelf;User Id=sa;Password=${MSSQL_SA_PASSWORD};TrustServerCertificate=True;Encrypt=false"
     ports:
