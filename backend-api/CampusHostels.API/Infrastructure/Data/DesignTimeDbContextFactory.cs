@@ -11,16 +11,26 @@ public class DesignTimeDbContextFactory : IDesignTimeDbContextFactory<Applicatio
     {
         var builder = new DbContextOptionsBuilder<ApplicationDbContext>();
 
-        // Attempt to read appsettings.Development.json located in the project root
+        // Use the environment variable to determine dev or prod
+        var env = Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT") ?? "Production";
+
         var config = new ConfigurationBuilder()
             .SetBasePath(Directory.GetCurrentDirectory())
-            .AddJsonFile("appsettings.Development.json", optional: true)
+            .AddJsonFile("appsettings.json", optional: false)
+            .AddJsonFile($"appsettings.{env}.json", optional: true)
             .AddEnvironmentVariables()
             .Build();
 
-        var conn = config.GetConnectionString("DefaultConnection") ?? "Data Source=campushostels.db";
+        var conn = config.GetConnectionString("DefaultConnection");
 
-        builder.UseSqlite(conn);
+        if (env == "Development")
+        {
+            builder.UseSqlite(conn);
+        }
+        else
+        {
+            builder.UseNpgsql(conn);
+        }
 
         return new ApplicationDbContext(builder.Options);
     }
