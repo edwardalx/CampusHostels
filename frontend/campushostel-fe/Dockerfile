@@ -1,4 +1,4 @@
-# frontend/Dockerfile
+# campushostel-fe/Dockerfile
 
 # ----------------------
 # Stage 1: Build
