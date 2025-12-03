@@ -1,25 +1,35 @@
 # frontend/Dockerfile
 
-# Build stage
+# ----------------------
+# Stage 1: Build
+# ----------------------
 FROM node:20-alpine AS build
+
 WORKDIR /app
 
-# Copy package files
+# Copy package files first for caching
 COPY package.json package-lock.json ./
 RUN npm install
 
-# Copy source code
+# Copy all source code
 COPY . ./
 
 # Build the app
 RUN npm run build
 
-# Production stage
+# ----------------------
+# Stage 2: Production
+# ----------------------
 FROM nginx:alpine
-COPY --from=build /app/build /usr/share/nginx/html
+
+# Copy built files from previous stage (Vite outputs to /dist)
+COPY --from=build /app/dist /usr/share/nginx/html
+
+# Copy custom nginx config if you have one (optional)
+# COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 # Expose port
-EXPOSE 3000
+EXPOSE 80
 
 # Start Nginx
 CMD ["nginx", "-g", "daemon off;"]

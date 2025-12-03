@@ -33,6 +33,22 @@ services:
       - campushostels_net
     restart: always
 
+  frontend:
+    build:
+      context: ./frontend/campushostel-fe
+      dockerfile: Dockerfile
+    container_name: campushostels_frontend
+    restart: always
+    ports:
+      - "5173:5173"  # optional if you want dev server
+    networks:
+      - campushostels_net
+    volumes:
+      - ./frontend/campushostel-fe:/app
+    command: >
+      sh -c "npm install &&
+             npm run build"
+  
   web:
     build:
       context: ./backend-admin
