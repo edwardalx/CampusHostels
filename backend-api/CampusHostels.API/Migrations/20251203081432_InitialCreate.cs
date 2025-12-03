@@ -1,12 +1,13 @@
 ﻿using System;
 using Microsoft.EntityFrameworkCore.Migrations;
+using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace CampusHostels.API.Infrastructure.Data.Migrations
+namespace CampusHostels.API.Migrations
 {
     /// <inheritdoc />
-    public partial class AddDomainEntities : Migration
+    public partial class InitialCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -15,14 +16,14 @@ namespace CampusHostels.API.Infrastructure.Data.Migrations
                 name: "Properties",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    Name = table.Column<string>(type: "TEXT", nullable: false),
-                    Location = table.Column<string>(type: "TEXT", nullable: false),
-                    ImageUrl = table.Column<string>(type: "TEXT", nullable: true),
-                    NoOfUnits = table.Column<int>(type: "INTEGER", nullable: true),
-                    NoOfFloors = table.Column<int>(type: "INTEGER", nullable: true),
-                    Availability = table.Column<bool>(type: "INTEGER", nullable: false, defaultValue: true)
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Name = table.Column<string>(type: "text", nullable: false),
+                    Location = table.Column<string>(type: "text", nullable: false),
+                    ImageUrl = table.Column<string>(type: "text", nullable: true),
+                    NoOfUnits = table.Column<int>(type: "integer", nullable: true),
+                    NoOfFloors = table.Column<int>(type: "integer", nullable: true),
+                    Availability = table.Column<bool>(type: "boolean", nullable: false, defaultValue: true)
                 },
                 constraints: table =>
                 {
@@ -30,19 +31,42 @@ namespace CampusHostels.API.Infrastructure.Data.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Users",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Username = table.Column<string>(type: "text", nullable: false),
+                    FirstName = table.Column<string>(type: "text", nullable: false),
+                    LastName = table.Column<string>(type: "text", nullable: false),
+                    Email = table.Column<string>(type: "text", nullable: false),
+                    PasswordHash = table.Column<string>(type: "text", nullable: false),
+                    Role = table.Column<string>(type: "text", nullable: false, defaultValue: "Tenant"),
+                    RefreshToken = table.Column<string>(type: "text", nullable: true),
+                    RefreshTokenExpiryTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    IsActive = table.Column<bool>(type: "boolean", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Users", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Units",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    PropertyId = table.Column<int>(type: "INTEGER", nullable: false),
-                    Floor = table.Column<int>(type: "INTEGER", nullable: false),
-                    RoomNumber = table.Column<string>(type: "TEXT", nullable: true),
-                    ImageUrl = table.Column<string>(type: "TEXT", nullable: true),
-                    Cost = table.Column<int>(type: "INTEGER", nullable: true),
-                    MaxNoOfPeople = table.Column<int>(type: "INTEGER", nullable: true),
-                    Availability = table.Column<bool>(type: "INTEGER", nullable: false, defaultValue: true),
-                    UnitType = table.Column<int>(type: "INTEGER", nullable: false)
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    PropertyId = table.Column<int>(type: "integer", nullable: false),
+                    Floor = table.Column<int>(type: "integer", nullable: false),
+                    RoomNumber = table.Column<string>(type: "text", nullable: true),
+                    ImageUrl = table.Column<string>(type: "text", nullable: true),
+                    Cost = table.Column<decimal>(type: "numeric", nullable: true),
+                    MaxNoOfPeople = table.Column<int>(type: "integer", nullable: true),
+                    Availability = table.Column<bool>(type: "boolean", nullable: false, defaultValue: true),
+                    UnitType = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -59,12 +83,12 @@ namespace CampusHostels.API.Infrastructure.Data.Migrations
                 name: "Images",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    PropertyId = table.Column<int>(type: "INTEGER", nullable: true),
-                    UnitId = table.Column<int>(type: "INTEGER", nullable: true),
-                    Description = table.Column<string>(type: "TEXT", nullable: true),
-                    PhotoUrl = table.Column<string>(type: "TEXT", nullable: true)
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    PropertyId = table.Column<int>(type: "integer", nullable: true),
+                    UnitId = table.Column<int>(type: "integer", nullable: true),
+                    Description = table.Column<string>(type: "text", nullable: true),
+                    PhotoUrl = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -87,15 +111,15 @@ namespace CampusHostels.API.Infrastructure.Data.Migrations
                 name: "TenancyAgreements",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    ContractStartDate = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    ContractDurationMonths = table.Column<int>(type: "INTEGER", nullable: false),
-                    ContractEndDate = table.Column<DateTime>(type: "TEXT", nullable: true),
-                    TenantId = table.Column<Guid>(type: "TEXT", nullable: false),
-                    PropertyId = table.Column<int>(type: "INTEGER", nullable: false),
-                    UnitId = table.Column<int>(type: "INTEGER", nullable: false),
-                    TotalAmountPaid = table.Column<int>(type: "INTEGER", nullable: true)
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    ContractStartDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    ContractDurationMonths = table.Column<int>(type: "integer", nullable: false),
+                    ContractEndDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    TenantId = table.Column<Guid>(type: "uuid", nullable: false),
+                    PropertyId = table.Column<int>(type: "integer", nullable: false),
+                    UnitId = table.Column<int>(type: "integer", nullable: false),
+                    TotalAmountPaid = table.Column<decimal>(type: "numeric", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -118,21 +142,20 @@ namespace CampusHostels.API.Infrastructure.Data.Migrations
                 name: "Payments",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    Email = table.Column<string>(type: "TEXT", nullable: false),
-                    Amount = table.Column<int>(type: "INTEGER", nullable: false),
-                    Currency = table.Column<string>(type: "TEXT", nullable: false),
-                    Phone = table.Column<string>(type: "TEXT", nullable: true),
-                    Provider = table.Column<int>(type: "INTEGER", nullable: false),
-                    Reference = table.Column<string>(type: "TEXT", nullable: false),
-                    Status = table.Column<int>(type: "INTEGER", nullable: false),
-                    Channel = table.Column<string>(type: "TEXT", nullable: true),
-                    CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    UnitId = table.Column<int>(type: "INTEGER", nullable: false),
-                    TenantId = table.Column<Guid>(type: "TEXT", nullable: false),
-                    TenancyAgreementId = table.Column<int>(type: "INTEGER", nullable: true),
-                    TenancyAgreementId1 = table.Column<int>(type: "INTEGER", nullable: true)
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Email = table.Column<string>(type: "text", nullable: false),
+                    Amount = table.Column<decimal>(type: "numeric", nullable: false),
+                    Currency = table.Column<string>(type: "text", nullable: false),
+                    Phone = table.Column<string>(type: "text", nullable: true),
+                    Provider = table.Column<int>(type: "integer", nullable: false),
+                    Reference = table.Column<string>(type: "text", nullable: false),
+                    Status = table.Column<int>(type: "integer", nullable: false),
+                    Channel = table.Column<string>(type: "text", nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    UnitId = table.Column<int>(type: "integer", nullable: false),
+                    TenantId = table.Column<Guid>(type: "uuid", nullable: false),
+                    TenancyAgreementId = table.Column<int>(type: "integer", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -143,11 +166,6 @@ namespace CampusHostels.API.Infrastructure.Data.Migrations
                         principalTable: "TenancyAgreements",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.SetNull);
-                    table.ForeignKey(
-                        name: "FK_Payments_TenancyAgreements_TenancyAgreementId1",
-                        column: x => x.TenancyAgreementId1,
-                        principalTable: "TenancyAgreements",
-                        principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_Payments_Units_UnitId",
                         column: x => x.UnitId,
@@ -160,12 +178,12 @@ namespace CampusHostels.API.Infrastructure.Data.Migrations
                 name: "PaymentSummaries",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    TenancyAgreementId = table.Column<int>(type: "INTEGER", nullable: false),
-                    TotalAmountPaid = table.Column<int>(type: "INTEGER", nullable: false),
-                    AmountLeft = table.Column<int>(type: "INTEGER", nullable: false),
-                    LastPaymentDate = table.Column<DateTime>(type: "TEXT", nullable: true)
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    TenancyAgreementId = table.Column<int>(type: "integer", nullable: false),
+                    TotalAmountPaid = table.Column<decimal>(type: "numeric", nullable: false),
+                    AmountLeft = table.Column<decimal>(type: "numeric", nullable: false),
+                    LastPaymentDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -200,11 +218,6 @@ namespace CampusHostels.API.Infrastructure.Data.Migrations
                 column: "TenancyAgreementId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Payments_TenancyAgreementId1",
-                table: "Payments",
-                column: "TenancyAgreementId1");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_Payments_UnitId",
                 table: "Payments",
                 column: "UnitId");
@@ -236,6 +249,18 @@ namespace CampusHostels.API.Infrastructure.Data.Migrations
                 table: "Units",
                 columns: new[] { "PropertyId", "RoomNumber" },
                 unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Users_Email",
+                table: "Users",
+                column: "Email",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Users_Username",
+                table: "Users",
+                column: "Username",
+                unique: true);
         }
 
         /// <inheritdoc />
@@ -249,6 +274,9 @@ namespace CampusHostels.API.Infrastructure.Data.Migrations
 
             migrationBuilder.DropTable(
                 name: "PaymentSummaries");
+
+            migrationBuilder.DropTable(
+                name: "Users");
 
             migrationBuilder.DropTable(
                 name: "TenancyAgreements");
