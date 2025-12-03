@@ -28,7 +28,7 @@ pipeline {
                             set -e
                             echo "📦 Ensuring frontend volume exists..."
                             
-                            # Create or recreate the frontend volume (CORRECT NAME)
+                            # Create or recreate the frontend volume
                             docker volume create campushostels_frontend-static 2>/dev/null || true
                             
                             echo "🔨 Building frontend image..."
@@ -37,8 +37,7 @@ pipeline {
                             # Build just the frontend
                             docker compose build frontend
                             
-                            echo "📋 Copying built files to volume (SIMPLIFIED)..."
-                            # Simplified copy method
+                            echo "📋 Copying built files to volume..."
                             docker run --rm \\
                                 -v campushostels_frontend-static:/target \\
                                 campushostels-frontend sh -c "
@@ -74,7 +73,7 @@ pipeline {
                             echo "🔨 Rebuilding backend images..."
                             docker compose build web backend_api
                             
-                            echo "🔄 Restarting backend services (EXCLUDING frontend & nginx)..."
+                            echo "🔄 Restarting backend services..."
                             docker compose up -d web backend_api db mssql app1
                             
                             echo "⏳ Waiting for services to start..."
@@ -168,7 +167,6 @@ pipeline {
                             echo "Frontend: \$(docker compose ps frontend | grep -q "Up" && echo "✅ Running" || echo "❌ Not running")"
                             echo "Nginx: \$(docker compose ps nginx | grep -q "Up" && echo "✅ Running" || echo "❌ Not running")"
                             echo "Django (web): \$(docker compose ps web | grep -q "Up" && echo "✅ Running" || echo "❌ Not running")"
-                            echo "PostgreSQL (db): \$(docker compose ps db | grep -q "Up" && echo "✅ Running" || echo "❌ Not running")"
                             
                             echo -e "\\\\n=== Website Test ==="
                             echo -n "CampusHostels: "
