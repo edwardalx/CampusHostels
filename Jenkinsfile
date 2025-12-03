@@ -105,7 +105,7 @@ pipeline {
             }
         }
 
-        stage('Reload Nginx') {
+        stage('Reload Services') {
             steps {
                 withCredentials([sshUserPrivateKey(
                     credentialsId: 'be7af895-440a-4af4-ad0a-685416674053',
@@ -117,10 +117,17 @@ pipeline {
                         
                         ssh -o StrictHostKeyChecking=no -i ${SSH_KEY} ${SSH_USERNAME}@${env.HOST_IP} '
                             echo "Checking nginx config..."
-                            docker exec campushostels_nginx nginx -t && \\
-                            docker exec campushostels_nginx nginx -s reload
+                            echo "🔨 Rebuilding images…"
+                            docker compose build
+
+                            echo "🔄 Restarting services…"
+                            docker compose down
+                            docker compose up -d
+
+                            echo "⏳ Waiting for services to start (30 seconds)…"
+                            sleep 30
                             
-                            echo "✅ Nginx reloaded!"
+                            echo "✅ Services reloaded!"
                         '
                     """
                 }
