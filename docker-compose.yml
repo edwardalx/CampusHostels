@@ -35,7 +35,7 @@ services:
 
   frontend:
     build:
-      context: ./frontend 
+      context: ./frontend/campushostel-fe
       dockerfile: Dockerfile
     container_name: campushostels_frontend
     restart: always
