@@ -37,12 +37,12 @@ services:
     build:
       context: ./frontend/campushostel-fe
       dockerfile: Dockerfile
-    container_name: campushostels_frontend
-    restart: always
     ports:
-      - "3000:80"       # maps container's Nginx port 80 to host 3000
-    networks:
-      - campushostels_net
+      - "80:80"
+    depends_on:
+      - backend-api
+    environment:
+      - VITE_API_URL=http://backend-api:8000
 
   
   web:
