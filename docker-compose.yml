@@ -40,14 +40,10 @@ services:
     container_name: campushostels_frontend
     restart: always
     ports:
-      - "5173:5173"  # optional if you want dev server
+      - "3000:80"       # maps container's Nginx port 80 to host 3000
     networks:
       - campushostels_net
-    volumes:
-      - ./frontend/campushostel-fe:/app
-    command: >
-      sh -c "npm install &&
-             npm run build"
+
   
   web:
     build:
