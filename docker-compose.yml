@@ -40,7 +40,7 @@ services:
     ports:
       - "80:80"
     depends_on:
-      - backend-api
+      - web
     environment:
       - VITE_API_URL=http://backend-api:8000
 
