@@ -39,6 +39,9 @@ services:
       dockerfile: Dockerfile
     # ports:
     #   - "80:80"
+    volumes:
+      - frontend-static:/usr/share/nginx/html:ro  # Read-only for frontend
+    restart: unless-stopped
     depends_on:
       - web
     environment:
@@ -121,9 +124,11 @@ services:
       - ./backend-admin/media:/app/media:ro
       - /etc/letsencrypt:/etc/letsencrypt:ro
       - /var/www/book-shelf-fe:/var/www/book-shelf-fe:ro
+      - frontend-static:/var/www/campushostels-fe:ro  # ← CHANGE THIS LINE
     depends_on:
       - web
       - app1
+      - frontend  # ← ADD THIS
     networks:
       - campushostels_net
     restart: always
@@ -131,6 +136,7 @@ services:
 volumes:
   postgres_data:
   mssql_data:
+  frontend-static:
 
 networks:
   campushostels_net:
