@@ -28,7 +28,7 @@ class Tenant(models.Model):
 
 
 class Property(models.Model):
-    id = models.IntegerField(primary_key=True, db_column='Id')
+    id = models.AutoField(primary_key=True, db_column='Id')
     name = models.CharField(max_length=250, db_column='Name')
     location = models.CharField(max_length=512, null=True, blank=True, db_column='Location')
     image_url = models.CharField(max_length=500, null=True, blank=True, db_column='ImageUrl')
