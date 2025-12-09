@@ -109,6 +109,20 @@ services:
     networks:
       - campushostels_net
 
+  portainer:
+    image: portainer/portainer-ce:latest
+    container_name: portainer
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./portainer-data:/data
+    ports:
+      - "9000:9000"
+    networks:
+      - campushostels_net
   nginx:
     image: nginx:1.25-alpine
     container_name: campushostels_nginx
@@ -129,6 +143,7 @@ services:
       - web
       - app1
       - frontend  # ← ADD THIS
+      - portainer  # ← ADD PORTAINER HERE
     networks:
       - campushostels_net
     restart: always
