@@ -11,7 +11,7 @@
 
 export default function HeroSection({ 
   title = 'EXPLORE HOSTELS & CO-LIVING',
-  subtitle = '',
+  subtitle = ``,
   children = null
 }) {
   return (

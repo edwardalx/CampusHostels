@@ -1,6 +1,89 @@
 from django.db import models
 from django.utils import timezone
 import uuid
+from django.db import models
+from decimal import Decimal, InvalidOperation
+import re
+
+class SafeDecimalField(models.DecimalField):
+    """
+    Improved SafeDecimalField that:
+    1. Handles commas in numbers (2,000.50 → 2000.50)
+    2. Preserves decimal places from floats (2000.0 → 2000.00)
+    3. Better error handling
+    """
+    
+    def from_db_value(self, value, expression, connection):
+        if value is None:
+            return None
+        try:
+            if isinstance(value, float):
+                # Convert float and preserve decimal places
+                decimal_places = getattr(self, 'decimal_places', 2)
+                return Decimal(str(value)).quantize(
+                    Decimal(f'1.{"0" * decimal_places}')
+                )
+            elif isinstance(value, (int, str)):
+                return Decimal(str(value))
+            else:
+                return Decimal(str(value))
+        except (TypeError, InvalidOperation, ValueError):
+            # Return safe default
+            return Decimal('0.00')
+    
+    def to_python(self, value):
+        if value is None:
+            return None
+        if isinstance(value, Decimal):
+            return value
+        
+        try:
+            if isinstance(value, (int, float)):
+                # Convert and format with proper decimal places
+                decimal_places = getattr(self, 'decimal_places', 2)
+                return Decimal(str(value)).quantize(
+                    Decimal(f'1.{"0" * decimal_places}')
+                )
+            elif isinstance(value, str):
+                # Clean the string (remove commas, currency symbols, etc.)
+                cleaned = re.sub(r'[^\d\.\-]', '', value)
+                if not cleaned:
+                    return None
+                
+                decimal_value = Decimal(cleaned)
+                # Apply decimal places formatting
+                decimal_places = getattr(self, 'decimal_places', 2)
+                return decimal_value.quantize(
+                    Decimal(f'1.{"0" * decimal_places}')
+                )
+        except (TypeError, InvalidOperation, ValueError):
+            return None
+        
+        return None
+    
+    def get_prep_value(self, value):
+        """Prepare value for database storage"""
+        if value is None:
+            return None
+        
+        decimal_value = self.to_python(value)
+        if decimal_value is None:
+            return None
+        
+        # Ensure proper decimal places for storage
+        decimal_places = getattr(self, 'decimal_places', 2)
+        if decimal_places is not None:
+            decimal_value = decimal_value.quantize(
+                Decimal(f'1.{"0" * decimal_places}')
+            )
+        
+        return decimal_value
+
+class UnitType(models.IntegerChoices):
+    SINGLE = 0, 'Single'
+    DOUBLE = 1, 'Double'
+    SHARED = 2, 'Shared'
+
 
 class Tenant(models.Model):
     """Mirror of the .NET User entity."""
@@ -35,7 +118,7 @@ class Property(models.Model):
     no_of_units = models.IntegerField(null=True, blank=True, db_column='NoOfUnits')
     no_of_floors = models.IntegerField(null=True, blank=True, db_column='NoOfFloors')
     availability = models.BooleanField(default=True, db_column='Availability')
-
+    starting_price = SafeDecimalField( max_digits=10, decimal_places=2, default=120.00,null=True,blank=True,db_column="StartingPrice", verbose_name="Starting Price GH₵(per month)")
     class Meta:
         db_table = 'Properties'
         managed = False
@@ -49,13 +132,13 @@ class Property(models.Model):
 class Unit(models.Model):
     id = models.IntegerField(primary_key=True, db_column='Id')
     property_id = models.IntegerField(db_column='PropertyId')
-    room_number = models.CharField(max_length=50, null=True, blank=True, db_column='RoomNumber')
-    cost = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, db_column='Cost')
+    cost = SafeDecimalField(max_digits=12, decimal_places=2, null=True, blank=True, db_column='Cost')
     availability = models.BooleanField(default=True, db_column='Availability')
-    floor = models.IntegerField(null=True, blank=True, db_column='Floor')
     image_url = models.CharField(max_length=500, null=True, blank=True, db_column='ImageUrl')
+    floor = models.IntegerField(null=True, blank=True, db_column='Floor')
     max_no_of_people = models.IntegerField(null=True, blank=True, db_column='MaxNoOfPeople')
-    unit_type = models.IntegerField(null=True, blank=True, db_column='UnitType')
+    room_number = models.CharField(max_length=50, null=True, blank=True, db_column='RoomNumber')
+    unit_type = models.IntegerField(choices=UnitType.choices, null=True, blank=True, db_column='UnitType')
 
     class Meta:
         db_table = 'Units'
@@ -66,7 +149,6 @@ class Unit(models.Model):
     def __str__(self):
         return f"Unit {self.room_number} (Property {self.property_id})"
 
-
 class Tenancy(models.Model):
     id = models.IntegerField(primary_key=True, db_column='Id')
     unit_id = models.IntegerField(db_column='UnitId')
@@ -75,7 +157,7 @@ class Tenancy(models.Model):
     contract_start_date = models.DateTimeField(null=True, blank=True, db_column='ContractStartDate')
     contract_end_date = models.DateTimeField(null=True, blank=True, db_column='ContractEndDate')
     contract_duration_months = models.IntegerField(null=True, blank=True, db_column='ContractDurationMonths')
-    total_amount_paid = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, db_column='TotalAmountPaid')
+    total_amount_paid = SafeDecimalField(max_digits=12, decimal_places=2, null=True, blank=True, db_column='TotalAmountPaid')
 
     class Meta:
         db_table = 'TenancyAgreements'
@@ -92,7 +174,7 @@ class Payment(models.Model):
     tenancy_agreement_id = models.IntegerField(null=True, blank=True, db_column='TenancyAgreementId')
     tenant_id = models.UUIDField(db_column='TenantId')  # .NET Guid → UUID
     unit_id = models.IntegerField(null=True, blank=True, db_column='UnitId')
-    amount = models.DecimalField(max_digits=12, decimal_places=2, db_column='Amount')
+    amount = SafeDecimalField(max_digits=12, decimal_places=2, db_column='Amount')
     created_at = models.DateTimeField(null=True, blank=True, db_column='CreatedAt')
     channel = models.CharField(max_length=100, null=True, blank=True, db_column='Channel')
     reference = models.CharField(max_length=250, null=True, blank=True, db_column='Reference')

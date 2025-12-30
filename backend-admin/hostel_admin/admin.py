@@ -25,14 +25,14 @@ class TenantAdmin(admin.ModelAdmin):
 
 @admin.register(Property)
 class PropertyAdmin(admin.ModelAdmin):
-	list_display = ('id', 'name', 'location', 'no_of_units', 'availability')
+	list_display = ('id', 'name', 'location', 'no_of_units', "starting_price", 'availability')
 	search_fields = ('name', 'location')
 	readonly_fields = ('id',)
 	ordering = ('name',)
 
 	fieldsets = (
 		(None, {
-			'fields': ('name', 'location', 'availability')
+			'fields': ('name', 'location', 'availability', 'starting_price')
 		}),
 		('Details', {
 			'fields': ('no_of_units', 'no_of_floors', 'image_url')
@@ -42,20 +42,24 @@ class PropertyAdmin(admin.ModelAdmin):
 
 @admin.register(Unit)
 class UnitAdmin(admin.ModelAdmin):
-	list_display = ('id', 'room_number', 'property_id', 'cost', 'availability')
-	search_fields = ('room_number',)
-	list_filter = ('availability', 'property_id')
-	readonly_fields = ('id',)
-	ordering = ('property_id', 'room_number')
+    list_display = ('id', 'room_number', 'property_id', 'formatted_cost', 'availability', 'unit_type')
+    search_fields = ('room_number',)
+    list_filter = ('availability', 'property_id', 'unit_type')
+    readonly_fields = ('id',)
+    ordering = ('property_id', 'room_number')
 
-	fieldsets = (
-		(None, {
-			'fields': ('property_id', 'room_number', 'cost', 'availability')
-		}),
-		('Details', {
-			'fields': ('floor', 'max_no_of_people', 'unit_type', 'image_url')
-		}),
-	)
+    fieldsets = (
+        (None, {
+            'fields': ('property_id', 'room_number', 'cost', 'availability', 'unit_type')
+        }),
+        ('Details', {
+            'fields': ('floor', 'max_no_of_people', 'image_url')
+        }),
+    )
+
+    @admin.display(description='Cost')
+    def formatted_cost(self, obj):
+        return f"${obj.cost:.2f}" if obj.cost is not None else "-"
 
 
 @admin.register(Tenancy)

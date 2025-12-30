@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Eye, EyeOff, Briefcase } from "lucide-react";
-import { Chrome, Facebook } from 'lucide-react';
+import { Chrome, Facebook } from "lucide-react";
 import { Link } from "react-router-dom";
 import { FcGoogle } from "react-icons/fc";
 import { FaFacebook } from "react-icons/fa";
@@ -42,12 +42,14 @@ export default function LoginPage() {
           {/* Header */}
           <div className="mb-12">
             <div className="flex items-center justify-between mb-12">
-              <div className="flex items-center space-x-3">
-                <div className="bg-cyan-400 p-2 rounded-lg">
-                  <Briefcase className="w-6 h-6 text-teal-900" />
+              <Link to='/'>
+                <div className="flex items-center space-x-3">
+                  <div className="bg-cyan-400 p-2 rounded-lg">
+                    <Briefcase className="w-6 h-6 text-teal-900" />
+                  </div>
+                  <span className="text-3xl font-bold text-white">RentIn</span>
                 </div>
-                <span className="text-3xl font-bold text-white">RentIn</span>
-              </div>
+              </Link>
               <div className="text-sm text-gray-300">
                 Don't have an account?{" "}
                 <Link

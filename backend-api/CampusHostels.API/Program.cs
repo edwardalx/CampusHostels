@@ -6,10 +6,10 @@ using Serilog;
 using AutoMapper;
 
 var builder = WebApplication.CreateBuilder(args);
-if (builder.Environment.IsDevelopment())
-{
-    builder.WebHost.UseUrls("http://localhost:5077", "https://localhost:7102");
-}
+// if (builder.Environment.IsDevelopment())
+// {
+//     builder.WebHost.UseUrls("http://localhost:5077", "https://localhost:7102");
+// }
 // Add services to the container
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
@@ -76,9 +76,10 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowReactApp", policy =>
     {
         policy.WithOrigins(
-            "http://localhost:3000", 
-            "https://localhost:3000",
-            "http://your-frontend-domain.com"
+            "http://localhost:5000", 
+            "https://localhost:5000",
+            "http://your-frontend-domain.com",
+            "https://campushostels.duckdns.org/"
         )
         .AllowAnyHeader()
         .AllowAnyMethod()

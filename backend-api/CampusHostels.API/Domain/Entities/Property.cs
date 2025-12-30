@@ -10,6 +10,7 @@ public class Property
     public string? ImageUrl { get; set; }
     public int? NoOfUnits { get; set; }
     public int? NoOfFloors { get; set; }
+    public decimal? StartingPrice { get; set; } = 120;  // Default starting price per month
     public bool Availability { get; set; } = true;
 
     public ICollection<Unit> Units { get; set; } = new List<Unit>();

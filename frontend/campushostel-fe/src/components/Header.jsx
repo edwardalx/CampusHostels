@@ -1,8 +1,8 @@
 /**
  * Header Component
- * 
+ *
  * Responsive navigation header with logo, nav links, and auth buttons.
- * 
+ *
  * Props:
  * - onLogin: () => void - Called when LOGIN button clicked
  * - onSignUp: () => void - Called when SIGN UP button clicked
@@ -10,33 +10,55 @@
  * - onNavClick: (link: string) => void - Called when nav link clicked
  */
 
-import React, { useState } from 'react';
-import { Menu, X } from 'lucide-react';
+import React, { useState } from "react";
+import { Menu, X } from "lucide-react";
+import { useNavigate, NavLink } from "react-router-dom";
 
-export default function Header({ 
-  onLogin = () => {}, 
-  onSignUp = () => {}, 
-  activeLink = 'HOME',
-  onNavClick = () => {}
-}) {
+export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [activeNavLink, setActiveNavLink] = useState("HOME");
 
-  const navLinks = ['HOME', 'EXPLORE', 'MY TRIPS'];
+  const navLinks = ["HOME", "HISTORY", "TENANCY"];
+  const navigate = useNavigate();
 
+
+  // Handle navigation
   const handleNavClick = (link) => {
-    onNavClick(link);
     setMenuOpen(false);
+    setActiveNavLink(link);
+    console.log("Navigate to:", link);
+    if (link === "HOME") {
+      navigate(`/`);
+    }
+    if (link === "HISTORY") {
+      navigate(`/payment-history`);
+    }
+    if (link === "TENANCY") {
+      navigate(`/tenancy`);
+    }
+    // Implement routing: navigate(`/${link.toLowerCase()}`)
+  };
+
+  // Handle auth
+  const handleLogin = () => {
+    console.log("Navigate to login");
+    navigate("/login");
+  };
+
+  const handleSignUp = () => {
+    console.log("Navigate to sign up");
+    navigate("/register");
   };
 
   return (
     <header className="bg-gradient-to-r from-cyan-500 via-teal-600 to-red-500 shadow-lg sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-          
           {/* Logo */}
           <div className="flex-shrink-0">
             <h1 className="text-2xl sm:text-3xl font-bold">
-              <span className="text-white">Rent</span><span className="text-red-500">in</span>
+              <span className="text-white">Rent</span>
+              <span className="text-red-500">in</span>
             </h1>
           </div>
 
@@ -47,9 +69,9 @@ export default function Header({
                 key={link}
                 onClick={() => handleNavClick(link)}
                 className={`text-sm font-medium transition-colors pb-2 ${
-                  activeLink === link
-                    ? 'text-white border-b-2 border-white'
-                    : 'text-gray-100 hover:text-white'
+                  activeNavLink === link
+                    ? "text-white border-b-2 border-white"
+                    : "text-gray-100 hover:text-white"
                 }`}
               >
                 {link}
@@ -60,13 +82,13 @@ export default function Header({
           {/* Desktop Auth Buttons */}
           <div className="hidden md:flex items-center space-x-3">
             <button
-              onClick={onLogin}
+              onClick={handleLogin}
               className="px-6 py-2 text-white font-medium text-sm hover:bg-white hover:text-cyan-500 rounded transition-colors"
             >
               LOGIN
             </button>
             <button
-              onClick={onSignUp}
+              onClick={handleSignUp}
               className="px-6 py-2 bg-red-500 text-white font-medium text-sm rounded hover:bg-orange-600 transition-colors"
             >
               SIGN UP
@@ -79,7 +101,11 @@ export default function Header({
             className="md:hidden p-2 rounded-lg hover:bg-white hover:bg-opacity-20 transition-colors"
             aria-label="Toggle menu"
           >
-            {menuOpen ? <X size={24} className="text-white" /> : <Menu size={24} className="text-white" />}
+            {menuOpen ? (
+              <X size={24} className="text-white" />
+            ) : (
+              <Menu size={24} className="text-white" />
+            )}
           </button>
         </div>
 
@@ -93,8 +119,8 @@ export default function Header({
                   onClick={() => handleNavClick(link)}
                   className={`block w-full text-left px-4 py-2 rounded font-medium text-sm transition-colors ${
                     activeLink === link
-                      ? 'bg-white bg-opacity-20 text-white'
-                      : 'text-white hover:bg-white hover:bg-opacity-10'
+                      ? "bg-white bg-opacity-20 text-white"
+                      : "text-white hover:bg-white hover:bg-opacity-10"
                   }`}
                 >
                   {link}
