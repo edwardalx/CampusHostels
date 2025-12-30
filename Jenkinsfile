@@ -14,26 +14,24 @@ pipeline {
                     keyFileVariable: 'SSH_KEY',
                     usernameVariable: 'SSH_USERNAME'
                 )]) {
-                    sh '''
-                        echo "🚀 Deploying application..."
-                        
-                        ssh -o StrictHostKeyChecking=no -i "$SSH_KEY" "$SSH_USERNAME"@''' + env.HOST_IP + ''' "
+                    script {
+                        def sshCommand = """
                             set -e
                             
-                            cd ''' + env.PROJECT_DIR + '''
+                            cd ${env.PROJECT_DIR}
                             git stash || true
                             git pull origin main
                             
                             # Build frontend with retry for rolldown bug
                             cd frontend/campushostel-fe
                             
-                            for attempt in {1..3}; do
-                                echo "Build attempt \$attempt"
+                            for i in 1 2 3; do
+                                echo "Build attempt \$i"
                                 rm -rf node_modules package-lock.json 2>/dev/null || true
                                 
-                                if [ \$attempt -eq 1 ]; then
+                                if [ \$i -eq 1 ]; then
                                     npm install --legacy-peer-deps
-                                elif [ \$attempt -eq 2 ]; then
+                                elif [ \$i -eq 2 ]; then
                                     npm install --force --legacy-peer-deps
                                 else
                                     # Last attempt: skip optional completely
@@ -41,29 +39,42 @@ pipeline {
                                 fi
                                 
                                 if npm run build; then
-                                    echo '✅ Build successful on attempt \$attempt'
+                                    echo "✅ Build successful on attempt \$i"
                                     break
-                                elif [ \$attempt -eq 3 ]; then
-                                    echo '❌ All build attempts failed'
+                                elif [ \$i -eq 3 ]; then
+                                    echo "❌ All build attempts failed"
                                     exit 1
                                 else
-                                    echo '⚠️ Build failed, retrying...'
+                                    echo "⚠️ Build failed, retrying..."
                                     sleep 5
                                 fi
                             done
                             
+                            # Verify build
+                            if [ ! -f 'dist/index.html' ]; then
+                                echo "❌ Build verification failed - no index.html"
+                                exit 1
+                            fi
+                            
+                            echo "✅ Frontend built successfully"
+                            echo "Build size: \$(du -sh dist/)"
+                            
                             # Deploy
-                            cd ''' + env.PROJECT_DIR + '''
+                            cd ${env.PROJECT_DIR}
                             docker compose build --no-cache frontend
                             docker compose down
                             docker compose up -d
                             
                             sleep 20
                             
-                            echo '✅ Deployment complete!'
-                            echo 'Frontend: https://campushostels.duckdns.org/'
-                        "
-                    '''
+                            echo "✅ Deployment complete!"
+                            echo "Frontend: https://campushostels.duckdns.org/"
+                        """
+                        
+                        sh """
+                            ssh -o StrictHostKeyChecking=no -i "\$SSH_KEY" "\$SSH_USERNAME"@${env.HOST_IP} '${sshCommand.replace("'", "'\"'\"'")}'
+                        """
+                    }
                 }
             }
         }
@@ -71,10 +82,15 @@ pipeline {
     
     post {
         success {
-            echo "✅ Success!"
+            echo "✅ Success! Frontend built and deployed."
         }
         failure {
-            echo "❌ Failed - rolldown npm bug detected"
+            echo "❌ Failed - Check rolldown npm bug or Docker network"
+            echo "Manual fix on server:"
+            echo "cd ${env.PROJECT_DIR}/frontend/campushostel-fe"
+            echo "rm -rf node_modules package-lock.json"
+            echo "npm install --force --legacy-peer-deps"
+            echo "npm run build"
         }
     }
 }
