@@ -25,19 +25,26 @@ pipeline {
                     sh """
                         echo "🔨 Building Frontend..."
                         
-                        ssh -o StrictHostKeyChecking=no -i \${SSH_KEY} \${SSH_USERNAME}@\${env.HOST_IP} '
+                        # Use single quotes for the SSH command to avoid variable expansion issues
+                        ssh -o StrictHostKeyChecking=no -i "\$SSH_KEY" "\$SSH_USERNAME"@\${env.HOST_IP} '
                             set -e
                             echo "=== Building Frontend at \$(date) ==="
                             
-                            cd \${env.PROJECT_DIR}
+                            cd "${env.PROJECT_DIR}"
                             
                             echo "📦 Pulling latest code..."
                             git stash || true
                             git pull origin main
                             
                             echo "📦 Installing frontend dependencies..."
-                            cd \${env.FRONTEND_DIR}
-                            npm install --no-optional --legacy-peer-deps
+                            cd "${env.FRONTEND_DIR}"
+                            
+                            # Fix for rolldown issue - clean install
+                            echo "Cleaning up previous installation..."
+                            rm -rf node_modules package-lock.json 2>/dev/null || true
+                            
+                            echo "Installing dependencies with specific flags..."
+                            npm install --no-optional --legacy-peer-deps --verbose
                             
                             echo "🔨 Building frontend..."
                             npm run build
@@ -67,17 +74,17 @@ pipeline {
                 )]) {
                     sh """
                         echo "🚀 Deploying using Docker Compose..."
-
-                        ssh -o StrictHostKeyChecking=no -i \${SSH_KEY} \${SSH_USERNAME}@\${env.HOST_IP} '
+                        
+                        ssh -o StrictHostKeyChecking=no -i "\$SSH_KEY" "\$SSH_USERNAME"@\${env.HOST_IP} '
                             set -e
                             echo "=== Starting Deployment ==="
                             
-                            cd \${env.PROJECT_DIR}
+                            cd "${env.PROJECT_DIR}"
                             
                             # Verify frontend build exists
-                            if [ ! -f "\${env.FRONTEND_DIR}/dist/index.html" ]; then
+                            if [ ! -f "${env.FRONTEND_DIR}/dist/index.html" ]; then
                                 echo "❌ ERROR: Frontend build not found!"
-                                echo "Expected: \${env.FRONTEND_DIR}/dist/index.html"
+                                echo "Expected: ${env.FRONTEND_DIR}/dist/index.html"
                                 exit 1
                             fi
                             
@@ -119,7 +126,7 @@ pipeline {
                     sh """
                         echo "🌐 Verifying deployment..."
                         
-                        ssh -o StrictHostKeyChecking=no -i \${SSH_KEY} \${SSH_USERNAME}@\${env.HOST_IP} '
+                        ssh -o StrictHostKeyChecking=no -i "\$SSH_KEY" "\$SSH_USERNAME"@\${env.HOST_IP} '
                             echo "=== Running Containers ==="
                             docker compose ps
                             
@@ -130,8 +137,8 @@ pipeline {
                                 echo "File modified: \$(docker exec campushostels_nginx stat -c %y /var/www/campushostels-fe/index.html 2>/dev/null)"
                             else
                                 echo "⚠️ Frontend files not found in nginx container"
-                                echo "Trying alternative nginx container name..."
-                                docker ps | grep nginx
+                                echo "Checking frontend volume..."
+                                docker volume inspect campushostels_frontend-static 2>/dev/null || echo "Frontend volume not found"
                             fi
                             
                             echo -e "\\\\n=== Django Health Check ==="
@@ -146,7 +153,7 @@ pipeline {
                             echo "🌐 Django Admin: https://campushostels.duckdns.org/admin/"
                             echo "🏠 Main Site: https://campushostels.duckdns.org/"
                             echo "🔧 .NET API: https://campushostels.duckdns.org/api/"
-                            echo "📅 Frontend built: \$(stat -c %y \${env.FRONTEND_DIR}/dist/index.html 2>/dev/null | cut -d" " -f1,2 || echo "Unknown")"
+                            echo "📅 Frontend built: \$(stat -c %y ${env.FRONTEND_DIR}/dist/index.html 2>/dev/null | cut -d" " -f1,2 || echo "Unknown")"
                         '
                     """
                 }
@@ -172,20 +179,20 @@ pipeline {
             )]) {
                 sh """
                     echo "=== Debug Information ==="
-                    ssh -o StrictHostKeyChecking=no -i \${SSH_KEY} \${SSH_USERNAME}@\${env.HOST_IP} '
-                        cd \${env.PROJECT_DIR}
+                    ssh -o StrictHostKeyChecking=no -i "\$SSH_KEY" "\$SSH_USERNAME"@\${env.HOST_IP} '
+                        cd "${env.PROJECT_DIR}"
                         echo "Recent logs:"
                         docker compose logs --tail=20
                         
                         echo -e "\\\\n=== Frontend Build Debug ==="
                         echo "Checking frontend build:"
-                        if [ -d "\${env.FRONTEND_DIR}/dist" ]; then
+                        if [ -d "${env.FRONTEND_DIR}/dist" ]; then
                             echo "✅ Frontend dist folder exists"
-                            ls -la \${env.FRONTEND_DIR}/dist/ | head -10
+                            ls -la "${env.FRONTEND_DIR}/dist/" | head -10
                         else
                             echo "❌ No dist folder found"
                             echo "Checking frontend directory:"
-                            ls -la \${env.FRONTEND_DIR}/ 2>/dev/null || echo "Cannot access frontend directory"
+                            ls -la "${env.FRONTEND_DIR}/" 2>/dev/null || echo "Cannot access frontend directory"
                         fi
                         
                         echo -e "\\\\n=== Docker Frontend Container ==="
