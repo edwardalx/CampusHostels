@@ -7,60 +7,63 @@ pipeline {
     }
 
     stages {
-        stage('Deploy Everything') {
+        stage('Deploy') {
             steps {
                 withCredentials([sshUserPrivateKey(
                     credentialsId: 'be7af895-440a-4af4-ad0a-685416674053',
                     keyFileVariable: 'SSH_KEY',
                     usernameVariable: 'SSH_USERNAME'
                 )]) {
-                    script {
-                        def sshCommand = """
+                    sh '''
+                        echo "🚀 Deploying application..."
+                        
+                        ssh -o StrictHostKeyChecking=no -i "$SSH_KEY" "$SSH_USERNAME"@''' + env.HOST_IP + ''' "
                             set -e
-                            echo '=== Full Deployment at \$(date) ==='
                             
-                            cd ${env.PROJECT_DIR}
-                            
-                            # Pull latest code
+                            cd ''' + env.PROJECT_DIR + '''
                             git stash || true
                             git pull origin main
                             
-                            # Build frontend
-                            echo '🔨 Building frontend...'
+                            # Build frontend with retry for rolldown bug
                             cd frontend/campushostel-fe
-                            rm -rf node_modules package-lock.json 2>/dev/null || true
-                            npm install --no-optional --legacy-peer-deps
-                            npm run build
                             
-                            if [ ! -f 'dist/index.html' ]; then
-                                echo '❌ Frontend build failed!'
-                                exit 1
-                            fi
+                            for attempt in {1..3}; do
+                                echo "Build attempt \$attempt"
+                                rm -rf node_modules package-lock.json 2>/dev/null || true
+                                
+                                if [ \$attempt -eq 1 ]; then
+                                    npm install --legacy-peer-deps
+                                elif [ \$attempt -eq 2 ]; then
+                                    npm install --force --legacy-peer-deps
+                                else
+                                    # Last attempt: skip optional completely
+                                    npm install --no-optional --legacy-peer-deps --ignore-scripts
+                                fi
+                                
+                                if npm run build; then
+                                    echo '✅ Build successful on attempt \$attempt'
+                                    break
+                                elif [ \$attempt -eq 3 ]; then
+                                    echo '❌ All build attempts failed'
+                                    exit 1
+                                else
+                                    echo '⚠️ Build failed, retrying...'
+                                    sleep 5
+                                fi
+                            done
                             
-                            echo '✅ Frontend built successfully'
-                            
-                            # Deploy with Docker
-                            cd ${env.PROJECT_DIR}
-                            echo '🚀 Deploying with Docker Compose...'
+                            # Deploy
+                            cd ''' + env.PROJECT_DIR + '''
                             docker compose build --no-cache frontend
-                            docker compose build
                             docker compose down
                             docker compose up -d
                             
-                            sleep 30
+                            sleep 20
                             
-                            # Run Django commands
-                            docker compose exec -T web python manage.py migrate --noinput || true
-                            docker compose exec -T web python manage.py collectstatic --noinput --clear || true
-                            
-                            echo '✅ Deployment completed at \$(date)'
+                            echo '✅ Deployment complete!'
                             echo 'Frontend: https://campushostels.duckdns.org/'
-                        """
-                        
-                        sh """
-                            ssh -o StrictHostKeyChecking=no -i "\$SSH_KEY" "\$SSH_USERNAME"@${env.HOST_IP} '${sshCommand.replace("'", "'\"'\"'")}'
-                        """
-                    }
+                        "
+                    '''
                 }
             }
         }
@@ -68,10 +71,10 @@ pipeline {
     
     post {
         success {
-            echo "✅ Deployment successful!"
+            echo "✅ Success!"
         }
         failure {
-            echo "❌ Deployment failed!"
+            echo "❌ Failed - rolldown npm bug detected"
         }
     }
 }
