@@ -21,10 +21,8 @@ pipeline {
                     keyFileVariable: 'SSH_KEY',
                     usernameVariable: 'SSH_USERNAME'
                 )]) {
-                    sh """
-                        echo "🔨 Building Frontend..."
-                        
-                        ssh -o StrictHostKeyChecking=no -i "\$SSH_KEY" "\$SSH_USERNAME"@${env.HOST_IP} '
+                    script {
+                        def sshCommand = """
                             set -e
                             echo "=== Building Frontend at \$(date) ==="
                             
@@ -41,12 +39,12 @@ pipeline {
                             cd frontend/campushostel-fe
                             
                             for i in 1 2 3; do
-                                echo "Build attempt \$i"
+                                echo "Build attempt \\\$i"
                                 rm -rf node_modules package-lock.json 2>/dev/null || true
                                 
-                                if [ \$i -eq 1 ]; then
+                                if [ \\\$i -eq 1 ]; then
                                     npm install --legacy-peer-deps
-                                elif [ \$i -eq 2 ]; then
+                                elif [ \\\$i -eq 2 ]; then
                                     npm install --force --legacy-peer-deps
                                 else
                                     # Last attempt: skip optional completely
@@ -54,9 +52,9 @@ pipeline {
                                 fi
                                 
                                 if npm run build; then
-                                    echo "✅ Build successful on attempt \$i"
+                                    echo "✅ Build successful on attempt \\\$i"
                                     break
-                                elif [ \$i -eq 3 ]; then
+                                elif [ \\\$i -eq 3 ]; then
                                     echo "❌ All build attempts failed"
                                     exit 1
                                 else
@@ -73,8 +71,12 @@ pipeline {
                             
                             echo "✅ Frontend built successfully"
                             echo "Build size: \$(du -sh dist/)"
-                        '
-                    """
+                        """
+                        
+                        sh """
+                            ssh -o StrictHostKeyChecking=no -i "\$SSH_KEY" "\$SSH_USERNAME"@${env.HOST_IP} '${sshCommand.replace("'", "'\"'\"'")}'
+                        """
+                    }
                 }
             }
         }
@@ -94,11 +96,6 @@ pipeline {
                             echo "=== Starting Deployment at \$(date) ==="
                             cd ${env.PROJECT_DIR}
                             
-                            # No need to pull again - already pulled in Build Frontend stage
-                            # Just ensure clean state
-                            git checkout -- .
-                            git clean -fd
-
                             echo "🔨 Rebuilding Docker images (including frontend)..."
                             # Force rebuild frontend to pick up new build
                             docker compose build --no-cache frontend
