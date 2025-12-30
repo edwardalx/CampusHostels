@@ -15,15 +15,17 @@ pipeline {
                     usernameVariable: 'SSH_USERNAME'
                 )]) {
                     script {
-                        // Create the SSH command as a single quoted string
-                        def sshCommand = '''#!/bin/bash
+                        // Build the script as a single string with proper escaping
+                        def deployScript = """#!/bin/bash
                             echo "=== Frontend Deployment at \$(date) ==="
                             
-                            cd ''' + env.PROJECT_DIR + '''
+                            cd $PROJECT_DIR
                             
                             # Clean git state but exclude protected directories
                             git checkout -- .
-                            git clean -fd -e portainer-data -e ssl -e certbot || true
+                            # Skip git clean or use selective cleaning
+                            # git clean -fd -e portainer-data -e ssl -e certbot || true
+                            find . -name "node_modules" -type d -prune -exec rm -rf {} \\; 2>/dev/null || true
                             git pull origin main
                             
                             echo "🔨 Building frontend..."
@@ -46,17 +48,17 @@ pipeline {
                             
                             # COPY FILES TO DOCKER VOLUME
                             echo "📦 Copying files to Docker volume..."
-                            cd ''' + env.PROJECT_DIR + '''
+                            cd $PROJECT_DIR
                             
                             # Method 1: Copy to Docker volume mount point
                             DOCKER_VOLUME_PATH="/var/lib/docker/volumes/campushostels_frontend-static/_data"
-                            if [ -d "$DOCKER_VOLUME_PATH" ]; then
-                                echo "Copying to Docker volume: $DOCKER_VOLUME_PATH"
-                                sudo rm -rf "$DOCKER_VOLUME_PATH"/*
-                                sudo cp -r frontend/campushostel-fe/dist/* "$DOCKER_VOLUME_PATH/"
+                            if [ -d "\\\$DOCKER_VOLUME_PATH" ]; then
+                                echo "Copying to Docker volume: \\\$DOCKER_VOLUME_PATH"
+                                sudo rm -rf "\\\$DOCKER_VOLUME_PATH"/*
+                                sudo cp -r frontend/campushostel-fe/dist/* "\\\$DOCKER_VOLUME_PATH/"
                                 echo "✅ Files copied to Docker volume"
                             else
-                                echo "⚠️ Docker volume not found at $DOCKER_VOLUME_PATH"
+                                echo "⚠️ Docker volume not found at \\\$DOCKER_VOLUME_PATH"
                                 echo "Trying alternative method..."
                             fi
                             
@@ -71,18 +73,18 @@ pipeline {
                             echo "✅ Frontend deployment completed!"
                             echo "💡 Clear browser cache: Ctrl+Shift+R"
                             echo "🌐 Frontend: https://campushostels.duckdns.org/"
-                        '''
+                        """
                         
-                        // Execute the SSH command
-                        sh '''
-                            cat > /tmp/deploy.sh << 'EOF'
-                            ''' + sshCommand + '''
-                            EOF
+                        // Write script to a file and execute it
+                        writeFile file: 'deploy-frontend.sh', text: deployScript
+                        
+                        sh """
+                            # Copy the script to remote server
+                            scp -o StrictHostKeyChecking=no -i "\$SSH_KEY" deploy-frontend.sh "\$SSH_USERNAME"@${env.HOST_IP}:/tmp/deploy-frontend.sh
                             
-                            chmod +x /tmp/deploy.sh
-                            scp -o StrictHostKeyChecking=no -i "$SSH_KEY" /tmp/deploy.sh "$SSH_USERNAME"@''' + env.HOST_IP + ''':/tmp/deploy.sh
-                            ssh -o StrictHostKeyChecking=no -i "$SSH_KEY" "$SSH_USERNAME"@''' + env.HOST_IP + ''' "bash /tmp/deploy.sh"
-                        '''
+                            # Execute the script on remote server
+                            ssh -o StrictHostKeyChecking=no -i "\$SSH_KEY" "\$SSH_USERNAME"@${env.HOST_IP} "bash /tmp/deploy-frontend.sh"
+                        """
                     }
                 }
             }
