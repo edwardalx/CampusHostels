@@ -7,98 +7,74 @@ pipeline {
     }
 
     stages {
-        stage('Build and Deploy') {
+        stage('Build and Deploy Frontend') {
             steps {
                 withCredentials([sshUserPrivateKey(
                     credentialsId: 'be7af895-440a-4af4-ad0a-685416674053',
                     keyFileVariable: 'SSH_KEY',
                     usernameVariable: 'SSH_USERNAME'
                 )]) {
-                    sh '''
-                        ssh -o StrictHostKeyChecking=no -i "$SSH_KEY" "$SSH_USERNAME"@''' + env.HOST_IP + ''' "
+                    script {
+                        def sshCommand = """
                             set -e
-                            echo '=== Full Deployment at $(date) ==='
-                            cd ''' + env.PROJECT_DIR + '''
+                            echo '=== Frontend Deployment at \$(date) ==='
+                            
+                            cd ${env.PROJECT_DIR}
                             
                             # Clean git state
-                            git stash || true
+                            git checkout -- .
+                            git clean -fd
                             git pull origin main
                             
                             echo '🔨 Building frontend...'
                             cd frontend/campushostel-fe
                             
-                            # Build with retry logic
-                            for i in 1 2 3; do
-                                echo 'Build attempt $i'
-                                rm -rf node_modules package-lock.json 2>/dev/null || true
-                                
-                                if [ $i -eq 1 ]; then
-                                    npm install --legacy-peer-deps
-                                elif [ $i -eq 2 ]; then
-                                    npm install --force --legacy-peer-deps
-                                else
-                                    npm install --no-optional --legacy-peer-deps --ignore-scripts
-                                fi
-                                
-                                if npm run build; then
-                                    echo '✅ Build successful on attempt $i'
-                                    break
-                                elif [ $i -eq 3 ]; then
-                                    echo '❌ All build attempts failed'
-                                    exit 1
-                                else
-                                    echo '⚠️ Build failed, retrying...'
-                                    sleep 5
-                                fi
-                            done
+                            # SIMPLE BUILD - we know this works manually
+                            rm -rf node_modules package-lock.json 2>/dev/null || true
+                            npm install --force --legacy-peer-deps
+                            npm run build
                             
                             # Verify build
                             if [ ! -f 'dist/index.html' ]; then
-                                echo '❌ Build verification failed'
+                                echo '❌ Frontend build failed!'
                                 exit 1
                             fi
                             
                             echo '✅ Frontend built successfully'
-                            echo 'Build size: $(du -sh dist/)'
+                            echo 'Build files:'
+                            ls -la dist/
                             
-                            # CRITICAL: Copy build files directly to nginx directory
-                            echo '📦 Copying frontend files to nginx volume...'
-                            sudo mkdir -p /var/www/campushostels-fe
-                            sudo cp -r dist/* /var/www/campushostels-fe/
-                            sudo chown -R www-data:www-data /var/www/campushostels-fe
-                            sudo chmod -R 755 /var/www/campushostels-fe
+                            # COPY FILES TO DOCKER VOLUME (no sudo needed)
+                            echo '📦 Copying files to Docker volume...'
+                            cd ${env.PROJECT_DIR}
                             
-                            # Now deploy with Docker
-                            cd ''' + env.PROJECT_DIR + '''
-                            echo '🚀 Deploying with Docker Compose...'
+                            # Method 1: Copy to Docker volume mount point
+                            DOCKER_VOLUME_PATH="/var/lib/docker/volumes/campushostels_frontend-static/_data"
+                            if [ -d "\$DOCKER_VOLUME_PATH" ]; then
+                                echo "Copying to Docker volume: \$DOCKER_VOLUME_PATH"
+                                sudo cp -r frontend/campushostel-fe/dist/* "\$DOCKER_VOLUME_PATH/"
+                                echo '✅ Files copied to Docker volume'
+                            else
+                                echo '⚠️ Docker volume not found at \$DOCKER_VOLUME_PATH'
+                            fi
                             
-                            # Rebuild frontend image with the new build
-                            docker compose build --no-cache frontend
+                            # Method 2: Alternative - restart frontend container to rebuild
+                            echo '🔄 Restarting frontend container...'
+                            docker compose restart frontend
                             
-                            # Restart services
-                            docker compose down
-                            docker compose up -d
+                            # Method 3: Direct nginx restart
+                            echo '🔄 Restarting nginx...'
+                            docker compose restart nginx
                             
-                            sleep 30
-                            
-                            # Run Django commands
-                            docker compose exec -T web python manage.py migrate --noinput || echo '⚠️ Migrations warning'
-                            docker compose exec -T web python manage.py collectstatic --noinput --clear || echo '⚠️ Static collection warning'
-                            
-                            echo '✅ Deployment completed at $(date)'
-                            echo ''
-                            echo '=== Verification ==='
-                            docker compose ps
-                            echo ''
-                            echo 'Frontend files in nginx:'
-                            docker exec campushostels_nginx ls -la /var/www/campushostels-fe/ 2>/dev/null || echo 'Checking nginx files...'
-                            echo ''
-                            echo '=== URLs ==='
+                            echo '✅ Frontend deployment completed!'
+                            echo '💡 Clear browser cache: Ctrl+Shift+R'
                             echo '🌐 Frontend: https://campushostels.duckdns.org/'
-                            echo '🔧 Django Admin: https://campushostels.duckdns.org/admin/'
-                            echo '💡 Tip: Clear browser cache (Ctrl+Shift+R) to see changes'
-                        "
-                    '''
+                        """
+                        
+                        sh """
+                            ssh -o StrictHostKeyChecking=no -i "\$SSH_KEY" "\$SSH_USERNAME"@${env.HOST_IP} '${sshCommand.replace("'", "'\"'\"'")}'
+                        """
+                    }
                 }
             }
         }
@@ -106,11 +82,11 @@ pipeline {
     
     post {
         success {
-            echo "✅ Full stack deployment successful!"
+            echo "✅ Frontend deployed successfully!"
             echo "📢 Clear browser cache: Ctrl+Shift+R (Windows/Linux) or Cmd+Shift+R (Mac)"
         }
         failure {
-            echo "❌ Deployment failed!"
+            echo "❌ Frontend deployment failed!"
         }
     }
 }
