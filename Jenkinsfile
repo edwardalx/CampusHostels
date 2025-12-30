@@ -17,6 +17,7 @@ pipeline {
                     script {
                         sh """
                             ssh -o StrictHostKeyChecking=no -i "\$SSH_KEY" "\$SSH_USERNAME"@${env.HOST_IP} '
+                                set -e
                                 echo "=== Frontend Deployment at \$(date) ==="
                                 
                                 cd ${env.PROJECT_DIR}
@@ -29,56 +30,33 @@ pipeline {
                                 cd frontend/campushostel-fe
                                 
                                 # Build
-                                rm -rf node_modules package-lock.json 2>/dev/null || true
+                                rm -rf node_modules package-lock.json
                                 npm install --force --legacy-peer-deps
                                 npm run build
                                 
-                                if [ ! -f "dist/index.html" ]; then
-                                    echo "❌ Frontend build failed!"
-                                    exit 1
-                                fi
-                                
                                 echo "✅ Frontend built successfully"
                                 
-                                # Use sudo for Docker commands since Jenkins user isn't in docker group
                                 echo "📦 Deploying files..."
                                 
-                                # Method 1: Direct copy to volume (no Docker commands needed)
-                                VOLUME_PATH="/var/lib/docker/volumes/campushostels_frontend-static/_data"
+                                # Get volume path from Docker
+                                VOLUME_PATH=\$(docker volume inspect campushostels_frontend-static --format "{{.Mountpoint}}")
                                 
-                                if [ -d "\$VOLUME_PATH" ]; then
-                                    echo "📦 Copying directly to volume..."
-                                    
-                                    # Remove ALL old files
-                                    sudo rm -rf "\$VOLUME_PATH"/*
-                                    
-                                    # Copy ALL new files
-                                    sudo cp -r dist/* "\$VOLUME_PATH"/
-                                    
-                                    # Fix permissions for nginx (user 101 in container)
-                                    sudo chown -R 101:101 "\$VOLUME_PATH" 2>/dev/null || true
-                                    sudo chmod -R 755 "\$VOLUME_PATH" 2>/dev/null || true
-                                    
-                                    echo "✅ Direct copy completed"
-                                else
-                                    echo "❌ Volume path not found!"
+                                if [ -z "\$VOLUME_PATH" ]; then
+                                    echo "❌ Could not find volume path"
                                     exit 1
                                 fi
                                 
-                                # Verify the copy
-                                echo "🔍 Verifying files..."
-                                echo "Index.html timestamp:"
-                                sudo ls -la "\$VOLUME_PATH/index.html"
-                                echo "Assets directory:"
-                                sudo ls -la "\$VOLUME_PATH/assets/" | head -10
+                                echo "Copying to: \$VOLUME_PATH"
                                 
-                                # Reload nginx (using sudo since docker commands need it)
-                                echo "🔄 Reloading nginx..."
-                                sudo docker exec campushostels_nginx nginx -s reload 2>/dev/null || true
+                                # Remove old files and copy new ones
+                                sudo rm -rf "\$VOLUME_PATH"/*
+                                sudo cp -r dist/* "\$VOLUME_PATH"/
+                                
+                                # Reload nginx
+                                docker exec campushostels_nginx nginx -s reload
                                 
                                 echo "✅ Frontend deployment completed!"
                                 echo "🌐 Check: https://campushostels.duckdns.org/"
-                                echo "💡 Clear browser cache: Ctrl+Shift+R (important for JS/CSS changes)"
                             '
                         """
                     }
