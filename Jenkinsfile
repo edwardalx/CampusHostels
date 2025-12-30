@@ -40,27 +40,45 @@ pipeline {
                                 
                                 echo "✅ Frontend built successfully"
                                 
-                                # IMPROVED: Don\'t stop nginx, use temporary container
+                                # Use sudo for Docker commands since Jenkins user isn't in docker group
                                 echo "📦 Deploying files..."
                                 
-                                # Create temporary container with volume
-                                docker run -d --name temp_frontend_deploy \\
-                                    -v campushostels_frontend-static:/target \\
-                                    busybox tail -f /dev/null
+                                # Method 1: Direct copy to volume (no Docker commands needed)
+                                VOLUME_PATH="/var/lib/docker/volumes/campushostels_frontend-static/_data"
                                 
-                                # Copy files
-                                docker cp dist/. temp_frontend_deploy:/target/
+                                if [ -d "\$VOLUME_PATH" ]; then
+                                    echo "📦 Copying directly to volume..."
+                                    
+                                    # Remove ALL old files
+                                    sudo rm -rf "\$VOLUME_PATH"/*
+                                    
+                                    # Copy ALL new files
+                                    sudo cp -r dist/* "\$VOLUME_PATH"/
+                                    
+                                    # Fix permissions for nginx (user 101 in container)
+                                    sudo chown -R 101:101 "\$VOLUME_PATH" 2>/dev/null || true
+                                    sudo chmod -R 755 "\$VOLUME_PATH" 2>/dev/null || true
+                                    
+                                    echo "✅ Direct copy completed"
+                                else
+                                    echo "❌ Volume path not found!"
+                                    exit 1
+                                fi
                                 
-                                # Clean up
-                                docker stop temp_frontend_deploy
-                                docker rm temp_frontend_deploy
+                                # Verify the copy
+                                echo "🔍 Verifying files..."
+                                echo "Index.html timestamp:"
+                                sudo ls -la "\$VOLUME_PATH/index.html"
+                                echo "Assets directory:"
+                                sudo ls -la "\$VOLUME_PATH/assets/" | head -10
                                 
-                                # Just reload nginx to pick up new files (no restart needed)
+                                # Reload nginx (using sudo since docker commands need it)
                                 echo "🔄 Reloading nginx..."
-                                docker exec campushostels_nginx nginx -s reload 2>/dev/null || true
+                                sudo docker exec campushostels_nginx nginx -s reload 2>/dev/null || true
                                 
-                                echo "✅ Frontend deployment completed with zero downtime!"
+                                echo "✅ Frontend deployment completed!"
                                 echo "🌐 Check: https://campushostels.duckdns.org/"
+                                echo "💡 Clear browser cache: Ctrl+Shift+R (important for JS/CSS changes)"
                             '
                         """
                     }
@@ -71,7 +89,7 @@ pipeline {
     
     post {
         success {
-            echo "✅ Frontend deployed successfully with zero downtime!"
+            echo "✅ Frontend deployed successfully!"
         }
         failure {
             echo "❌ Frontend deployment failed!"
