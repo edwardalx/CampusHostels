@@ -21,6 +21,10 @@ pipeline {
                                 
                                 cd ${env.PROJECT_DIR}
                                 
+                                # Reset any local changes first
+                                git reset --hard HEAD
+                                git clean -fd -e portainer-data -e ssl -e certbot || true
+                                
                                 # Update code
                                 git pull origin main
                                 
@@ -41,15 +45,50 @@ pipeline {
                                 echo "Build timestamp:"
                                 ls -la dist/index.html
                                 
-                                # THE FIX: Copy to the correct volume
+                                # Check if volume exists as root first
                                 VOLUME_PATH="/var/lib/docker/volumes/campushostels_frontend-static/_data"
-                                echo "📦 Copying to volume: \$VOLUME_PATH"
+                                echo "📦 Looking for volume at: \$VOLUME_PATH"
                                 
-                                # Check if volume exists
-                                if [ ! -d "\$VOLUME_PATH" ]; then
-                                    echo "❌ Volume path not found: \$VOLUME_PATH"
-                                    exit 1
+                                # Try to check with sudo
+                                if sudo [ ! -d "\$VOLUME_PATH" ]; then
+                                    echo "⚠️ Volume path not found directly, checking Docker volumes..."
+                                    # List volumes to see what exists
+                                    docker volume ls | grep -i frontend
+                                    
+                                    # Try alternative volume names
+                                    VOLUME_NAMES=(
+                                        "campushostels_frontend-static"
+                                        "frontend-static"
+                                    )
+                                    
+                                    for VOLUME_NAME in "\${VOLUME_NAMES[@]}"; do
+                                        echo "Checking volume: \$VOLUME_NAME"
+                                        VOLUME_INFO=\$(docker volume inspect "\$VOLUME_NAME" 2>/dev/null | grep "Mountpoint" | cut -d'"' -f4)
+                                        if [ ! -z "\$VOLUME_INFO" ]; then
+                                            VOLUME_PATH="\$VOLUME_INFO"
+                                            echo "✅ Found volume mountpoint: \$VOLUME_PATH"
+                                            break
+                                        fi
+                                    done
+                                    
+                                    if [ -z "\$VOLUME_PATH" ] || sudo [ ! -d "\$VOLUME_PATH" ]; then
+                                        echo "❌ No volume found, trying direct Docker copy method..."
+                                        # Alternative: Use docker cp directly
+                                        docker cp dist/. campushostels_nginx:/var/www/campushostels-fe/ 2>/dev/null || echo "Docker cp failed, trying restart approach"
+                                        
+                                        # If docker cp fails due to read-only, rebuild container
+                                        cd ${env.PROJECT_DIR}
+                                        echo "Rebuilding nginx container to pick up new files..."
+                                        docker compose up -d --force-recreate nginx
+                                        
+                                        echo "✅ Using container rebuild method"
+                                        echo "🌐 Check: https://campushostels.duckdns.org/"
+                                        echo "💡 Clear browser cache: Ctrl+Shift+R"
+                                        exit 0
+                                    fi
                                 fi
+                                
+                                echo "📦 Copying to volume: \$VOLUME_PATH"
                                 
                                 # Remove old files and copy new ones
                                 sudo rm -rf "\$VOLUME_PATH"/*
@@ -65,13 +104,12 @@ pipeline {
                                 
                                 # Verify files in nginx container
                                 echo "🔍 Verifying in nginx container..."
-                                docker exec campushostels_nginx ls -la /var/www/campushostels-fe/ || echo "Cannot check nginx container"
+                                docker exec campushostels_nginx ls -la /var/www/campushostels-fe/ 2>/dev/null || echo "Cannot check nginx container"
                                 
-                                # Force nginx to reload
-                                echo "🔄 Reloading nginx..."
+                                # Restart nginx to pick up changes
+                                echo "🔄 Restarting nginx..."
+                                cd ${env.PROJECT_DIR}
                                 docker compose restart nginx
-                                sleep 2
-                                docker exec campushostels_nginx nginx -s reload 2>/dev/null || true
                                 
                                 echo "✅ Frontend deployment completed!"
                                 echo "🌐 Check: https://campushostels.duckdns.org/"
