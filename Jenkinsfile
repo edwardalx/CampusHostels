@@ -30,9 +30,13 @@ pipeline {
                             
                             cd ${env.PROJECT_DIR}
                             
-                            # Stash any local changes
-                            git stash || echo "No changes to stash"
+                            # Discard any local changes without creating a stash
+                            git checkout -- .
+                            git clean -fd
                             
+                            # Pull latest code
+                            git pull origin main
+
                             # Build frontend with retry for rolldown bug
                             cd frontend/campushostel-fe
                             
@@ -90,8 +94,10 @@ pipeline {
                             echo "=== Starting Deployment at \$(date) ==="
                             cd ${env.PROJECT_DIR}
                             
-                            # Pull latest code (already pulled in Build Frontend stage)
-                            git pull origin main
+                            # No need to pull again - already pulled in Build Frontend stage
+                            # Just ensure clean state
+                            git checkout -- .
+                            git clean -fd
 
                             echo "🔨 Rebuilding Docker images (including frontend)..."
                             # Force rebuild frontend to pick up new build
@@ -185,6 +191,9 @@ pipeline {
                     echo "=== Debug Information ==="
                     ssh -o StrictHostKeyChecking=no -i "\$SSH_KEY" "\$SSH_USERNAME"@${env.HOST_IP} '
                         cd ${env.PROJECT_DIR}
+                        echo "Git status:"
+                        git status --short
+                        echo ""
                         echo "Recent Docker logs:"
                         docker compose logs --tail=20
                         
