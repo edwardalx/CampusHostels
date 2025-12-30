@@ -40,32 +40,26 @@ pipeline {
                                 
                                 echo "✅ Frontend built successfully"
                                 
-                                # SIMPLE SOLUTION: Use a temporary container to copy files
-                                echo "📦 Deploying using temporary container..."
+                                # IMPROVED: Don\'t stop nginx, use temporary container
+                                echo "📦 Deploying files..."
                                 
-                                # Stop nginx temporarily
-                                docker compose stop nginx
-                                
-                                # Create a temporary container with the volume
+                                # Create temporary container with volume
                                 docker run -d --name temp_frontend_deploy \\
                                     -v campushostels_frontend-static:/target \\
                                     busybox tail -f /dev/null
                                 
-                                # Copy files to the temporary container
+                                # Copy files
                                 docker cp dist/. temp_frontend_deploy:/target/
                                 
-                                # Clean up temporary container
+                                # Clean up
                                 docker stop temp_frontend_deploy
                                 docker rm temp_frontend_deploy
                                 
-                                # Start nginx again
-                                docker compose start nginx
-                                
-                                # Reload nginx
-                                sleep 2
+                                # Just reload nginx to pick up new files (no restart needed)
+                                echo "🔄 Reloading nginx..."
                                 docker exec campushostels_nginx nginx -s reload 2>/dev/null || true
                                 
-                                echo "✅ Frontend deployment completed!"
+                                echo "✅ Frontend deployment completed with zero downtime!"
                                 echo "🌐 Check: https://campushostels.duckdns.org/"
                             '
                         """
@@ -77,7 +71,7 @@ pipeline {
     
     post {
         success {
-            echo "✅ Frontend deployed successfully!"
+            echo "✅ Frontend deployed successfully with zero downtime!"
         }
         failure {
             echo "❌ Frontend deployment failed!"
