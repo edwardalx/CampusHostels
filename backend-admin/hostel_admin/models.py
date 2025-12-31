@@ -130,7 +130,7 @@ class Property(models.Model):
 
 
 class Unit(models.Model):
-    id = models.IntegerField(primary_key=True, db_column='Id')
+    id = models.AutoField(primary_key=True, db_column='Id') 
     property_id = models.IntegerField(db_column='PropertyId')
     cost = SafeDecimalField(max_digits=12, decimal_places=2, null=True, blank=True, db_column='Cost')
     availability = models.BooleanField(default=True, db_column='Availability')
