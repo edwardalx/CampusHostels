@@ -16,26 +16,30 @@
 import React, { useState, useCallback, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { getHostels } from "../services/HostelServices";
-import {
-  HeroSection,
-  SearchBar,
-  HostelGrid,
-  Footer,
-} from "../components";
-
+import { HeroSection, SearchBar, HostelGrid, Footer } from "../components";
 
 export default function HomePage() {
   const [hostels, setHostels] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isEmpty, setIsEmpty] = useState(false);
   const [filteredHostels, setFilteredHostels] = useState([]);
-  const [selectedHostels, setSelectedHostels] = useState([]);
   //fetch hostels
   useEffect(() => {
-    const fetchHostels = async () => {
-      const response = await getHostels();
-      setHostels(response)
-    };
-    fetchHostels();
+    try {
+      setIsLoading(true);
+      const fetchHostels = async () => {
+        const response = await getHostels();
+        setHostels(response);
+      };
+      fetchHostels();
+    } catch (error) {
+      console.warn("Error fetching hostels:", error);
+      setIsEmpty(true);
+    } finally {
+      setTimeout(() => {
+        setIsLoading(false);
+      }, 600);
+    }
   }, []);
 
   const navigate = useNavigate();
@@ -155,7 +159,7 @@ export default function HomePage() {
           <HostelGrid
             hostels={hostels}
             isLoading={isLoading}
-            isEmpty={hostels.length === 0}
+            isEmpty={isEmpty}
             onCardAction={{
               onLike: handleHostelLike,
               onViewDetails: handleViewDetails,
