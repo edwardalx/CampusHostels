@@ -1,3 +1,5 @@
+// Jenkinsfile.full - Full Deployment (All Services)
+// Use this when you need to update backend, migrations, or all services
 pipeline {
     agent any
 
@@ -7,10 +9,30 @@ pipeline {
     }
 
     stages {
-        stage('Checkout Code') {
+        stage('Checkout and Update') {
             steps {
-                git branch: 'main',
-                url: 'https://github.com/edwardalx/CampusHostels.git'
+                withCredentials([sshUserPrivateKey(
+                    credentialsId: 'be7af895-440a-4af4-ad0a-685416674053',
+                    keyFileVariable: 'SSH_KEY',
+                    usernameVariable: 'SSH_USERNAME'
+                )]) {
+                    script {
+                        sh """
+                            ssh -o StrictHostKeyChecking=no -i "\$SSH_KEY" "\$SSH_USERNAME"@${env.HOST_IP} '
+                                set -e
+                                echo "=== Full Deployment Started at \$(date) ==="
+                                
+                                cd ${env.PROJECT_DIR}
+                                
+                                echo "📦 Pulling latest code..."
+                                git stash || echo "No changes to stash"
+                                git pull origin main
+                                
+                                echo "✅ Code updated"
+                            '
+                        """
+                    }
+                }
             }
         }
 
@@ -25,16 +47,17 @@ pipeline {
                         sh """
                             ssh -o StrictHostKeyChecking=no -i "\$SSH_KEY" "\$SSH_USERNAME"@${env.HOST_IP} '
                                 set -e
-                                echo "=== Frontend Build at \$(date) ==="
-                                
-                                cd ${env.PROJECT_DIR}
-                                
                                 echo "🔨 Building frontend..."
-                                cd frontend/campushostel-fe
                                 
-                                # Clean and build
-                                rm -rf node_modules package-lock.json
+                                cd ${env.PROJECT_DIR}/frontend/campushostel-fe
+                                
+                                echo "🧹 Cleaning..."
+                                rm -rf node_modules package-lock.json dist
+                                
+                                echo "📦 Installing dependencies..."
                                 npm install --force --legacy-peer-deps
+                                
+                                echo "🏗️ Building..."
                                 npm run build
                                 
                                 if [ ! -f "dist/index.html" ]; then
@@ -42,7 +65,7 @@ pipeline {
                                     exit 1
                                 fi
                                 
-                                echo "✅ Frontend built successfully"
+                                echo "✅ Frontend built"
                             '
                         """
                     }
@@ -50,7 +73,7 @@ pipeline {
             }
         }
 
-        stage('Deploy All Services') {
+        stage('Rebuild Docker Images') {
             steps {
                 withCredentials([sshUserPrivateKey(
                     credentialsId: 'be7af895-440a-4af4-ad0a-685416674053',
@@ -61,31 +84,69 @@ pipeline {
                         sh """
                             ssh -o StrictHostKeyChecking=no -i "\$SSH_KEY" "\$SSH_USERNAME"@${env.HOST_IP} '
                                 set -e
-                                echo "=== Full Deployment at \$(date) ==="
+                                echo "🐳 Rebuilding Docker images..."
                                 
                                 cd ${env.PROJECT_DIR}
-                                
-                                # Update code
-                                git stash || echo "No changes to stash"
-                                git pull origin main
-                                
-                                echo "🔨 Rebuilding Docker images..."
                                 docker compose build
                                 
+                                echo "✅ Docker images rebuilt"
+                            '
+                        """
+                    }
+                }
+            }
+        }
+
+        stage('Restart Services') {
+            steps {
+                withCredentials([sshUserPrivateKey(
+                    credentialsId: 'be7af895-440a-4af4-ad0a-685416674053',
+                    keyFileVariable: 'SSH_KEY',
+                    usernameVariable: 'SSH_USERNAME'
+                )]) {
+                    script {
+                        sh """
+                            ssh -o StrictHostKeyChecking=no -i "\$SSH_KEY" "\$SSH_USERNAME"@${env.HOST_IP} '
+                                set -e
                                 echo "🔄 Restarting services..."
+                                
+                                cd ${env.PROJECT_DIR}
                                 docker compose down
                                 docker compose up -d
                                 
                                 echo "⏳ Waiting for services to start..."
                                 sleep 30
                                 
-                                echo "🗄️ Applying Django migrations..."
-                                docker compose exec -T web python manage.py migrate --noinput || echo "⚠️ Migrations may have warnings"
+                                echo "✅ Services restarted"
+                            '
+                        """
+                    }
+                }
+            }
+        }
+
+        stage('Django Setup') {
+            steps {
+                withCredentials([sshUserPrivateKey(
+                    credentialsId: 'be7af895-440a-4af4-ad0a-685416674053',
+                    keyFileVariable: 'SSH_KEY',
+                    usernameVariable: 'SSH_USERNAME'
+                )]) {
+                    script {
+                        sh """
+                            ssh -o StrictHostKeyChecking=no -i "\$SSH_KEY" "\$SSH_USERNAME"@${env.HOST_IP} '
+                                set -e
+                                echo "🐍 Running Django setup..."
+                                
+                                cd ${env.PROJECT_DIR}
+                                
+                                echo "🗄️ Applying migrations..."
+                                docker compose exec -T web python manage.py migrate --noinput || echo "⚠️ Migrations warning"
                                 
                                 echo "📁 Collecting static files..."
-                                docker compose exec -T web python manage.py collectstatic --noinput --clear || echo "⚠️ Static collection may have warnings"
+                                docker compose exec -T web python manage.py collectstatic --noinput --clear || echo "⚠️ Static files warning"
                                 
-                                echo "✅ All services deployed successfully!"
+                                echo "✅ Django setup completed"
                             '
                         """
                     }
@@ -104,35 +165,20 @@ pipeline {
                         sh """
                             ssh -o StrictHostKeyChecking=no -i "\$SSH_KEY" "\$SSH_USERNAME"@${env.HOST_IP} '
                                 set -e
-                                echo "=== Frontend File Deployment at \$(date) ==="
+                                echo "📦 Deploying frontend files..."
                                 
                                 cd ${env.PROJECT_DIR}
                                 
-                                echo "📦 Deploying frontend files..."
-                                
-                                # METHOD 1: Copy to Docker volume (for frontend container)
-                                VOLUME_PATH=\$(docker volume inspect campushostels_frontend-static --format "{{.Mountpoint}}" 2>/dev/null || echo "")
-                                
-                                if [ -n "\$VOLUME_PATH" ] && [ -d "\$VOLUME_PATH" ]; then
-                                    echo "Copying to frontend volume: \$VOLUME_PATH"
-                                    sudo rm -rf "\$VOLUME_PATH"/*
-                                    sudo cp -r frontend/campushostel-fe/dist/* "\$VOLUME_PATH"/
-                                    echo "✅ Frontend volume updated"
-                                else
-                                    echo "⚠️ Frontend volume not found, trying nginx container..."
-                                fi
-                                
-                                # METHOD 2: Copy to nginx container (main serving location)
-                                echo "Copying to nginx container..."
+                                # Copy to nginx container
                                 docker cp frontend/campushostel-fe/dist/. campushostels_nginx:/var/www/campushostels-fe/
                                 
                                 # Set permissions
-                                docker exec campushostels_nginx chown -R nginx:nginx /var/www/campushostels-fe/ 2>/dev/null || echo "Permissions already set"
+                                docker exec campushostels_nginx chown -R nginx:nginx /var/www/campushostels-fe/ 2>/dev/null || true
                                 
                                 echo "🔄 Reloading nginx..."
-                                docker exec campushostels_nginx nginx -s reload 2>/dev/null || echo "⚠️ Nginx reload failed"
+                                docker exec campushostels_nginx nginx -s reload 2>/dev/null || echo "⚠️ Nginx reload warning"
                                 
-                                echo "✅ Frontend files deployed successfully!"
+                                echo "✅ Frontend files deployed"
                             '
                         """
                     }
@@ -150,7 +196,6 @@ pipeline {
                     script {
                         sh """
                             ssh -o StrictHostKeyChecking=no -i "\$SSH_KEY" "\$SSH_USERNAME"@${env.HOST_IP} '
-                                set -e
                                 echo "=== Verification at \$(date) ==="
                                 
                                 cd ${env.PROJECT_DIR}
@@ -158,76 +203,39 @@ pipeline {
                                 echo "=== Container Status ==="
                                 docker compose ps
                                 
-                                echo -e "\\\\n=== Frontend Files Status ==="
-                                echo "Local build timestamp: \$(stat -c "%y" frontend/campushostel-fe/dist/index.html 2>/dev/null || echo "No local build")"
+                                echo -e "\\\\n=== Services Health ==="
+                                echo "Django: \$(docker compose exec -T web python manage.py check 2>&1 | tail -1 || echo "Check failed")"
+                                echo "PostgreSQL: \$(docker compose exec -T db pg_isready 2>/dev/null && echo "✅" || echo "❌")"
+                                echo "Nginx: \$(docker compose ps nginx | grep -q "Up" && echo "✅" || echo "❌")"
                                 
-                                echo "Nginx container files:"
-                                docker exec campushostels_nginx ls -la /var/www/campushostels-fe/ 2>/dev/null || echo "Cannot access nginx"
+                                echo -e "\\\\n=== Frontend Status ==="
+                                echo "Files in nginx: \$(docker exec campushostels_nginx ls /var/www/campushostels-fe/index.html >/dev/null 2>&1 && echo "✅" || echo "❌")"
                                 
-                                echo -e "\\\\n=== Application Health ==="
-                                echo "API test: \$(curl -s -o /dev/null -w "%{http_code}" https://localhost/api/Properties 2>/dev/null || echo "API check failed")"
+                                echo -e "\\\\n=== API Test ==="
+                                echo "API response: \$(curl -s -o /dev/null -w "%{http_code}" https://localhost/api/Properties 2>/dev/null || echo "Failed")"
                                 
-                                echo -e "\\\\n=== Deployment URLs ==="
-                                echo "🌐 Django Admin: https://campushostels.duckdns.org/admin/"
-                                echo "🏠 Main Site: https://campushostels.duckdns.org/?v=\$(date +%s)"
-                                echo "🔧 .NET API: https://campushostels.duckdns.org/api/"
-                                
-                                echo -e "\\\\n=== Cache Busting URL ==="
-                                echo "🔍 Fresh test: https://campushostels.duckdns.org/?v=\$(date +%s)"
+                                echo -e "\\\\n=== URLs ==="
+                                echo "🌐 Main Site: https://campushostels.duckdns.org/?v=\$(date +%s)"
+                                echo "🔧 API Docs: https://campushostels.duckdns.org/swagger"
+                                echo "👨‍💼 Admin: https://campushostels.duckdns.org/admin/"
                             '
                         """
                     }
                 }
             }
         }
-        
-        stage('Clear Browser Cache Instructions') {
-            steps {
-                echo """
-                🔄 Browser Cache Clearing Instructions:
-                
-                For Users:
-                1. Open https://campushostels.duckdns.org/?v=\$(date +%s)
-                2. Or use incognito/private window
-                
-                For Developers:
-                1. Open Dev Tools (F12)
-                2. Network tab → Check "Disable cache"
-                3. Right-click refresh → "Empty Cache and Hard Reload"
-                
-                Deployment completed at: \$(date)
-                """
-            }
-        }
     }
 
     post {
         always {
-            echo "📊 Deployment pipeline completed"
+            echo "📊 Full deployment pipeline completed"
         }
         success {
-            echo "✅ Deployment successful!"
-            
-            // Optional: Send notification or update dashboard
-            withCredentials([sshUserPrivateKey(
-                credentialsId: 'be7af895-440a-4af4-ad0a-685416674053',
-                keyFileVariable: 'SSH_KEY',
-                usernameVariable: 'SSH_USERNAME'
-            )]) {
-                script {
-                    sh """
-                        ssh -o StrictHostKeyChecking=no -i "\$SSH_KEY" "\$SSH_USERNAME"@${env.HOST_IP} '
-                            cd ${env.PROJECT_DIR}
-                            echo "=== Final Verification ==="
-                            echo "Frontend files deployed: \$(docker exec campushostels_nginx ls /var/www/campushostels-fe/index.html >/dev/null 2>&1 && echo "✅" || echo "❌")"
-                            echo "Containers running: \$(docker compose ps | grep -c "Up")"
-                        '
-                    """
-                }
-            }
+            echo "✅ Full deployment successful!"
+            echo "🚀 All services are running and updated"
         }
         failure {
-            echo "❌ Deployment failed!"
+            echo "❌ Full deployment failed!"
             
             withCredentials([sshUserPrivateKey(
                 credentialsId: 'be7af895-440a-4af4-ad0a-685416674053',
@@ -240,13 +248,12 @@ pipeline {
                         ssh -o StrictHostKeyChecking=no -i "\$SSH_KEY" "\$SSH_USERNAME"@${env.HOST_IP} '
                             cd ${env.PROJECT_DIR}
                             echo "=== Recent Logs ==="
-                            docker compose logs --tail=20 2>/dev/null || echo "No logs available"
-                            
+                            docker compose logs --tail=30
                             echo -e "\\\\n=== Container Status ==="
-                            docker ps -a | head -10
-                            
-                            echo -e "\\\\n=== Frontend Files ==="
-                            ls -la frontend/campushostel-fe/dist/ 2>/dev/null || echo "No frontend build"
+                            docker ps -a
+                            echo -e "\\\\n=== Failed Stage Debug ==="
+                            echo "Last 5 commands:"
+                            history 5 2>/dev/null || echo "History not available"
                         '
                     """
                 }
