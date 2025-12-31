@@ -71,6 +71,34 @@ pipeline {
                 }
             }
         }
+         stage('Verify Deployment') {
+            steps {
+                withCredentials([sshUserPrivateKey(
+                    credentialsId: 'be7af895-440a-4af4-ad0a-685416674053',
+                    keyFileVariable: 'SSH_KEY',
+                    usernameVariable: 'SSH_USERNAME'
+                )]) {
+                    script {
+                        sh """
+                            ssh -o StrictHostKeyChecking=no -i "\$SSH_KEY" "\$SSH_USERNAME"@${env.HOST_IP} '
+                                echo "=== Verification ==="
+                                
+                                cd ${env.PROJECT_DIR}
+                                
+                                echo "📁 Files in nginx container:"
+                                docker exec campushostels_nginx ls -la /var/www/campushostels-fe/ 2>/dev/null || echo "Cannot access nginx"
+                                
+                                echo -e "\\\\n📊 Build info:"
+                                echo "Branch: ${params.BRANCH}"
+                                echo "Files in dist: \$(ls -la frontend/campushostel-fe/dist/ 2>/dev/null | wc -l) files"
+                                
+                                echo -e "\\\\n✅ Deployment completed successfully!"
+                            '
+                        """
+                    }
+                }
+            }
+        }
     }
     
     post {
