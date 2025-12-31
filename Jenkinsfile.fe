@@ -1,5 +1,3 @@
-// Jenkinsfile.fe - Frontend Only Deployment
-// Use this for quick frontend updates without touching backend
 pipeline {
     agent any
 
@@ -9,7 +7,7 @@ pipeline {
     }
 
     stages {
-        stage('Build Frontend') {
+        stage('Build and Deploy Frontend') {
             steps {
                 withCredentials([sshUserPrivateKey(
                     credentialsId: 'be7af895-440a-4af4-ad0a-685416674053',
@@ -20,100 +18,45 @@ pipeline {
                         sh """
                             ssh -o StrictHostKeyChecking=no -i "\$SSH_KEY" "\$SSH_USERNAME"@${env.HOST_IP} '
                                 set -e
-                                echo "=== Frontend Build at \$(date) ==="
+                                echo "=== Frontend Deployment at \$(date) ==="
                                 
                                 cd ${env.PROJECT_DIR}
                                 
-                                echo "📦 Updating frontend code..."
+                                # Reset and update
+                                git reset --hard HEAD
+                                git pull origin main
+                                
+                                echo "🔨 Building frontend..."
                                 cd frontend/campushostel-fe
-                                git pull origin main || echo "Git pull failed, continuing with existing code"
                                 
-                                echo "🧹 Cleaning..."
-                                rm -rf node_modules package-lock.json dist
-                                
-                                echo "📦 Installing dependencies..."
+                                # Build
+                                rm -rf node_modules package-lock.json
                                 npm install --force --legacy-peer-deps
-                                
-                                echo "🏗️ Building frontend..."
                                 npm run build
                                 
-                                if [ ! -f "dist/index.html" ]; then
-                                    echo "❌ Frontend build failed!"
+                                echo "✅ Frontend built successfully"
+                                
+                                echo "📦 Deploying files..."
+                                
+                                # Get volume path from Docker
+                                VOLUME_PATH=\$(docker volume inspect campushostels_frontend-static --format "{{.Mountpoint}}")
+                                
+                                if [ -z "\$VOLUME_PATH" ]; then
+                                    echo "❌ Could not find volume path"
                                     exit 1
                                 fi
                                 
-                                echo "✅ Frontend built successfully"
-                            '
-                        """
-                    }
-                }
-            }
-        }
-
-        stage('Deploy Frontend Files') {
-            steps {
-                withCredentials([sshUserPrivateKey(
-                    credentialsId: 'be7af895-440a-4af4-ad0a-685416674053',
-                    keyFileVariable: 'SSH_KEY',
-                    usernameVariable: 'SSH_USERNAME'
-                )]) {
-                    script {
-                        sh """
-                            ssh -o StrictHostKeyChecking=no -i "\$SSH_KEY" "\$SSH_USERNAME"@${env.HOST_IP} '
-                                set -e
-                                echo "=== Deploying Frontend Files at \$(date) ==="
+                                echo "Copying to: \$VOLUME_PATH"
                                 
-                                cd ${env.PROJECT_DIR}
+                                # Remove old files and copy new ones
+                                sudo rm -rf "\$VOLUME_PATH"/*
+                                sudo cp -r dist/* "\$VOLUME_PATH"/
                                 
-                                echo "📦 Copying files to nginx container..."
+                                # Reload nginx
+                                docker exec campushostels_nginx nginx -s reload
                                 
-                                # Method 1: Direct copy to nginx (PRIMARY)
-                                docker cp frontend/campushostel-fe/dist/. campushostels_nginx:/var/www/campushostels-fe/
-                                
-                                # Set permissions
-                                docker exec campushostels_nginx chown -R nginx:nginx /var/www/campushostels-fe/ 2>/dev/null || echo "Permissions ok"
-                                
-                                # Method 2: Also update frontend container if it exists
-                                docker cp frontend/campushostel-fe/dist/. campushostels-frontend-1:/usr/share/nginx/html/ 2>/dev/null || echo "Frontend container not found, skipping"
-                                
-                                echo "🔄 Reloading nginx..."
-                                docker exec campushostels_nginx nginx -s reload 2>/dev/null || echo "Nginx reload warning"
-                                
-                                echo "✅ Frontend files deployed!"
-                            '
-                        """
-                    }
-                }
-            }
-        }
-
-        stage('Verify Frontend') {
-            steps {
-                withCredentials([sshUserPrivateKey(
-                    credentialsId: 'be7af895-440a-4af4-ad0a-685416674053',
-                    keyFileVariable: 'SSH_KEY',
-                    usernameVariable: 'SSH_USERNAME'
-                )]) {
-                    script {
-                        sh """
-                            ssh -o StrictHostKeyChecking=no -i "\$SSH_KEY" "\$SSH_USERNAME"@${env.HOST_IP} '
-                                echo "=== Frontend Verification at \$(date) ==="
-                                
-                                cd ${env.PROJECT_DIR}
-                                
-                                echo "📁 Local build files:"
-                                ls -la frontend/campushostel-fe/dist/ 2>/dev/null || echo "No local build found"
-                                
-                                echo -e "\\\\n📁 Nginx container files:"
-                                docker exec campushostels_nginx ls -la /var/www/campushostels-fe/ 2>/dev/null || echo "Cannot access nginx"
-                                
-                                echo -e "\\\\n⏰ Timestamps:"
-                                echo "Local: \$(stat -c "%y" frontend/campushostel-fe/dist/index.html 2>/dev/null || echo "N/A")"
-                                echo "Nginx: \$(docker exec campushostels_nginx stat -c "%y" /var/www/campushostels-fe/index.html 2>/dev/null || echo "N/A")"
-                                
-                                echo -e "\\\\n🌐 Test URLs:"
-                                echo "Fresh test: https://campushostels.duckdns.org/?v=\$(date +%s)"
-                                echo "Incognito: https://campushostels.duckdns.org/"
+                                echo "✅ Frontend deployment completed!"
+                                echo "🌐 Check: https://campushostels.duckdns.org/"
                             '
                         """
                     }
@@ -121,36 +64,13 @@ pipeline {
             }
         }
     }
-
+    
     post {
-        always {
-            echo "📊 Frontend deployment completed"
-        }
         success {
             echo "✅ Frontend deployed successfully!"
-            echo "🔍 Test with: https://campushostels.duckdns.org/?v=\$(date +%s)"
         }
         failure {
             echo "❌ Frontend deployment failed!"
-            
-            withCredentials([sshUserPrivateKey(
-                credentialsId: 'be7af895-440a-4af4-ad0a-685416674053',
-                keyFileVariable: 'SSH_KEY',
-                usernameVariable: 'SSH_USERNAME'
-            )]) {
-                script {
-                    sh """
-                        echo "=== Debug Info ==="
-                        ssh -o StrictHostKeyChecking=no -i "\$SSH_KEY" "\$SSH_USERNAME"@${env.HOST_IP} '
-                            cd ${env.PROJECT_DIR}
-                            echo "Nginx status:"
-                            docker ps | grep nginx || echo "Nginx not running"
-                            echo -e "\\\\nFrontend build:"
-                            ls -la frontend/campushostel-fe/ 2>/dev/null || echo "Frontend directory not found"
-                        '
-                    """
-                }
-            }
         }
     }
 }
