@@ -1,14 +1,38 @@
-// Jenkinsfile.fe - Frontend Only Deployment (FIXED)
+// Jenkinsfile.fe - Frontend Only Deployment with Branch Parameters
 // Use this for quick frontend updates without touching backend
 pipeline {
     agent any
+    
+    parameters {
+        choice(
+            name: 'BRANCH',
+            choices: ['main', 'develop', 'staging', 'feature/ui-updates'],
+            description: 'Select git branch to deploy'
+        )
+        booleanParam(
+            name: 'CLEAN_BUILD',
+            defaultValue: true,
+            description: 'Clean node_modules before building'
+        )
+    }
 
     environment {
         HOST_IP = "192.168.0.72"
         PROJECT_DIR = "/home/eobkwaku/jenkins-docker/CampusHostels"
+        DEPLOY_BRANCH = "${params.BRANCH}"
     }
 
     stages {
+        stage('Display Parameters') {
+            steps {
+                echo "🎯 Deployment Parameters:"
+                echo "  Branch: ${params.BRANCH}"
+                echo "  Clean Build: ${params.CLEAN_BUILD}"
+                echo "  Host: ${env.HOST_IP}"
+                echo "  Project Dir: ${env.PROJECT_DIR}"
+            }
+        }
+
         stage('Build and Deploy Frontend') {
             steps {
                 withCredentials([sshUserPrivateKey(
@@ -20,23 +44,62 @@ pipeline {
                         sh """
                             ssh -o StrictHostKeyChecking=no -i "\$SSH_KEY" "\$SSH_USERNAME"@${env.HOST_IP} '
                                 set -e
-                                echo "=== Frontend Deployment at \$(date) ==="
+                                echo "=== Frontend Deployment from branch ${params.BRANCH} at \$(date) ==="
                                 
                                 cd ${env.PROJECT_DIR}
                                 
-                                # Update code
-                                git stash || echo "No changes to stash"
-                                git pull origin main
+                                # Save current branch
+                                CURRENT_BRANCH=\$(git branch --show-current 2>/dev/null || echo "unknown")
+                                echo "Current branch: \$CURRENT_BRANCH"
+                                
+                                # Update and checkout selected branch
+                                echo "📦 Switching to branch: ${params.BRANCH}"
+                                git fetch origin
+                                
+                                # Check if branch exists locally
+                                if git show-ref --verify --quiet "refs/heads/${params.BRANCH}"; then
+                                    echo "Branch exists locally, checking out..."
+                                    git checkout ${params.BRANCH}
+                                else
+                                    echo "Branch doesn\'t exist locally, creating from origin..."
+                                    git checkout -b ${params.BRANCH} origin/${params.BRANCH} || {
+                                        echo "❌ Failed to checkout branch ${params.BRANCH}"
+                                        echo "Available branches:"
+                                        git branch -a
+                                        exit 1
+                                    }
+                                fi
+                                
+                                # Pull latest
+                                git pull origin ${params.BRANCH}
+                                echo "✅ Switched to branch: ${params.BRANCH}"
                                 
                                 echo "🔨 Building frontend..."
                                 cd frontend/campushostel-fe
                                 
-                                # Clean and build
-                                rm -rf node_modules package-lock.json
+                                # Clean if requested
+                                if ${params.CLEAN_BUILD}; then
+                                    echo "🧹 Performing clean build..."
+                                    rm -rf node_modules package-lock.json dist
+                                else
+                                    echo "⚡ Skipping clean build (using cache)"
+                                fi
+                                
+                                # Install dependencies
+                                echo "📦 Installing dependencies..."
                                 npm install --force --legacy-peer-deps
+                                
+                                # Build
+                                echo "🏗️ Building frontend..."
                                 npm run build
                                 
-                                echo "✅ Frontend built successfully"
+                                # Verify build
+                                if [ ! -f "dist/index.html" ]; then
+                                    echo "❌ Frontend build failed - no index.html found!"
+                                    exit 1
+                                fi
+                                
+                                echo "✅ Frontend built successfully from branch ${params.BRANCH}"
                                 
                                 echo "📦 Deploying files to multiple locations..."
                                 
@@ -62,8 +125,14 @@ pipeline {
                                 echo "🔄 Reloading nginx..."
                                 docker exec campushostels_nginx nginx -s reload 2>/dev/null || echo "⚠️ Nginx reload warning"
                                 
-                                echo "✅ Frontend deployment completed!"
+                                echo "✅ Frontend deployment completed from branch ${params.BRANCH}!"
                                 echo "🌐 Test with cache busting: https://campushostels.duckdns.org/?v=\$(date +%s)"
+                                
+                                # Return to original branch if needed
+                                if [ "\$CURRENT_BRANCH" != "unknown" ] && [ "\$CURRENT_BRANCH" != "${params.BRANCH}" ]; then
+                                    echo "↩️ Returning to original branch: \$CURRENT_BRANCH"
+                                    git checkout "\$CURRENT_BRANCH"
+                                fi
                             '
                         """
                     }
@@ -82,6 +151,7 @@ pipeline {
                         sh """
                             ssh -o StrictHostKeyChecking=no -i "\$SSH_KEY" "\$SSH_USERNAME"@${env.HOST_IP} '
                                 echo "=== Frontend Verification ==="
+                                echo "Deployed from branch: ${params.BRANCH}"
                                 
                                 cd ${env.PROJECT_DIR}
                                 
@@ -92,7 +162,11 @@ pipeline {
                                 echo "Local build: \$(stat -c "%y" frontend/campushostel-fe/dist/index.html 2>/dev/null || echo "No local build")"
                                 echo "Nginx served: \$(docker exec campushostels_nginx stat -c "%y" /var/www/campushostels-fe/index.html 2>/dev/null || echo "No file in nginx")"
                                 
-                                echo -e "\\\\n🔍 Test URLs:"
+                                echo -e "\\\\n🔍 Git Status:"
+                                echo "Current branch: \$(git branch --show-current 2>/dev/null || echo "unknown")"
+                                echo "Last commit: \$(git log --oneline -1 2>/dev/null || echo "No git info")"
+                                
+                                echo -e "\\\\n🌐 Test URLs:"
                                 echo "Fresh: https://campushostels.duckdns.org/?v=\$(date +%s)"
                                 echo "API test: \$(curl -s -o /dev/null -w "%{http_code}" https://localhost/api/Properties 2>/dev/null || echo "API check failed")"
                             '
@@ -105,14 +179,16 @@ pipeline {
     
     post {
         always {
-            echo "📊 Frontend deployment completed"
+            echo "📊 Frontend deployment from branch ${params.BRANCH} completed"
+            echo "🧹 Clean Build: ${params.CLEAN_BUILD}"
         }
         success {
-            echo "✅ Frontend deployed successfully!"
+            echo "✅ Frontend deployed successfully from branch ${params.BRANCH}!"
             echo "🔍 Clear browser cache or use: https://campushostels.duckdns.org/?v=\$(date +%s)"
+            echo "📝 Branch: ${params.BRANCH}"
         }
         failure {
-            echo "❌ Frontend deployment failed!"
+            echo "❌ Frontend deployment failed from branch ${params.BRANCH}!"
             
             withCredentials([sshUserPrivateKey(
                 credentialsId: 'be7af895-440a-4af4-ad0a-685416674053',
@@ -124,10 +200,14 @@ pipeline {
                         echo "=== Debug Information ==="
                         ssh -o StrictHostKeyChecking=no -i "\$SSH_KEY" "\$SSH_USERNAME"@${env.HOST_IP} '
                             cd ${env.PROJECT_DIR}
+                            echo "Failed deployment from branch: ${params.BRANCH}"
                             echo "Nginx container status:"
                             docker ps | grep nginx || echo "Nginx not running"
                             echo -e "\\\\nFrontend build directory:"
-                            ls -la frontend/campushostel-fe/dist/ 2>/dev/null || echo "No frontend build"
+                            ls -la frontend/campushostel-fe/ 2>/dev/null || echo "No frontend directory"
+                            echo -e "\\\\nGit status:"
+                            git status 2>/dev/null || echo "No git info"
+                            git branch -a 2>/dev/null || echo "No branch info"
                         '
                     """
                 }
