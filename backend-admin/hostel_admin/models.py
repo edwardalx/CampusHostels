@@ -87,7 +87,7 @@ class UnitType(models.IntegerChoices):
 
 class Tenant(models.Model):
     """Mirror of the .NET User entity."""
-    id = models.IntegerField(primary_key=True, db_column='Id')
+    id = models.AutoField(primary_key=True, db_column='Id')
     username = models.CharField(max_length=150, db_column='Username')
     first_name = models.CharField(max_length=150, db_column='FirstName')
     last_name = models.CharField(max_length=150, db_column='LastName')
@@ -150,7 +150,7 @@ class Unit(models.Model):
         return f"Unit {self.room_number} (Property {self.property_id})"
 
 class Tenancy(models.Model):
-    id = models.IntegerField(primary_key=True, db_column='Id')
+    id = models.AutoField(primary_key=True, db_column='Id')
     unit_id = models.IntegerField(db_column='UnitId')
     tenant_id = models.UUIDField(db_column='TenantId')  # .NET Guid → UUID
     property_id = models.IntegerField(db_column='PropertyId')
@@ -170,7 +170,7 @@ class Tenancy(models.Model):
 
 
 class Payment(models.Model):
-    id = models.IntegerField(primary_key=True, db_column='Id')
+    id = models.AutoField(primary_key=True, db_column='Id')
     tenancy_agreement_id = models.IntegerField(null=True, blank=True, db_column='TenancyAgreementId')
     tenant_id = models.UUIDField(db_column='TenantId')  # .NET Guid → UUID
     unit_id = models.IntegerField(null=True, blank=True, db_column='UnitId')
