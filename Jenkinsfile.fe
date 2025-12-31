@@ -1,7 +1,6 @@
-// Jenkinsfile.fe - Updated with proper checkout
 pipeline {
     agent any
-    
+
     parameters {
         choice(
             name: 'BRANCH',
@@ -16,23 +15,6 @@ pipeline {
     }
 
     stages {
-        stage('Checkout Code') {
-            steps {
-                script {
-                    // Checkout the selected branch
-                    checkout([
-                        $class: 'GitSCM',
-                        branches: [[name: "*/${params.BRANCH}"]],
-                        userRemoteConfigs: [[
-                            url: 'https://github.com/edwardalx/CampusHostels.git'
-                        ]]
-                    ])
-                    
-                    echo "✅ Checked out branch: ${params.BRANCH}"
-                }
-            }
-        }
-        
         stage('Build and Deploy Frontend') {
             steps {
                 withCredentials([sshUserPrivateKey(
@@ -44,14 +26,18 @@ pipeline {
                         sh """
                             ssh -o StrictHostKeyChecking=no -i "\$SSH_KEY" "\$SSH_USERNAME"@${env.HOST_IP} '
                                 set -e
-                                echo "=== Frontend Deployment from branch ${params.BRANCH} ==="
+                                echo "=== Frontend Deployment at \$(date) ==="
                                 
                                 cd ${env.PROJECT_DIR}
+                                
+                                # Reset and update
+                                git reset --hard HEAD
+                                git pull origin main
                                 
                                 echo "🔨 Building frontend..."
                                 cd frontend/campushostel-fe
                                 
-                                # Clean and build
+                                # Build
                                 rm -rf node_modules package-lock.json
                                 npm install --force --legacy-peer-deps
                                 npm run build
@@ -59,17 +45,40 @@ pipeline {
                                 echo "✅ Frontend built successfully"
                                 
                                 echo "📦 Deploying files..."
-                                docker cp frontend/campushostel-fe/dist/. campushostels_nginx:/var/www/campushostels-fe/
                                 
-                                echo "🔄 Reloading nginx..."
-                                docker exec campushostels_nginx nginx -s reload 2>/dev/null
+                                # Get volume path from Docker
+                                VOLUME_PATH=\$(docker volume inspect campushostels_frontend-static --format "{{.Mountpoint}}")
+                                
+                                if [ -z "\$VOLUME_PATH" ]; then
+                                    echo "❌ Could not find volume path"
+                                    exit 1
+                                fi
+                                
+                                echo "Copying to: \$VOLUME_PATH"
+                                
+                                # Remove old files and copy new ones
+                                sudo rm -rf "\$VOLUME_PATH"/*
+                                sudo cp -r dist/* "\$VOLUME_PATH"/
+                                
+                                # Reload nginx
+                                docker exec campushostels_nginx nginx -s reload
                                 
                                 echo "✅ Frontend deployment completed!"
+                                echo "🌐 Check: https://campushostels.duckdns.org/"
                             '
                         """
                     }
                 }
             }
+        }
+    }
+    
+    post {
+        success {
+            echo "✅ Frontend deployed successfully!"
+        }
+        failure {
+            echo "❌ Frontend deployment failed!"
         }
     }
 }
