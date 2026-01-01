@@ -32,6 +32,7 @@ pipeline {
                             # Stash any local changes
                             git stash || echo "No changes to stash"
                             git pull origin main
+                            git stash clear 
 
                             echo "🔨 Rebuilding images…"
                             docker compose build
