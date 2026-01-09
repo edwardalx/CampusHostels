@@ -29,20 +29,26 @@ export default function HomePage() {
       setIsLoading(true);
       const fetchHostels = async () => {
         const response = await getHostels();
-        setHostels(response);
+        if (response.length > 0) {
+          setHostels(response);
+           setIsLoading(false);
+        }
       };
       fetchHostels();
     } catch (error) {
       console.warn("Error fetching hostels:", error);
       setIsEmpty(true);
-    } finally {
-      setTimeout(() => {
-        setIsLoading(false);
-      }, 600);
-    }
+    } 
+    // finally {
+    //   if (hostels.length > 0) {
+    //     setIsLoading(false);
+    //   }
+    //   setTimeout(() => {
+    //     setIsLoading(false);
+    //   }, 600);
+    // }
   }, []);
 
-  const navigate = useNavigate();
   // Handle search filters
   const handleSearch = useCallback((filters) => {
     setIsLoading(true);
@@ -156,15 +162,17 @@ export default function HomePage() {
           </div>
 
           {/* Grid */}
-          <HostelGrid
-            hostels={hostels}
-            isLoading={isLoading}
-            isEmpty={isEmpty}
-            onCardAction={{
-              onLike: handleHostelLike,
-              onViewDetails: handleViewDetails,
-            }}
-          />
+          {hostels.length > 0 && (
+            <HostelGrid
+              hostels={hostels}
+              isLoading={isLoading}
+              isEmpty={isEmpty}
+              onCardAction={{
+                onLike: handleHostelLike,
+                onViewDetails: handleViewDetails,
+              }}
+            />
+          )}
         </section>
       </main>
 

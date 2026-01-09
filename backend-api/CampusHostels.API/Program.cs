@@ -4,6 +4,8 @@ using CampusHostels.API.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
 using AutoMapper;
+using FluentValidation;
+using FluentValidation.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 // if (builder.Environment.IsDevelopment())
@@ -25,6 +27,10 @@ builder.Services.AddScoped<CampusHostels.API.Infrastructure.Repositories.IUnitRe
 builder.Services.AddScoped<CampusHostels.API.Infrastructure.Repositories.ITenancyRepository, CampusHostels.API.Infrastructure.Repositories.EfTenancyRepository>();
 // Token service
 builder.Services.AddScoped<CampusHostels.API.Application.Interfaces.ITokenService, CampusHostels.API.Application.Services.TokenService>();
+// Account service
+builder.Services.AddScoped<CampusHostels.API.Application.Interfaces.IAccountService, CampusHostels.API.Application.Services.AccountService>();
+// Payment service (registered so PaymentsController DI resolves)
+builder.Services.AddScoped<CampusHostels.API.Application.Interfaces.IPaymentService, CampusHostels.API.Application.Services.PaymentService>();
 builder.Services.AddSwaggerGen();
 
 // Database Configuration - Auto-detect based on environment
@@ -87,7 +93,11 @@ builder.Services.AddCors(options =>
     });
 });
 
-// Register validators as services (we'll invoke them manually in controllers)
+// Register validators and enable FluentValidation automatic model validation
+builder.Services.AddFluentValidationAutoValidation();
+builder.Services.AddValidatorsFromAssemblyContaining<CampusHostels.API.Application.Validators.RegisterDtoValidator>();
+
+// Register existing validators (kept for explicit registration compatibility)
 builder.Services.AddTransient<FluentValidation.IValidator<CampusHostels.API.Application.DTOs.UnitCreateDto>, CampusHostels.API.Application.Validators.UnitCreateDtoValidator>();
 builder.Services.AddTransient<FluentValidation.IValidator<CampusHostels.API.Application.DTOs.TenancyCreateDto>, CampusHostels.API.Application.Validators.TenancyCreateDtoValidator>();
 

@@ -30,7 +30,6 @@ public class AccountServiceTests
 
         var dto = new RegisterDto
         {
-            Username = "testuser",
             Email = "test@example.com",
             Password = "SecurePassword123!",
             Role = "tenant"
@@ -41,7 +40,7 @@ public class AccountServiceTests
 
         // Assert
         Assert.NotNull(response);
-        Assert.Equal("testuser", response.Username);
+        Assert.Equal("test@example.com", response.Email);
         Assert.Equal("test@example.com", response.Email);
         Assert.Equal("tenant", response.Role);
         Assert.NotNull(response.Token);
@@ -58,7 +57,7 @@ public class AccountServiceTests
         // Pre-create a user
         var existingUser = new User
         {
-            Username = "testuser",
+            PhoneNumber = "existing-phone",
             Email = "existing@example.com",
             PasswordHash = "hash",
             Role = "tenant"
@@ -68,7 +67,6 @@ public class AccountServiceTests
 
         var dto = new RegisterDto
         {
-            Username = "testuser",
             Email = "new@example.com",
             Password = "Password123!",
             Role = "tenant"
@@ -89,7 +87,6 @@ public class AccountServiceTests
         // Register a user so password hashing is consistent with AccountService
         var registerDto = new RegisterDto
         {
-            Username = "testuser",
             Email = "test@example.com",
             Password = "Password123!",
             Role = "tenant"
@@ -99,7 +96,7 @@ public class AccountServiceTests
 
         var dto = new LoginDto
         {
-            Username = "testuser",
+            Email = "test@example.com",
             Password = "Password123!"
         };
 
@@ -108,7 +105,7 @@ public class AccountServiceTests
 
         // Assert
         Assert.NotNull(response);
-        Assert.Equal("testuser", response.Username);
+        Assert.Equal("test@example.com", response.Email);
         Assert.NotNull(response.Token);
     }
 
@@ -122,7 +119,6 @@ public class AccountServiceTests
 
         var registerDto = new RegisterDto
         {
-            Username = "testuser",
             Email = "test@example.com",
             Password = "Password123!",
             Role = "tenant"
@@ -132,7 +128,7 @@ public class AccountServiceTests
 
         var dto = new LoginDto
         {
-            Username = "testuser",
+            Email = "test@example.com",
             Password = "WrongPassword"
         };
 

@@ -7,7 +7,7 @@ namespace CampusHostels.API.Application.Services
     {
         public User CreateSampleUser()
         {
-            return new User { Username = "sample", Email = "sample@example.com" };
+            return new User { PhoneNumber = "sample", Email = "sample@example.com" };
         }
     }
 }

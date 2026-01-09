@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Eye, EyeOff, Briefcase } from "lucide-react";
 import { Link } from "react-router-dom";
+import { RegisterApi } from "../services/AuthServices";
 
 // Layout constants
 const LAYOUT = {
@@ -89,7 +90,9 @@ const TYPOGRAPHY = {
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
-    fullName: "",
+    firstName: "",
+    lastName: "",
+    phoneNumber: "",
     email: "",
     password: "",
     confirmPassword: "",
@@ -98,7 +101,17 @@ export default function RegisterPage() {
 
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-
+  const [errorMessage, setErrorMessage] = useState({
+    general: "",
+    firstName: "",
+    lastName: "",
+    email: "",
+    phoneNumber: "",
+    password: "",
+    passwordConfirm: "",
+  });
+  const [resData, setResData] = useState(null);
+  let response;
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData((prev) => ({
@@ -107,9 +120,81 @@ export default function RegisterPage() {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Form submitted:", formData);
+    const mapppedData = {
+      firstName: formData.firstName,
+      lastName: formData.lastName,
+      phoneNumber: formData.phoneNumber,
+      email: formData.email,
+      password: formData.password,
+      isActive: formData.agreeToTerms,
+    };
+    if (formData.password !== formData.confirmPassword) {
+      setErrorMessage((prev) => ({
+        ...prev,
+        passwordConfirm: "Passwords do not match",
+      }));
+      return;
+    }
+    if (!formData.agreeToTerms) {
+      setErrorMessage((prev) => ({
+        ...prev,
+        general: "You must agree to the terms to proceed",
+      }));
+      return;
+    }
+
+    setErrorMessage({
+      general: "",
+      firstName: "",
+      lastName: "",
+      email: "",
+      phoneNumber: "",
+      password: "",
+      passwordConfirm: "",
+    });
+    setResData(null);
+    try {
+      response = await RegisterApi(mapppedData);
+      setResData(response);
+      console.log("Registration data:", response);
+    } catch (error) {
+      console.warn("Registration error:", error);
+
+      // backend validation errors
+      if (error.errors) {
+        setErrorMessage({
+          general: "",
+          firstName: error.errors.FirstName?.join(" ") || "",
+          lastName: error.errors.LastName?.[0] || "",
+          email: error.errors.Email?.join(" ") || "",
+          phoneNumber: error.errors.PhoneNumber?.[0] || "",
+          password: error.errors.Password?.[0] || "",
+        });
+      } else {
+        // fallback error
+        setErrorMessage((prev) => ({
+          ...prev,
+          general: error.error || "Registration failed",
+        }));
+      }
+    } finally {
+      console.log("errorMessage:", errorMessage);
+      if (resData.token) {
+        setFormData({
+          firstName: "",
+          lastName: "",
+          phoneNumber: "",
+          email: "",
+          password: "",
+          confirmPassword: "",
+          agreeToTerms: false,
+        });
+      }
+    }
+    console.log("Form submitted:", mapppedData);
+    console.log("Response:", resData.Email);
     // TODO: Handle registration logic
   };
 
@@ -128,7 +213,7 @@ export default function RegisterPage() {
               <header
                 className={`${SPACING.HEADER_BOTTOM} flex w-full items-center justify-between`}
               >
-                <Link to = '/'>
+                <Link to="/">
                   <div className="flex items-center gap-3">
                     <div className={`${ICON.LOGO_SIZE}`}>
                       <Briefcase className="w-6 h-6 text-teal-900" />
@@ -163,27 +248,80 @@ export default function RegisterPage() {
               {/* Form */}
               <form
                 onSubmit={handleSubmit}
+                noValidate
                 className={`flex flex-col ${SPACING.FORM_GAP}`}
               >
                 {/* Full Name */}
+
                 <label className="flex flex-col">
+                  {errorMessage.firstName && (
+                    <span className={`text-red-400 ${TYPOGRAPHY.SUBHEADING}`}>
+                      {errorMessage.firstName}
+                    </span>
+                  )}
                   <p
                     className={`text-white ${TYPOGRAPHY.LABEL} ${SPACING.LABEL_PADDING}`}
                   >
-                    Full Name
+                    First Name
                   </p>
                   <input
                     type="text"
-                    name="fullName"
-                    value={formData.fullName}
+                    name="firstName"
+                    value={formData.firstName}
                     onChange={handleChange}
-                    placeholder="Enter your full name"
+                    placeholder="Enter your first name"
+                    className={`flex w-full resize-none overflow-hidden ${INPUT.BORDER_RADIUS} ${INPUT.TEXT_COLOR} focus:outline-0 ${INPUT.FOCUS_RING} border ${INPUT.BORDER_COLOR} ${INPUT.BG_COLOR} ${INPUT.HEIGHT} ${INPUT.PLACEHOLDER_COLOR} ${INPUT.PADDING} ${TYPOGRAPHY.BODY}`}
+                  />
+                </label>
+                <label className="flex flex-col">
+                  {errorMessage.lastName && (
+                    <span className={`text-red-400 ${TYPOGRAPHY.SUBHEADING}`}>
+                      {errorMessage.lastName}
+                    </span>
+                  )}
+                  <p
+                    className={`text-white ${TYPOGRAPHY.LABEL} ${SPACING.LABEL_PADDING}`}
+                  >
+                    Last Name
+                  </p>
+                  <input
+                    type="text"
+                    inputMode="tel" // still shows numeric keypad on mobile
+                    name="lastName"
+                    value={formData.lastName}
+                    onChange={handleChange}
+                    placeholder="Enter your last name"
+                    className={`flex w-full resize-none overflow-hidden ${INPUT.BORDER_RADIUS} ${INPUT.TEXT_COLOR} focus:outline-0 ${INPUT.FOCUS_RING} border ${INPUT.BORDER_COLOR} ${INPUT.BG_COLOR} ${INPUT.HEIGHT} ${INPUT.PLACEHOLDER_COLOR} ${INPUT.PADDING} ${TYPOGRAPHY.BODY}`}
+                  />
+                </label>
+                <label className="flex flex-col">
+                  {errorMessage.phoneNumber && (
+                    <span className={`text-red-400 ${TYPOGRAPHY.SUBHEADING}`}>
+                      {errorMessage.phoneNumber}
+                    </span>
+                  )}
+                  <p
+                    className={`text-white ${TYPOGRAPHY.LABEL} ${SPACING.LABEL_PADDING}`}
+                  >
+                    Phone Number
+                  </p>
+                  <input
+                    type="tel"
+                    name="phoneNumber"
+                    value={formData.phoneNumber}
+                    onChange={handleChange}
+                    placeholder="+233 123 456 7890"
                     className={`flex w-full resize-none overflow-hidden ${INPUT.BORDER_RADIUS} ${INPUT.TEXT_COLOR} focus:outline-0 ${INPUT.FOCUS_RING} border ${INPUT.BORDER_COLOR} ${INPUT.BG_COLOR} ${INPUT.HEIGHT} ${INPUT.PLACEHOLDER_COLOR} ${INPUT.PADDING} ${TYPOGRAPHY.BODY}`}
                   />
                 </label>
 
                 {/* Email Address */}
                 <label className="flex flex-col">
+                  {errorMessage.email && (
+                    <span className={`text-red-400 ${TYPOGRAPHY.SUBHEADING}`}>
+                      {errorMessage.email}
+                    </span>
+                  )}
                   <p
                     className={`text-white ${TYPOGRAPHY.LABEL} ${SPACING.LABEL_PADDING}`}
                   >
@@ -194,13 +332,18 @@ export default function RegisterPage() {
                     name="email"
                     value={formData.email}
                     onChange={handleChange}
-                    placeholder="Enter your email"
+                    placeholder={"Enter your email"}
                     className={`flex w-full resize-none overflow-hidden ${INPUT.BORDER_RADIUS} ${INPUT.TEXT_COLOR} focus:outline-0 ${INPUT.FOCUS_RING} border ${INPUT.BORDER_COLOR} ${INPUT.BG_COLOR} ${INPUT.HEIGHT} ${INPUT.PLACEHOLDER_COLOR} ${INPUT.PADDING} ${TYPOGRAPHY.BODY}`}
                   />
                 </label>
 
                 {/* Password */}
                 <label className="flex flex-col">
+                  {errorMessage.password && (
+                    <span className={`text-red-400 ${TYPOGRAPHY.SUBHEADING}`}>
+                      {errorMessage.password}
+                    </span>
+                  )}
                   <p
                     className={`text-white ${TYPOGRAPHY.LABEL} ${SPACING.LABEL_PADDING}`}
                   >
@@ -231,6 +374,11 @@ export default function RegisterPage() {
 
                 {/* Confirm Password */}
                 <label className="flex flex-col">
+                  {errorMessage.passwordConfirm && (
+                    <span className={`text-red-400 ${TYPOGRAPHY.SUBHEADING}`}>
+                      {errorMessage.passwordConfirm}
+                    </span>
+                  )}
                   <p
                     className={`text-white ${TYPOGRAPHY.LABEL} ${SPACING.LABEL_PADDING}`}
                   >
@@ -270,6 +418,7 @@ export default function RegisterPage() {
                     type="checkbox"
                     name="agreeToTerms"
                     checked={formData.agreeToTerms}
+                    required
                     onChange={handleChange}
                     className="h-5 w-5 rounded border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-cyan-500 focus:ring-cyan-500/50 cursor-pointer"
                   />
@@ -287,6 +436,13 @@ export default function RegisterPage() {
                     </a>
                     .
                   </label>
+                  <div>
+                    {!formData.agreeToTerms && (
+                      <span className={`text-red-400 ${TYPOGRAPHY.SUBHEADING}`}>
+                        {errorMessage.general}
+                      </span>
+                    )}
+                  </div>
                 </div>
 
                 {/* Submit Button */}

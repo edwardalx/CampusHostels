@@ -4,6 +4,6 @@ namespace CampusHostels.API.Infrastructure.Repositories
 {
     public class PlaceholderRepository
     {
-        public User GetSample() => new User { Username = "repo-sample" };
+        public User GetSample() => new User { PhoneNumber = "repo-sample" };
     }
 }

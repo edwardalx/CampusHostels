@@ -6,7 +6,7 @@ public class User
 {
     public int Id { get; set; }
     [Required]
-    public string Username { get; set; } = string.Empty;
+    public string PhoneNumber { get; set; } = string.Empty;
     [Required]
     public string FirstName { get; set; } = string.Empty;
 
@@ -22,5 +22,5 @@ public class User
     public DateTime? RefreshTokenExpiryTime { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? UpdatedAt { get; set; }
-    public bool IsActive { get; set; } = true;
+    public bool IsActive { get; set; } = false;
 }

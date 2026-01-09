@@ -1,18 +1,83 @@
 import React, { useState } from "react";
 import { Eye, EyeOff, Briefcase } from "lucide-react";
 import { Chrome, Facebook } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { FcGoogle } from "react-icons/fc";
 import { FaFacebook } from "react-icons/fa";
+import { LiginApi } from "../services/AuthServices";
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("");
+  const [resData, setResData] = useState(null);
+  const [email_phoneNumber, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [errorMsg, setErrorMsg] = useState({
+    email: "",
+    password: "",
+    general: "",
+  });
   const [showPassword, setShowPassword] = useState(false);
-
-  const handleLogin = (e) => {
+  const navigate = useNavigate();
+  let response;
+  const handleLogin = async (e) => {
     e.preventDefault();
-    console.log("Login:", { email, password });
+    // if (!email_phoneNumber && !password) {
+    //   setErrorMsg((prev) => ({
+    //     ...prev,
+    //     general: "Please enter both email and password.",
+    //   }));
+    //   return;
+    // }
+    // if (!email_phoneNumber.includes("@")) {
+    //   setErrorMsg((prev) => ({
+    //     ...prev,
+    //     email: "Please enter a valid email address.",
+    //   }));
+    //   return;
+    // }
+    // if (!email_phoneNumber) {
+    //   setErrorMsg((prev) => ({ ...prev, email: "Email is required." }));
+    //   return;
+    // }
+    // if (!password) {
+    //   setErrorMsg((prev) => ({ ...prev, password: "Password is required." }));
+    //   return;
+    // }
+    const loginData = {
+      email: email_phoneNumber,
+      phoneNumber: email_phoneNumber,
+      password: password,
+    };
+    try {
+      setErrorMsg({ email: "", password: "", general: "" });
+      response = await LiginApi({ loginData });
+      setResData(response);
+      console.log("Response:", response);
+    } catch (error) {
+      console.error("Login error:", error);
+      // setErrorMsg({ email: "", password: "", general: "" });
+      if (error.error.includes("password")) {
+        setErrorMsg((prev) => ({
+          ...prev,
+          password: error.error,
+        }));
+      } else {
+        setErrorMsg((prev) => ({
+          ...prev,
+          general:
+            error.error ||
+            "Login failed. Please check your credentials and try again.",
+        }));
+      }
+    } finally {
+      if (response && response.token) {
+        setEmail("");
+        setPassword("");
+        localStorage.setItem("token", response.token);
+        localStorage.setItem("user", JSON.stringify(response.phoneNumber));
+        navigate("/");
+      }
+    }
+    console.log("Login attempted", errorMsg);
     // TODO: Handle login logic
   };
 
@@ -42,7 +107,7 @@ export default function LoginPage() {
           {/* Header */}
           <div className="mb-12">
             <div className="flex items-center justify-between mb-12">
-              <Link to='/'>
+              <Link to="/">
                 <div className="flex items-center space-x-3">
                   <div className="bg-cyan-400 p-2 rounded-lg">
                     <Briefcase className="w-6 h-6 text-teal-900" />
@@ -77,14 +142,23 @@ export default function LoginPage() {
                 htmlFor="email"
                 className="block text-white font-medium mb-3"
               >
-                Email or Username
+                Email or Phone Number
               </label>
+              <div>
+                {errorMsg.general && (
+                  <span
+                    className={`text-red-400 text-base font-normal leading-normal mt-2`}
+                  >
+                    {errorMsg.general}
+                  </span>
+                )}
+              </div>
               <input
                 type="text"
                 id="email"
-                value={email}
+                value={email_phoneNumber}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="youname@email.com"
+                placeholder="youname@email.com   or +233 123 456 7890"
                 className="w-full h-10 px-4 py-5 bg-teal-700/50 border border-teal-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-transparent"
               />
             </div>
@@ -97,6 +171,15 @@ export default function LoginPage() {
               >
                 Password
               </label>
+              <div>
+                {errorMsg.password && (
+                  <span
+                    className={`text-red-400 text-base font-normal leading-normal mt-2`}
+                  >
+                    {errorMsg.password}
+                  </span>
+                )}
+              </div>
               <div className="relative">
                 <input
                   type={showPassword ? "text" : "password"}

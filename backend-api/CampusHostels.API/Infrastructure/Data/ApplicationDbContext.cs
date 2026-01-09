@@ -22,7 +22,7 @@ public class ApplicationDbContext : DbContext
         {
             entity.HasKey(e => e.Id);
             entity.HasIndex(e => e.Email).IsUnique();
-            entity.HasIndex(e => e.Username).IsUnique();
+            entity.HasIndex(e => e.PhoneNumber).IsUnique();
             entity.Property(e => e.Role).HasDefaultValue("Tenant");
         });
 
