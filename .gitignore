@@ -112,3 +112,6 @@ __pycache__/
 db.sqlite3.bak
 inspect_schema.py
 *.sln
+# SQLite runtime files
+backend-admin/db.sqlite3-wal
+backend-admin/db.sqlite3-shm
