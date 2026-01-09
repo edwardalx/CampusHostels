@@ -19,9 +19,9 @@ public class AccountsController : ControllerBase
     public async Task<IActionResult> Register([FromBody] RegisterDto dto)
     {
         try
-        {
-            var response = await _accountService.RegisterAsync(dto);
-            return CreatedAtAction(null, new { id = response.Username }, response);
+            {
+                var response = await _accountService.RegisterAsync(dto);
+                return CreatedAtAction(null, new { id = response.Email }, response);
         }
         catch (InvalidOperationException ex)
         {
