@@ -5,7 +5,7 @@
 namespace CampusHostels.API.Migrations
 {
     /// <inheritdoc />
-    public partial class AddedPropertyPricDecimal : Migration
+    public partial class UsernameToPhoneNumber : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)

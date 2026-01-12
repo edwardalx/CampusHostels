@@ -17,6 +17,7 @@ import { useNavigate, NavLink } from "react-router-dom";
 export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [activeNavLink, setActiveNavLink] = useState("HOME");
+  const [token, setToken] = useState(localStorage.getItem("token"));
 
   const navLinks = ["HOME", "HISTORY", "TENANCY"];
   const navigate = useNavigate();
@@ -49,6 +50,12 @@ export default function Header() {
     console.log("Navigate to sign up");
     navigate("/register");
   };
+  const handleLogout = () => {
+    console.log("Logging out");
+    localStorage.removeItem("token");
+    setToken(null);
+    navigate("/");
+  }
 
   return (
     <header className="bg-gradient-to-r from-cyan-500 via-teal-600 to-red-500 shadow-lg sticky top-0 z-50">
@@ -81,12 +88,21 @@ export default function Header() {
 
           {/* Desktop Auth Buttons */}
           <div className="hidden md:flex items-center space-x-3">
+            {!token ? (
             <button
               onClick={handleLogin}
               className="px-6 py-2 text-white font-medium text-sm hover:bg-white hover:text-cyan-500 rounded transition-colors"
             >
               LOGIN
             </button>
+            ) : (
+            <button
+              onClick={handleLogout}
+              className="px-6 py-2 text-white font-medium text-sm hover:bg-white hover:text-cyan-500 rounded transition-colors"
+            >
+              LOGOUT
+            </button>
+            )}
             <button
               onClick={handleSignUp}
               className="px-6 py-2 bg-red-500 text-white font-medium text-sm rounded hover:bg-orange-600 transition-colors"
