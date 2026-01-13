@@ -137,7 +137,7 @@ export default function Header() {
                   onClick={() => handleNavClick(link)}
                   className={`block w-full text-left px-4 py-2 rounded font-medium text-sm transition-colors ${
                     activeNavLink === link
-                      ? "bg-white bg-opacity-20 text-white"
+                      ? "bg-gradient-to-r from-teal-400 to-red-400 bg-opacity-20 !text-black"
                       : "text-white hover:bg-white hover:bg-opacity-10"
                   }`}
                 >
