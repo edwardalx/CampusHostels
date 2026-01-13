@@ -102,10 +102,10 @@ export default function LoginPage() {
       </div>
 
       {/* Right Side - Login Form */}
-      <div className="w-full lg:w-1/2 bg-gradient-to-br from-teal-800 to-teal-900 flex items-center justify-center p-8">
-        <div className="w-full max-w-md">
+      <div className=" flex min-h-screen w-full lg:w-1/2 flex-col items-center justify-center bg-gradient-to-br from-teal-800 to-teal-900 dark:bg-gray-900">
+        <div className="w-full max-w-md flex flex-col">
           {/* Header */}
-          <div className="mb-12">
+          <div className="mb-12 ">
             <div className="flex items-center justify-between mb-12">
               <Link to="/">
                 <div className="flex items-center space-x-3">
@@ -129,7 +129,7 @@ export default function LoginPage() {
             <h1 className="text-5xl font-bold text-white mb-4">
               Welcome Back!
             </h1>
-            <p className="text-gray-300 text-lg">
+            <p className="text-gray-300 text-lg mb-4">
               Log in to continue your adventure.
             </p>
           </div>
@@ -229,16 +229,16 @@ export default function LoginPage() {
             <button
               type="button"
               onClick={handleGoogleLogin}
-              className="w-full py-4 gap-2 bg-white text-gray-700 rounded-lg font-medium hover:bg-gray-100 transition-colors duration-200 flex items-center justify-center space-x-3 shadow-md"
+              className="w-full py-4 gap-2 bg-gray-800 text-gray-700 rounded-lg font-medium hover:bg-gray-100 transition-colors duration-200 flex items-center justify-center space-x-3 shadow-md"
             >
-              <Chrome className="w-5 h-5" />
+              <FcGoogle className="w-5 h-5" />
               <span>Continue with Google</span>
             </button>
 
             <button
               type="button"
               onClick={handleFacebookLogin}
-              className="w-full py-4 gap-2 bg-white text-gray-700 rounded-lg font-medium hover:bg-gray-100 transition-colors duration-200 flex items-center justify-center space-x-3 shadow-md"
+              className="w-full py-4 gap-2 bg-gray-800 text-gray-700 rounded-lg font-medium hover:bg-gray-100 transition-colors duration-200 flex items-center justify-center space-x-3 shadow-md"
             >
               <Facebook className="w-5 h-5 text-[#1877F2]" />
               <span>Continue with Facebook</span>

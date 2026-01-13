@@ -143,10 +143,10 @@ export default function HomePage() {
           title="EXPLORE HOSTELS & CO-LIVING"
           subtitle="Find your perfect student accommodation"
         >
-          <SearchBar
+          {/* <SearchBar
             onSearch={handleSearch}
             onFilterClick={handleFilterClick}
-          />
+          /> */}
         </HeroSection>
 
         {/* Hostel Grid Section */}

@@ -12,7 +12,7 @@
 
 import React, { useState } from "react";
 import { Menu, X } from "lucide-react";
-import { useNavigate, NavLink } from "react-router-dom";
+import { useNavigate, NavLink, Link } from "react-router-dom";
 
 export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -21,7 +21,6 @@ export default function Header() {
 
   const navLinks = ["HOME", "HISTORY", "TENANCY"];
   const navigate = useNavigate();
-
 
   // Handle navigation
   const handleNavClick = (link) => {
@@ -55,19 +54,22 @@ export default function Header() {
     localStorage.removeItem("token");
     setToken(null);
     navigate("/");
-  }
+  };
 
   return (
     <header className="bg-gradient-to-r from-cyan-500 via-teal-600 to-red-500 shadow-lg sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
-          <div className="flex-shrink-0">
-            <h1 className="text-2xl sm:text-3xl font-bold">
-              <span className="text-white">Rent</span>
-              <span className="text-red-500">in</span>
-            </h1>
-          </div>
+
+          <Link to="/" className="sm:pointer-events-none">
+            <div className="flex-shrink-0">
+              <h1 className="text-2xl sm:text-3xl font-bold">
+                <span className="text-white">Rent</span>
+                <span className="text-red-500">in</span>
+              </h1>
+            </div>
+          </Link>
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-8">
@@ -77,7 +79,7 @@ export default function Header() {
                 onClick={() => handleNavClick(link)}
                 className={`text-sm font-medium transition-colors pb-2 ${
                   activeNavLink === link
-                    ? "text-white border-b-2 border-white"
+                    ? "text-white bg-white transition-colors"
                     : "text-gray-100 hover:text-white"
                 }`}
               >
@@ -89,23 +91,23 @@ export default function Header() {
           {/* Desktop Auth Buttons */}
           <div className="hidden md:flex items-center space-x-3">
             {!token ? (
-            <button
-              onClick={handleLogin}
-              className="px-6 py-2 text-white font-medium text-sm hover:bg-white hover:text-cyan-500 rounded transition-colors"
-            >
-              LOGIN
-            </button>
+              <button
+                onClick={handleLogin}
+                className="px-6 py-2 text-white font-medium text-sm hover:bg-white hover:text-cyan-500 rounded transition-colors"
+              >
+                LOGIN
+              </button>
             ) : (
-            <button
-              onClick={handleLogout}
-              className="px-6 py-2 text-white font-medium text-sm hover:bg-white hover:text-cyan-500 rounded transition-colors"
-            >
-              LOGOUT
-            </button>
+              <button
+                onClick={handleLogout}
+                className="px-6 py-2 text-white font-medium text-sm hover:bg-white hover:text-cyan-500 rounded transition-colors"
+              >
+                LOGOUT
+              </button>
             )}
             <button
               onClick={handleSignUp}
-              className="px-6 py-2 bg-red-500 text-white font-medium text-sm rounded hover:bg-orange-600 transition-colors"
+              className="px-6 py-2 bg-white-500 text-white font-medium text-sm rounded hover:bg-cyan-500 transition-colors"
             >
               SIGN UP
             </button>
@@ -114,7 +116,7 @@ export default function Header() {
           {/* Mobile Menu Button */}
           <button
             onClick={() => setMenuOpen(!menuOpen)}
-            className="md:hidden p-2 rounded-lg hover:bg-white hover:bg-opacity-20 transition-colors"
+            className="md:hidden p-2 rounded-lg hover:bg-red-400 hover:bg-opacity-20 transition-colors"
             aria-label="Toggle menu"
           >
             {menuOpen ? (
@@ -134,7 +136,7 @@ export default function Header() {
                   key={link}
                   onClick={() => handleNavClick(link)}
                   className={`block w-full text-left px-4 py-2 rounded font-medium text-sm transition-colors ${
-                    activeLink === link
+                    activeNavLink === link
                       ? "bg-white bg-opacity-20 text-white"
                       : "text-white hover:bg-white hover:bg-opacity-10"
                   }`}
@@ -157,7 +159,7 @@ export default function Header() {
                     onSignUp();
                     setMenuOpen(false);
                   }}
-                  className="w-full px-4 py-2 bg-red-500 text-white font-medium text-sm rounded hover:bg-orange-600 transition-colors"
+                  className="w-full px-4 py-2 bg-white-500 text-white font-medium text-sm rounded hover:bg-orange-600 transition-colors"
                 >
                   SIGN UP
                 </button>

@@ -41,7 +41,7 @@ const INPUT = {
 // Button constants
 const BUTTON = {
   PRIMARY: {
-    BG: "bg-cyan-500",
+    BG: "bg-white",
     TEXT: "text-white",
     HOVER: "hover:bg-cyan-600",
     HEIGHT: "h-12",
@@ -227,7 +227,7 @@ export default function RegisterPage() {
                   </p>
                   <Link
                     to="/login"
-                    className={`flex min-w-[84px] cursor-pointer items-center justify-center overflow-hidden ${BUTTON.PRIMARY.BORDER_RADIUS} ${BUTTON.PRIMARY.HEIGHT} ${BUTTON.PRIMARY.PADDING} ${BUTTON.PRIMARY.BG} ${BUTTON.PRIMARY.TEXT} ${TYPOGRAPHY.CAPTION} ${BUTTON.PRIMARY.FONT_WEIGHT} ${BUTTON.PRIMARY.HOVER} transition-colors`}
+                    className={`flex min-w-[84px] cursor-pointer items-center justify-center overflow-hidden ${BUTTON.PRIMARY.BORDER_RADIUS} ${BUTTON.PRIMARY.HEIGHT} ${BUTTON.PRIMARY.PADDING} ${BUTTON.PRIMARY.TEXT} ${TYPOGRAPHY.CAPTION} ${BUTTON.PRIMARY.FONT_WEIGHT} transition-colors`}
                   >
                     <span className="truncate">Log In</span>
                   </Link>
