@@ -9,20 +9,20 @@ export function Tile({ hostel = {}, unit = {} }) {
     e.stopPropagation();
     navigate(`/payments/hostel/${hostel.id}/room/${unit.id}`);
   };
-  const handleTouch = (e) => {
-    localStorage.setItem("selectedRoom", JSON.stringify(unit));
-  };
+  // const handleTouch = (e) => {
+  //   localStorage.setItem("selectedRoom", JSON.stringify(unit));
+  // };
 
-  const handleRightClick = () => {
-    localStorage.setItem("selectedRoom", JSON.stringify(unit));
-  };
+  // const handleRightClick = () => {
+  //   localStorage.setItem("selectedRoom", JSON.stringify(unit));
+  // };
   return (
     <div>
       <Link
         to={`/payments/hostel/${hostel.id}/room/${unit.id}`}
         className="tile block bg-white rounded-2xl overflow-hidden shadow-md h-full cursor-pointer transition-all duration-500 hover:translate-x-2 hover:shadow-xl"
-        onTouchStart={handleTouch}
-        onContextMenu={handleRightClick}
+        // onTouchStart={handleTouch}
+        // onContextMenu={handleRightClick}
       >
         <div className="transition-all duration-500 rounded-lg shadow-md overflow-hidden flex flex-col  size:full  hover:translate-x-2 hover:shadow-xl">
           <img

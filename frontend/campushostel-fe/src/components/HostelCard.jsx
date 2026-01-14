@@ -20,8 +20,7 @@
 
 import React, { useState } from "react";
 import { Heart, MapPin, Star } from "lucide-react";
-import { useNavigate, useParams } from "react-router-dom";
-
+import { redirect, useNavigate, useParams, Link } from "react-router-dom";
 
 export default function HostelCard({
   hostel = {
@@ -36,7 +35,6 @@ export default function HostelCard({
     isFavorite: false,
   },
   onLike = () => {},
-  onViewDetails = () => {},
 }) {
   const [isFavorite, setIsFavorite] = useState(hostel.isFavorite);
 
@@ -47,7 +45,7 @@ export default function HostelCard({
   };
   const navigate = useNavigate();
   const handleViewDetails = () => {
-    localStorage.setItem("selectedHostel", JSON.stringify(hostel.id));
+    // localStorage.setItem("selectedHostel", JSON.stringify(hostel.id));
     navigate(`/hostel/${hostel.id}`);
   };
   const getTagColor = (tag) => {
@@ -66,13 +64,14 @@ export default function HostelCard({
     <div className="bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 flex flex-col h-full">
       {/* Image Container */}
       <div className="relative overflow-hidden aspect-video sm:aspect-square">
-        <img
-          src={hostel.imageUrl}
-          alt={hostel.name}
-          className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
-          loading="lazy"
-        />
-
+        <Link to={`/hostel/${hostel.id}`}>
+          <img
+            src={hostel.imageUrl}
+            alt={hostel.name}
+            className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+            loading="lazy"
+          />
+        </Link>
         {/* Tag Badge */}
         {hostel.tag && (
           <div
@@ -136,7 +135,7 @@ export default function HostelCard({
         <div className="flex items-center justify-between gap-3 mt-auto pt-4 border-t border-gray-200">
           <div className="flex">
             <p className="text-xs text-secondary-gray">From</p>
-              GH₵{hostel.startingPrice} 
+            GH₵{hostel.startingPrice}
             <p className="text-base sm:text-lg font-bold text-secondary-dark-gray">
               <span className="text-xs font-normal">/Month</span>
             </p>

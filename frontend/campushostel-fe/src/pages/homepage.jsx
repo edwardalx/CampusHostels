@@ -16,7 +16,7 @@
 import React, { useState, useCallback, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { getHostels } from "../services/HostelServices";
-import { HeroSection, SearchBar, HostelGrid, Footer} from "../components";
+import { HeroSection, SearchBar, HostelGrid, Footer } from "../components";
 import SkeletonCard from "../components/SkeletonCard";
 
 export default function HomePage() {
@@ -32,14 +32,15 @@ export default function HomePage() {
         const response = await getHostels();
         if (response.length > 0) {
           setHostels(response);
-           setIsLoading(false);
+          setIsLoading(false);
         }
       };
       fetchHostels();
+      localStorage.clear();
     } catch (error) {
       console.warn("Error fetching hostels:", error);
       setIsEmpty(true);
-    } 
+    }
     // finally {
     //   if (hostels.length > 0) {
     //     setIsLoading(false);
@@ -158,12 +159,12 @@ export default function HomePage() {
               <span className="text-primary-coral">HOSTELS & CO-LIVING</span>
             </h2>
             <p className="text-secondary-gray text-sm sm:text-base">
-              {!isLoading?hostels.length:""} properties available
+              {!isLoading ? hostels.length : ""} properties available
             </p>
           </div>
 
           {/* Grid */}
-          {!isLoading? (
+          {!isLoading ? (
             <HostelGrid
               hostels={hostels}
               isLoading={isLoading}
@@ -173,11 +174,13 @@ export default function HomePage() {
                 onViewDetails: handleViewDetails,
               }}
             />
-          ):(<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 lg:gap-6">
-                  {[...Array(8)].map((_, i) => (
-                    <SkeletonCard key={i} />
-                  ))}
-                </div>)}
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 lg:gap-6">
+              {[...Array(8)].map((_, i) => (
+                <SkeletonCard key={i} />
+              ))}
+            </div>
+          )}
         </section>
       </main>
 

@@ -15,7 +15,7 @@ export default function HostelDetails() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const { id: routeId } = useParams();
-  let storedHostel = JSON.parse(localStorage.getItem("selectedHostel"));
+  // let storedHostel = JSON.parse(localStorage.getItem("selectedHostel"));
   const hostelId = Number(routeId);
   const selectedHostelNameUpper = selectedHostel.name
     ? selectedHostel.name.toUpperCase()
@@ -41,7 +41,7 @@ export default function HostelDetails() {
 
   useEffect(() => {
     try {
-      storedHostel = JSON.parse(storedHostel);
+      // storedHostel = JSON.parse(storedHostel);
       const fetchUnits = async () => {
         const response = await getUnitsByPropertyId(hostelId || storedHostel);
         setUnits(response);
@@ -49,7 +49,7 @@ export default function HostelDetails() {
       fetchUnits();
     } catch (error) {
       console.warn("Error fetching hostel details:", error);
-      setError("Failed to load hostel details. Please try again later.");
+      setError("Failed to load hostel units. Please try again later.");
     }
   }, [hostelId]);
   console.log("units", units);
