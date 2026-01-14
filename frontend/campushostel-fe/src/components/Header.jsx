@@ -18,8 +18,8 @@ export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [activeNavLink, setActiveNavLink] = useState("HOME");
   const [token, setToken] = useState(localStorage.getItem("token"));
-
-  const navLinks = ["HOME", "HISTORY", "TENANCY"];
+  let navLinks
+  token? navLinks = ["HOME", "HISTORY", "TENANCY"]: navLinks = ["HOME"];
   const navigate = useNavigate();
 
   // Handle navigation
@@ -72,6 +72,7 @@ export default function Header() {
           </Link>
 
           {/* Desktop Navigation */}
+
           <nav className="hidden md:flex items-center space-x-8">
             {navLinks.map((link) => (
               <button
@@ -105,12 +106,14 @@ export default function Header() {
                 LOGOUT
               </button>
             )}
-            <button
-              onClick={handleSignUp}
-              className="px-6 py-2 bg-white-500 text-white font-medium text-sm rounded hover:bg-cyan-500 transition-colors"
-            >
-              SIGN UP
-            </button>
+            {!token && (
+              <button
+                onClick={handleSignUp}
+                className={`px-6 py-2 bg-white-500 text-white font-medium text-sm rounded hover:bg-cyan-500 transition-colors`}
+              >
+                SIGN UP
+              </button>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -135,7 +138,7 @@ export default function Header() {
                 <button
                   key={link}
                   onClick={() => handleNavClick(link)}
-                  className={`block w-full text-left px-4 py-2 rounded font-medium text-sm transition-colors ${
+                  className={`block w-full  px-4 py-2 rounded font-medium text-sm transition-colors ${
                     activeNavLink === link
                       ? "bg-gradient-to-r from-teal-400 to-red-400 bg-opacity-20 !text-black"
                       : "text-white hover:bg-white hover:bg-opacity-10"
@@ -145,21 +148,35 @@ export default function Header() {
                 </button>
               ))}
               <div className="pt-4 border-t border-white border-opacity-20 space-y-2">
+                {!token ? (
+                  <button
+                    onClick={() => {
+                      handleLogin();
+                      setMenuOpen(!menuOpen);
+                    }}
+                    className="w-full px-4 py-2 text-white font-medium text-sm hover:bg-white hover:bg-opacity-20 rounded transition-colors"
+                  >
+                    LOGIN
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => {
+                      handleLogout();
+                      setMenuOpen(!menuOpen);
+                    }}
+                    className="w-full px-4 py-2 text-white font-medium text-sm hover:bg-white hover:bg-opacity-20 rounded transition-colors"
+                  >
+                    LOGOUT
+                  </button>
+                )}
                 <button
                   onClick={() => {
-                    onLogin();
-                    setMenuOpen(false);
+                    handleSignUp();
+                    setMenuOpen(!menuOpen);
                   }}
-                  className="w-full px-4 py-2 text-white font-medium text-sm hover:bg-white hover:bg-opacity-20 rounded transition-colors"
-                >
-                  LOGIN
-                </button>
-                <button
-                  onClick={() => {
-                    onSignUp();
-                    setMenuOpen(false);
-                  }}
-                  className="w-full px-4 py-2 bg-white-500 text-white font-medium text-sm rounded hover:bg-orange-600 transition-colors"
+                  className={`${
+                    token && "hidden"
+                  } w-full px-4 py-2 bg-white-500 text-white font-medium text-sm rounded hover:bg-orange-600 transition-colors`}
                 >
                   SIGN UP
                 </button>
