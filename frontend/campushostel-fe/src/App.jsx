@@ -22,6 +22,14 @@ function App() {
             path="/tenancy"
             element={<p>Tenancy Page (Coming Soon)</p>}
           />
+             <Route
+            path="/About"
+            element={<p>About Page (Coming Soon)</p>}
+          />
+             <Route
+            path="/Contact"
+            element={<p>Contact Page (Coming Soon)</p>}
+          />
           <Route path="/hostel/:id" element={<HostelDetails />}></Route>
           <Route  path="/payments/hostel/:hostelId/room/:roomId" element={<Payments />} />
         </Route>

@@ -24,6 +24,8 @@ export default function HomePage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isEmpty, setIsEmpty] = useState(false);
   const [filteredHostels, setFilteredHostels] = useState([]);
+  let links = ["Home", "About", "Contact"];
+  const navigate = useNavigate();
   //fetch hostels
   useEffect(() => {
     try {
@@ -130,7 +132,16 @@ export default function HomePage() {
 
   // Handle footer links
   const handleFooterLink = (link) => {
-    console.log("Footer link clicked:", link);
+    if (link === "Home") {
+      navigate(`/`);
+      console.log("Navigating to Home");
+    }
+    if (link === "About") {
+      navigate("/about");
+    }
+    if (link === "Contact") {
+      navigate("/contact");
+    }
   };
 
   return (
@@ -186,7 +197,7 @@ export default function HomePage() {
 
       {/* Footer */}
       <Footer
-        links={["Home", "About", "Company", "Links", "Contact"]}
+        links={links}
         onLinkClick={handleFooterLink}
         socials={[
           { id: "facebook", icon: "facebook", url: "https://facebook.com" },

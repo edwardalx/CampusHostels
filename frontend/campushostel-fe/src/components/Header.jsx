@@ -19,7 +19,7 @@ export default function Header() {
   const [activeNavLink, setActiveNavLink] = useState("HOME");
   const [token, setToken] = useState(localStorage.getItem("token"));
   let navLinks
-  token? navLinks = ["HOME", "HISTORY", "TENANCY"]: navLinks = ["HOME"];
+  token? navLinks = ["HOME", "HISTORY", "TENANCY"]: navLinks = ["HOME", "ABOUT", "CONTACT"];
   const navigate = useNavigate();
 
   // Handle navigation
@@ -35,6 +35,12 @@ export default function Header() {
     }
     if (link === "TENANCY") {
       navigate(`/tenancy`);
+    }
+    if (link === "ABOUT") {
+      navigate("/about");
+    }
+    if (link === "CONTACT") {
+      navigate("/contact");
     }
     // Implement routing: navigate(`/${link.toLowerCase()}`)
   };
