@@ -101,12 +101,12 @@ export default function HostelCard({
       {/* Content Container */}
       <div className="p-4 sm:p-5 flex flex-col flex-grow">
         {/* Name */}
-        <h3 className="text-base sm:text-lg font-bold text-secondary-dark-gray mb-1 line-clamp-1">
+        <h3 className="text-base sm:text-lg font-bold !text-gray-600 mb-1 line-clamp-1">
           {hostel.name}
         </h3>
 
         {/* Location */}
-        <div className="flex items-center gap-1 text-secondary-gray text-sm mb-3">
+        <div className="flex items-center gap-1 !text-gray-600 text-sm mb-3">
           <MapPin size={16} className="flex-shrink-0" />
           <span className="line-clamp-1">{hostel.location}</span>
         </div>
@@ -125,18 +125,18 @@ export default function HostelCard({
                 }`}
               />
             ))}
-            <span className="text-xs text-secondary-gray ml-1">
+            <span className="text-xs text-gray-600 ml-1">
               {hostel.rating}
             </span>
           </div>
         </div>
 
         {/* Price and Button Row */}
-        <div className="flex items-center justify-between gap-3 mt-auto pt-4 border-t border-gray-200">
+        <div className="flex items-center justify-between gap-3 mt-auto pt-4 border-t border-gray-400">
           <div className="flex">
-            <p className="text-xs text-secondary-gray">From</p>
+            <p className="text-xs text-gray-600">From</p>
             GH₵{hostel.startingPrice}
-            <p className="text-base sm:text-lg font-bold text-secondary-dark-gray">
+            <p className="text-base sm:text-lg font-bold text-gray-600">
               <span className="text-xs font-normal">/Month</span>
             </p>
           </div>
