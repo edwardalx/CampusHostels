@@ -133,8 +133,8 @@ export default function HostelCard({
 
         {/* Price and Button Row */}
         <div className="flex items-center justify-between gap-3 mt-auto pt-4 border-t border-gray-400">
-          <div className="flex">
-            <p className="text-xs text-gray-600">From</p>
+          <div className="flex text-teal-400" >
+            <p className="text-xs text-gray-600">From: </p>
             GH₵{hostel.startingPrice}
             <p className="text-base sm:text-lg font-bold text-gray-600">
               <span className="text-xs font-normal">/Month</span>
