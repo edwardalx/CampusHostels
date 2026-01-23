@@ -113,7 +113,7 @@ export default function RegisterPage() {
     passwordConfirm: "",
   });
   const [resData, setResData] = useState(null);
-  const [ storedToken, setStoredToken ] = useState(null);
+  const [storedToken, setStoredToken] = useState(null);
   let response;
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
