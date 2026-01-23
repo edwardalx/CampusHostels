@@ -76,7 +76,7 @@ export default function HostelCard({
         {hostel.tag && (
           <div
             className={`absolute top-3 left-3 ${getTagColor(
-              hostel.tag
+              hostel.tag,
             )} text-white text-xs sm:text-sm font-medium px-3 py-1 rounded-full`}
           >
             {hostel.tag}
@@ -125,15 +125,13 @@ export default function HostelCard({
                 }`}
               />
             ))}
-            <span className="text-xs text-gray-600 ml-1">
-              {hostel.rating}
-            </span>
+            <span className="text-xs text-gray-600 ml-1">{hostel.rating}</span>
           </div>
         </div>
 
         {/* Price and Button Row */}
         <div className="flex items-center justify-between gap-3 mt-auto pt-4 border-t border-gray-400">
-          <div className="flex text-teal-400" >
+          <div className="flex text-teal-400">
             <p className="text-xs text-gray-600">From: </p>
             GH₵{hostel.startingPrice}
             <p className="text-base sm:text-lg font-bold text-gray-600">

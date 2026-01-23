@@ -1,7 +1,8 @@
-import React, { useState } from "react";
+import React, { use, useEffect, useState } from "react";
 import { Eye, EyeOff, Briefcase } from "lucide-react";
 import { Link } from "react-router-dom";
 import { RegisterApi } from "../services/AuthServices";
+import RegSuccessModel from "../components/RegSuccessModel";
 
 // Layout constants
 const LAYOUT = {
@@ -42,7 +43,7 @@ const INPUT = {
 const BUTTON = {
   PRIMARY: {
     BG: "bg-white",
-    TEXT: "text-white",
+    TEXT: "text-teal-900",
     HOVER: "hover:bg-cyan-600",
     HEIGHT: "h-12",
     PADDING: "px-4",
@@ -101,6 +102,7 @@ export default function RegisterPage() {
 
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [checkToken, setCheckToken] = useState(false);
   const [errorMessage, setErrorMessage] = useState({
     general: "",
     firstName: "",
@@ -111,6 +113,7 @@ export default function RegisterPage() {
     passwordConfirm: "",
   });
   const [resData, setResData] = useState(null);
+  const [ storedToken, setStoredToken ] = useState(null);
   let response;
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -119,6 +122,13 @@ export default function RegisterPage() {
       [name]: type === "checkbox" ? checked : value,
     }));
   };
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+
+    if (token) {
+      setStoredToken(token);
+    }
+  }, [checkToken]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -181,7 +191,7 @@ export default function RegisterPage() {
       }
     } finally {
       console.log("errorMessage:", errorMessage);
-      if (resData.token) {
+      if (response?.token) {
         setFormData({
           firstName: "",
           lastName: "",
@@ -193,12 +203,15 @@ export default function RegisterPage() {
         });
       }
     }
+    setCheckToken(!storedToken);
     console.log("Form submitted:", mapppedData);
-    console.log("Response:", resData.Email);
+    console.log("Response:", resData?.email);
     // TODO: Handle registration logic
   };
 
-  return (
+  return storedToken ? (
+    <RegSuccessModel />
+  ) : (
     <div className="relative flex min-h-screen w-full flex-col bg-gradient-to-br from-teal-800 to-teal-900 dark:bg-gray-900">
       <div className="flex flex-1">
         <div
@@ -286,7 +299,7 @@ export default function RegisterPage() {
                   </p>
                   <input
                     type="text"
-                    inputMode="tel" // still shows numeric keypad on mobile
+                    // inputMode="tel" // still shows numeric keypad on mobile
                     name="lastName"
                     value={formData.lastName}
                     onChange={handleChange}
@@ -437,7 +450,7 @@ export default function RegisterPage() {
                     .
                   </label>
                   <div>
-                    {!formData.agreeToTerms && (
+                    {errorMessage.general && (
                       <span className={`text-red-400 ${TYPOGRAPHY.SUBHEADING}`}>
                         {errorMessage.general}
                       </span>
