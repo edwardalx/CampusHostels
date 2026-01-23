@@ -7,16 +7,15 @@ export default function RegSuccessModal({ response }) {
   const handleContinue = () => {
     if (response?.token) {
       localStorage.setItem("token", response.token);
-      localStorage.setItem(
-        "user",
-        JSON.stringify(response.phoneNumber)
-      );
+      localStorage.setItem("user", JSON.stringify(response.phoneNumber));
     }
     navigate("/");
   };
 
   const handleCancel = () => {
-    navigate("/login");
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    navigate("/");
   };
 
   return (

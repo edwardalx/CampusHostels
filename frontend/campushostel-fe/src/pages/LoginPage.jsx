@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Eye, EyeOff, Briefcase } from "lucide-react";
 import { Chrome, Facebook } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
@@ -17,6 +17,10 @@ export default function LoginPage() {
   });
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
+  useEffect(() => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+  }, []);
   let response;
   const handleLogin = async (e) => {
     e.preventDefault();
