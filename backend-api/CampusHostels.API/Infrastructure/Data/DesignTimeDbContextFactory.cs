@@ -23,13 +23,16 @@ public class DesignTimeDbContextFactory : IDesignTimeDbContextFactory<Applicatio
 
         var conn = config.GetConnectionString("DefaultConnection");
 
-        if (env == "Development")
+        // Prefer PostgreSQL for both development and production in this repo
+        // (development previously used Sqlite; switch to Npgsql to match runtime).
+        if (!string.IsNullOrEmpty(conn) && (conn.StartsWith("Host=") || conn.StartsWith("postgres://") || conn.Contains("neon")))
         {
-            builder.UseSqlite(conn);
+            builder.UseNpgsql(conn);
         }
         else
         {
-            builder.UseNpgsql(conn);
+            // Fallback to Sqlite only if a non-postgres connection string is present
+            builder.UseSqlite(conn);
         }
 
         return new ApplicationDbContext(builder.Options);

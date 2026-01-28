@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace CampusHostels.API.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260110220541_UsernameToPhoneNumber")]
-    partial class UsernameToPhoneNumber
+    [Migration("20260128233250_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

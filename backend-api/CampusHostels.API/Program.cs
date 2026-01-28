@@ -64,7 +64,7 @@ if (builder.Environment.IsDevelopment())
     }
 
     builder.Services.AddDbContext<ApplicationDbContext>(options =>
-        options.UseSqlite(resolvedConn));
+        options.UseNpgsql(resolvedConn));
 }
 else
 {
