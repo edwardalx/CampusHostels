@@ -21,6 +21,12 @@ public class TenancyAgreement
 
     public void ComputeContractEndDate()
     {
+        if (ContractStartDate == default)
+            throw new InvalidOperationException("Contract start date is required.");
+
+        if (ContractDurationMonths <= 0)
+            throw new InvalidOperationException("Contract duration must be greater than zero.");
+
         ContractEndDate = ContractStartDate.AddMonths(ContractDurationMonths);
     }
 }

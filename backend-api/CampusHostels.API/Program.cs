@@ -1,67 +1,87 @@
+using AutoMapper;
 using CampusHostels.API.API.Extensions;
 using CampusHostels.API.API.Middleware;
+using CampusHostels.API.Application.Mapping;
+using CampusHostels.API.Application.Services;
+using CampusHostels.API.Application.Interfaces;
+using CampusHostels.API.Application.Validators;
 using CampusHostels.API.Infrastructure.Data;
-using Microsoft.EntityFrameworkCore;
-using Serilog;
-using AutoMapper;
+using CampusHostels.API.Infrastructure.Repositories;
 using FluentValidation;
 using FluentValidation.AspNetCore;
+using Microsoft.EntityFrameworkCore;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
-// if (builder.Environment.IsDevelopment())
-// {
-//     builder.WebHost.UseUrls("http://localhost:5077", "https://localhost:7102");
-// }
-// Add services to the container
+
+#region Core MVC & API
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
-// AutoMapper (manual registration to avoid extension dependency issues)
-builder.Services.AddSingleton(provider =>
+builder.Services.AddSwaggerGen(c =>
 {
-    var config = new MapperConfiguration(cfg => cfg.AddProfile(new CampusHostels.API.Application.Mapping.MappingProfile()));
+    c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
+    {
+        Title = "CampusHostels API",
+        Version = "v1"
+    });
+
+    // Add JWT Bearer Authorization
+    c.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = Microsoft.OpenApi.Models.SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT",
+        In = Microsoft.OpenApi.Models.ParameterLocation.Header,
+        Description = "Enter JWT token like: Bearer {your token}"
+    });
+
+    c.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
+    {
+        {
+            new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+            {
+                Reference = new Microsoft.OpenApi.Models.OpenApiReference
+                {
+                    Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            new string[] {}
+        }
+    });
+});
+#endregion
+
+#region AutoMapper
+builder.Services.AddSingleton<IMapper>(_ =>
+{
+    var config = new MapperConfiguration(cfg =>
+        cfg.AddProfile(new MappingProfile()));
     return config.CreateMapper();
 });
-// Register repositories
-builder.Services.AddScoped<CampusHostels.API.Infrastructure.Repositories.IPropertyRepository, CampusHostels.API.Infrastructure.Repositories.EfPropertyRepository>();
-builder.Services.AddScoped<CampusHostels.API.Infrastructure.Repositories.IUnitRepository, CampusHostels.API.Infrastructure.Repositories.EfUnitRepository>();
-builder.Services.AddScoped<CampusHostels.API.Infrastructure.Repositories.ITenancyRepository, CampusHostels.API.Infrastructure.Repositories.EfTenancyRepository>();
-// Token service
-builder.Services.AddScoped<CampusHostels.API.Application.Interfaces.ITokenService, CampusHostels.API.Application.Services.TokenService>();
-// Account service
-builder.Services.AddScoped<CampusHostels.API.Application.Interfaces.IAccountService, CampusHostels.API.Application.Services.AccountService>();
-// Payment service (registered so PaymentsController DI resolves)
-builder.Services.AddScoped<CampusHostels.API.Application.Interfaces.IPaymentService, CampusHostels.API.Application.Services.PaymentService>();
-builder.Services.AddSwaggerGen();
+#endregion
 
-// Database Configuration - Auto-detect based on environment
-// Resolve relative SQLite paths to absolute paths so tests and different working directories can open the DB file.
+#region Repositories
+builder.Services.AddScoped<IPropertyRepository, EfPropertyRepository>();
+builder.Services.AddScoped<IUnitRepository, EfUnitRepository>();
+builder.Services.AddScoped<ITenancyRepository, EfTenancyRepository>();
+#endregion
+
+#region Services
+builder.Services.AddScoped<IAccountService, AccountService>();
+builder.Services.AddScoped<ITokenService, TokenService>();
+builder.Services.AddScoped<IPaymentService, PaymentService>();
+builder.Services.AddScoped<ITenancyService, TenancyService>();
+#endregion
+
+#region Database
 if (builder.Environment.IsDevelopment())
 {
     Console.WriteLine("🚀 DEVELOPMENT: Using SQLite database");
+
     var originalConn = builder.Configuration.GetConnectionString("DefaultConnection") ?? string.Empty;
-    var resolvedConn = originalConn;
-    try
-    {
-        const string dataSourceKey = "Data Source=";
-        var idx = originalConn.IndexOf(dataSourceKey, StringComparison.OrdinalIgnoreCase);
-        if (idx >= 0)
-        {
-            var pathPart = originalConn.Substring(idx + dataSourceKey.Length);
-            var semicolon = pathPart.IndexOf(';');
-            var relativePath = semicolon >= 0 ? pathPart.Substring(0, semicolon) : pathPart;
-            relativePath = relativePath.Trim();
-            if (!string.IsNullOrEmpty(relativePath) && !Path.IsPathRooted(relativePath))
-            {
-                var basePath = builder.Environment.ContentRootPath ?? AppContext.BaseDirectory;
-                var abs = Path.GetFullPath(Path.Combine(basePath, relativePath));
-                resolvedConn = dataSourceKey + abs + (semicolon >= 0 ? pathPart.Substring(semicolon) : string.Empty);
-            }
-        }
-    }
-    catch (Exception ex)
-    {
-        Console.WriteLine($"⚠️ Failed to resolve SQLite path: {ex.Message}");
-    }
+    var resolvedConn = ResolveSqlitePath(originalConn, builder.Environment.ContentRootPath);
 
     builder.Services.AddDbContext<ApplicationDbContext>(options =>
         options.UseNpgsql(resolvedConn));
@@ -69,82 +89,139 @@ if (builder.Environment.IsDevelopment())
 else
 {
     Console.WriteLine("🐘 PRODUCTION: Using PostgreSQL database");
+
     builder.Services.AddDbContext<ApplicationDbContext>(options =>
         options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 }
+#endregion
 
-// JWT Authentication
-builder.Services.AddJwtAuthentication(builder.Configuration);
+#region Authentication & Authorization
+var jwtSettings = builder.Configuration.GetSection("JwtSettings");
+var secretKey = jwtSettings["SecretKey"] ?? throw new Exception("JwtSettings:SecretKey not configured");
+var issuer = jwtSettings["Issuer"] ?? "CampusHostels";
+var audience = jwtSettings["Audience"] ?? "CampusHostelsUsers";
 
-// CORS Policy
+var signingKey = new Microsoft.IdentityModel.Tokens.SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(secretKey));
+
+var tokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
+{
+    ValidateIssuerSigningKey = true,
+    IssuerSigningKey = signingKey,
+    ValidateIssuer = true,
+    ValidIssuer = issuer,
+    ValidateAudience = true,
+    ValidAudience = audience,
+    ValidateLifetime = true,
+    ClockSkew = TimeSpan.Zero
+};
+
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = tokenValidationParameters;
+
+    options.Events = new Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerEvents
+    {
+        OnMessageReceived = context =>
+        {
+            var logger = context.HttpContext.RequestServices.GetService<Microsoft.Extensions.Logging.ILogger<Program>>();
+            try
+            {
+                var authHeader = context.Request.Headers["Authorization"].FirstOrDefault();
+                if (!string.IsNullOrWhiteSpace(authHeader) && authHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+                {
+                    // Trim prefix, surrounding quotes and whitespace
+                    var token = authHeader.Substring("Bearer ".Length).Trim().Trim('"').Trim();
+                    if (!string.IsNullOrEmpty(token))
+                    {
+                        var prefix = token.Length > 8 ? token.Substring(0, 8) : token;
+                        logger?.LogDebug("Received Authorization token (len={Len}, prefix={Prefix})", token.Length, prefix);
+                        context.Token = token;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                logger?.LogWarning(ex, "Error processing Authorization header");
+            }
+
+            return Task.CompletedTask;
+        },
+
+        OnAuthenticationFailed = context =>
+        {
+            var logger = context.HttpContext.RequestServices.GetService<Microsoft.Extensions.Logging.ILogger<Program>>();
+            logger?.LogWarning(context.Exception, "JWT authentication failed");
+            return Task.CompletedTask;
+        },
+
+        OnChallenge = context =>
+        {
+            var logger = context.HttpContext.RequestServices.GetService<Microsoft.Extensions.Logging.ILogger<Program>>();
+            logger?.LogWarning("JWT challenge: {Error} - {ErrorDescription}", context.Error, context.ErrorDescription);
+            return Task.CompletedTask;
+        }
+    };
+});
+#endregion
+
+
+#region CORS
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowReactApp", policy =>
     {
         policy.WithOrigins(
-            "http://localhost:5000", 
-            "https://localhost:5000",
-            "http://your-frontend-domain.com",
-            "https://campushostels.duckdns.org/"
-        )
-        .AllowAnyHeader()
-        .AllowAnyMethod()
-        .AllowCredentials();
+                "http://localhost:5000",
+                "https://localhost:5000",
+                "http://your-frontend-domain.com",
+                "https://campushostels.duckdns.org/")
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials();
     });
 });
+#endregion
 
-// Register validators and enable FluentValidation automatic model validation
+#region FluentValidation
 builder.Services.AddFluentValidationAutoValidation();
-builder.Services.AddValidatorsFromAssemblyContaining<CampusHostels.API.Application.Validators.RegisterDtoValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<RegisterDtoValidator>();
+#endregion
 
-// Register existing validators (kept for explicit registration compatibility)
-builder.Services.AddTransient<FluentValidation.IValidator<CampusHostels.API.Application.DTOs.UnitCreateDto>, CampusHostels.API.Application.Validators.UnitCreateDtoValidator>();
-builder.Services.AddTransient<FluentValidation.IValidator<CampusHostels.API.Application.DTOs.TenancyCreateDto>, CampusHostels.API.Application.Validators.TenancyCreateDtoValidator>();
-
-// Serilog Configuration
+#region Logging
 builder.Host.UseSerilog((context, configuration) =>
     configuration.ReadFrom.Configuration(context.Configuration));
+#endregion
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline
+#region Middleware Pipeline
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
     app.UseDeveloperExceptionPage();
 
-    // Auto-create and migrate SQLite database in development
-    using (var scope = app.Services.CreateScope())
+    using var scope = app.Services.CreateScope();
+    var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+    try
     {
-        var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        try
-        {
-            dbContext.Database.Migrate();
-            Console.WriteLine("✅ SQLite database created/migrated");
-        }
-        catch (InvalidOperationException ex)
-        {
-            // EF throws if there are pending model changes not represented in migrations.
-            // In the test/dev environment we prefer to create the database schema instead
-            // of failing the whole application start. Log and fall back to EnsureCreated.
-            var message = ex.Message ?? string.Empty;
-            if (message.Contains("PendingModelChangesWarning"))
-            {
-                Console.WriteLine("⚠️ Pending EF model changes detected. Skipping automatic migrations and using EnsureCreated() for dev/test.");
-                dbContext.Database.EnsureCreated();
-            }
-            else
-            {
-                // rethrow other unexpected InvalidOperationExceptions
-                throw;
-            }
-        }
-        catch (Exception e)
-        {
-            // Don't let unexpected errors stop the app during development startup; surface the error and continue.
-            Console.WriteLine($"⚠️ Exception while applying migrations: {e.Message}");
-        }
+        dbContext.Database.Migrate();
+        Console.WriteLine("✅ Database migrated");
+    }
+    catch (InvalidOperationException ex) when (ex.Message.Contains("PendingModelChangesWarning"))
+    {
+        Console.WriteLine("⚠️ Pending model changes detected. Using EnsureCreated()");
+        dbContext.Database.EnsureCreated();
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"⚠️ Migration error: {ex.Message}");
     }
 }
 else
@@ -152,22 +229,53 @@ else
     app.UseExceptionHandler("/error");
     app.UseHsts();
 }
-foreach (var url in app.Urls)
-{
-    Console.WriteLine($"🚀 API running at: {url}");
-}
-// Only use HTTPS redirection in Development
+
+app.UseMiddleware<ExceptionHandlingMiddleware>();
+
 if (app.Environment.IsDevelopment())
 {
     app.UseHttpsRedirection();
 }
-app.UseMiddleware<ExceptionHandlingMiddleware>();
+
 app.UseCors("AllowReactApp");
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 
-app.Run();
+foreach (var url in app.Urls)
+{
+    Console.WriteLine($"🚀 API running at: {url}");
+}
 
-// Expose Program type for integration tests
+app.Run();
+#endregion
+
+#region Helpers
+static string ResolveSqlitePath(string connectionString, string? contentRoot)
+{
+    try
+    {
+        const string key = "Data Source=";
+        var idx = connectionString.IndexOf(key, StringComparison.OrdinalIgnoreCase);
+        if (idx < 0) return connectionString;
+
+        var pathPart = connectionString[(idx + key.Length)..];
+        var semicolon = pathPart.IndexOf(';');
+        var relativePath = semicolon >= 0 ? pathPart[..semicolon] : pathPart;
+
+        if (Path.IsPathRooted(relativePath)) return connectionString;
+
+        var basePath = contentRoot ?? AppContext.BaseDirectory;
+        var absPath = Path.GetFullPath(Path.Combine(basePath, relativePath));
+
+        return key + absPath + (semicolon >= 0 ? pathPart[semicolon..] : string.Empty);
+    }
+    catch
+    {
+        return connectionString;
+    }
+}
+#endregion
+
+// Expose Program for integration tests
 public partial class Program { }

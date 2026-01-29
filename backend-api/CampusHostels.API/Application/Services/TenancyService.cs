@@ -18,13 +18,21 @@ public class TenancyService : ITenancyService
         _mapper = mapper;
     }
 
-    public async Task<TenancyAgreement> CreateAsync(TenancyCreateDto dto)
-    {
-        var entity = _mapper.Map<TenancyAgreement>(dto);
-        var created = await _repo.AddAsync(entity);
-        await _repo.SaveChangesAsync();
-        return created;
-    }
+  public async Task<TenancyAgreement> CreateAsync(
+    TenancyCreateDto dto,
+    Guid tenantId
+)
+{
+    var entity = _mapper.Map<TenancyAgreement>(dto);
+
+    entity.TenantId = tenantId;
+    entity.ComputeContractEndDate();
+
+    var created = await _repo.AddAsync(entity);
+    await _repo.SaveChangesAsync();
+
+    return created;
+}
 
     public Task<TenancyAgreement?> GetByIdAsync(int id) => _repo.GetByIdAsync(id);
 }

@@ -28,6 +28,7 @@ public class Payment
     public PaymentStatus Status { get; set; } = PaymentStatus.Pending;
     public string? Channel { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime? PaidAt { get; set; }
 
     public int UnitId { get; set; }
     public Unit? Unit { get; set; }

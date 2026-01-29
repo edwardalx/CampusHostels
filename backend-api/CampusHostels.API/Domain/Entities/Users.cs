@@ -5,6 +5,7 @@ namespace CampusHostels.API.Domain.Entities;
 public class User
 {
     public int Id { get; set; }
+    public Guid TenantId { get; set; }
     [Required]
     public string PhoneNumber { get; set; } = string.Empty;
     [Required]

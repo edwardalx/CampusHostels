@@ -22,6 +22,7 @@ public class RegisterDto
 public class AuthResponseDto
 {
     public string Token { get; set; } = string.Empty;
+    public Guid TenantId { get; set; }
     public string FirstName { get; set; } = string.Empty;
     public string PhoneNumber { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
