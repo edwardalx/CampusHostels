@@ -18,8 +18,10 @@ export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [activeNavLink, setActiveNavLink] = useState("HOME");
   const [token, setToken] = useState(localStorage.getItem("token"));
-  let navLinks
-  token? navLinks = ["HOME", "HISTORY", "TENANCY"]: navLinks = ["HOME", "ABOUT", "CONTACT"];
+  let navLinks;
+  token
+    ? (navLinks = ["HOME", "HISTORY", "TENANCY"])
+    : (navLinks = ["HOME", "ABOUT", "CONTACT"]);
   const navigate = useNavigate();
 
   // Handle navigation
@@ -58,6 +60,7 @@ export default function Header() {
   const handleLogout = () => {
     console.log("Logging out");
     localStorage.removeItem("token");
+    localStorage.removeItem("user");
     setToken(null);
     navigate("/");
   };

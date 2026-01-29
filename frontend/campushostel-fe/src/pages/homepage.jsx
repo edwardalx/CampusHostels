@@ -38,7 +38,7 @@ export default function HomePage() {
         }
       };
       fetchHostels();
-      localStorage.clear();
+      // localStorage.clear();
     } catch (error) {
       console.warn("Error fetching hostels:", error);
       setIsEmpty(true);

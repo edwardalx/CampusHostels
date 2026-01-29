@@ -31,7 +31,8 @@ export const RegisterApi = async (regData) => {
     // 🔥 throw backend validation errors
     throw data;
   }
-
+  localStorage.setItem("token", data.token);
+  localStorage.setItem("user", JSON.stringify(data.phoneNumber));
   return data;
 };
 
