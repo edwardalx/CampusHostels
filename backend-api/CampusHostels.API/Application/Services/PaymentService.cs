@@ -2,78 +2,145 @@ using CampusHostels.API.Application.Interfaces;
 using CampusHostels.API.Domain.Entities;
 using CampusHostels.API.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace CampusHostels.API.Application.Services;
 
 public class PaymentService : IPaymentService
 {
     private readonly ApplicationDbContext _db;
+    private readonly Application.Interfaces.IPaystackService _paystack;
 
-    public PaymentService(ApplicationDbContext db)
+    public PaymentService(ApplicationDbContext db, Application.Interfaces.IPaystackService paystack)
     {
         _db = db;
+        _paystack = paystack;
     }
 
-    public async Task<(string Reference, string AuthorizationUrl)> InitializePaymentAsync(int tenancyId, decimal amount)
+    public async Task<(string Reference, string AuthorizationUrl)> InitializePaymentAsync(int tenancyId, decimal amount, string customerEmail, string? callbackUrl, string? phone = null, string? provider = null, int? unitId = null, string currency = "GHS")
     {
-        // Validate tenancy exists
-        var tenancy = await _db.TenancyAgreements.FindAsync(tenancyId);
-        if (tenancy is null)
+
+        // 1. Validate tenancy
+        var tenancy = await _db.TenancyAgreements
+            .Include(t => t.Unit)
+            .FirstOrDefaultAsync(t => t.Id == tenancyId)
+            ?? throw new InvalidOperationException($"Tenancy {tenancyId} not found.");
+
+        if (amount <= 0)
+            throw new ArgumentException("Payment amount must be greater than zero.");
+
+        // 2. Generate payment reference
+        var reference = $"PAY-{Guid.NewGuid():N}".Substring(0, 18);
+        if (string.IsNullOrWhiteSpace(callbackUrl))
         {
-            throw new InvalidOperationException($"Tenancy {tenancyId} not found.");
+            callbackUrl = $"http://localhost:5173/payments/receipt/{reference}/";
         }
 
-        // Create payment record with pending status
+        // 3. Create payment (Pending)
         var payment = new Payment
         {
             TenancyAgreementId = tenancyId,
+            UnitId = tenancy.UnitId,
             Amount = amount,
+            Reference = reference,
             Status = PaymentStatus.Pending,
-            Reference = Guid.NewGuid().ToString("N").Substring(0, 16), // Placeholder reference
             CreatedAt = DateTime.UtcNow
         };
 
         _db.Payments.Add(payment);
-        await _db.SaveChangesAsync();
 
-        // In a real implementation, call the payment gateway (Paystack) here
-        // and return the actual authorization URL from the gateway.
-        // For now, return a placeholder.
-        var authUrl = $"https://checkout.paystack.com/placeholder-{payment.Reference}";
+        try
+        {
+            await _db.SaveChangesAsync();
+        }
+        catch (DbUpdateException ex)
+        {
+            throw new Exception("Database error while initializing payment: " + ex.InnerException?.Message, ex);
+        }
 
-        return (payment.Reference, authUrl);
+        // 4. Initialize transaction with Paystack to get authorization URL
+        try
+        {
+            var metadata = new
+            {
+                phone,
+                provider,
+                unit_id = unitId ?? payment.UnitId,
+                tenancy_id = tenancyId
+            };
+
+            var (authUrl, paystackRef) = await _paystack.InitializeTransactionAsync(amount, customerEmail, callbackUrl, payment.Reference, currency, metadata);
+            // Update local payment.Reference to the reference returned by Paystack (if provided)
+            payment.Reference = !string.IsNullOrEmpty(paystackRef) ? paystackRef : payment.Reference;
+            await _db.SaveChangesAsync();
+            return (payment.Reference, authUrl);
+        }
+        catch (Exception ex)
+        {
+            // Leave payment in Pending but surface the error
+            throw new Exception("Payment gateway initialization failed: " + ex.Message, ex);
+        }
+    }
+
+    // Backwards-compatible overload used by tests and older callers
+    public Task<(string Reference, string AuthorizationUrl)> InitializePaymentAsync(int tenancyId, decimal amount)
+    {
+        // Use placeholders for email and callback; callers using this overload expect a quick local flow (no external callback)
+        var defaultEmail = "noreply@campushostels.local";
+        var defaultCallback = string.Empty;
+        return InitializePaymentAsync(tenancyId, amount, defaultEmail, defaultCallback);
+    }
+
+    // Interface-compatible implementation (explicit 4-parameter signature)
+    public Task<(string Reference, string AuthorizationUrl)> InitializePaymentAsync(int tenancyId, decimal amount, string customerEmail, string callbackUrl)
+    {
+        return InitializePaymentAsync(tenancyId, amount, customerEmail, callbackUrl, null, null, null, "GHS");
     }
 
     public async Task<Payment> VerifyPaymentAsync(string reference)
     {
-        // Find payment by reference
-        var payment = await _db.Payments.FirstOrDefaultAsync(p => p.Reference == reference);
+        // 1. Find payment
+        var payment = await _db.Payments
+            .FirstOrDefaultAsync(p => p.Reference == reference);
+
         if (payment is null)
+            throw new InvalidOperationException($"Payment {reference} not found.");
+
+        if (payment.Status == PaymentStatus.Success)
+            return payment; // Idempotency safety
+
+        // 2. Verify with gateway (Paystack verify endpoint)
+        var isValid = await _paystack.VerifyTransactionAsync(reference);
+
+        if (!isValid)
         {
-            throw new InvalidOperationException($"Payment with reference {reference} not found.");
+            payment.Status = PaymentStatus.Failed;
+            await _db.SaveChangesAsync();
+            return payment;
         }
 
-        // In a real implementation, verify with the payment gateway (Paystack)
-        // For now, mark as paid (dev/test only)
+        // 3. Mark payment as successful
         payment.Status = PaymentStatus.Success;
+        payment.PaidAt = DateTime.UtcNow;
 
-        // Update or create PaymentSummary
+        // 4. Update payment summary
+        var tenancy = await _db.TenancyAgreements
+            .Include(t => t.Unit)
+            .FirstAsync(t => t.Id == payment.TenancyAgreementId);
+
+        var totalRent = tenancy.Unit?.Cost ?? 0m;
+
         var summary = await _db.PaymentSummaries
-            .FirstOrDefaultAsync(s => s.TenancyAgreementId == payment.TenancyAgreementId);
+            .FirstOrDefaultAsync(s => s.TenancyAgreementId == tenancy.Id);
 
         if (summary is null)
         {
             summary = new PaymentSummary
             {
-                TenancyAgreementId = payment.TenancyAgreementId ?? 0,
+                TenancyAgreementId = tenancy.Id,
                 TotalAmountPaid = payment.Amount,
-                LastPaymentDate = DateTime.UtcNow,
-                AmountLeft = 0m // This would be calculated from tenancy rent - total paid
+                LastPaymentDate = DateTime.UtcNow
             };
+
             _db.PaymentSummaries.Add(summary);
         }
         else
@@ -82,17 +149,27 @@ public class PaymentService : IPaymentService
             summary.LastPaymentDate = DateTime.UtcNow;
         }
 
-        await _db.SaveChangesAsync();
+        summary.AmountLeft = Math.Max(
+            totalRent - summary.TotalAmountPaid,
+            0m
+        );
 
+        await _db.SaveChangesAsync();
         return payment;
     }
 
-    public async Task<IEnumerable<Payment>> GetPaymentsByTenancyAsync(int tenancyId)
+    public async Task<IEnumerable<Payment>>
+        GetPaymentsByTenancyAsync(int tenancyId)
     {
         return await _db.Payments
             .Where(p => p.TenancyAgreementId == tenancyId)
+            .OrderByDescending(p => p.CreatedAt)
             .ToListAsync();
     }
 
-    public Task<Payment?> GetPaymentByIdAsync(int id) => _db.Payments.FindAsync(id).AsTask();
+    public async Task<Payment?>
+        GetPaymentByIdAsync(int id)
+    {
+        return await _db.Payments.FindAsync(id);
+    }
 }

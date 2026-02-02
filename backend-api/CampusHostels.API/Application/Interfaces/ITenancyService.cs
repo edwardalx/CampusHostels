@@ -6,6 +6,6 @@ namespace CampusHostels.API.Application.Interfaces;
 
 public interface ITenancyService
 {
-    Task<TenancyAgreement> CreateAsync(TenancyCreateDto dto);
+    Task<TenancyAgreement> CreateAsync(TenancyCreateDto dto, Guid tenantId);
     Task<TenancyAgreement?> GetByIdAsync(int id);
 }

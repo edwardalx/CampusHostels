@@ -41,6 +41,7 @@ public class AccountService : IAccountService
         {
             FirstName = dto.FirstName,
             LastName = dto.LastName,
+            TenantId = Guid.NewGuid(),
             Email = normalizedEmail,
             PhoneNumber = normalizedPhone,
             Role = dto.Role,
@@ -80,6 +81,7 @@ public class AccountService : IAccountService
             Token = token,
             FirstName = user.FirstName,
             PhoneNumber = user.PhoneNumber,
+            TenantId = user.TenantId,
             Email = user.Email,
             Role = user.Role,
             Expires = expires
@@ -131,6 +133,7 @@ public class AccountService : IAccountService
         return new AuthResponseDto
         {
             Token = token,
+            TenantId = user.TenantId,
             FirstName = user.FirstName,
             PhoneNumber = user.PhoneNumber,
             Email = user.Email,

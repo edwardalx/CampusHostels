@@ -10,6 +10,7 @@ import LoginPage from "./pages/LoginPage";
 import MainLayout from "./components/MainLayout";
 import HostelDetails from "./pages/HostelDetails";
 import Payments from "./pages/Payments";
+import PaymentReceipt from "./pages/PaymentReceipt";
 import {
   PrivateRoute,
   ProtectedRegistrationRoute,
@@ -47,6 +48,7 @@ function App() {
               </PrivateRoute>
             }
           />
+          <Route path="/payments/receipt/:reference" element={<PaymentReceipt />} />
         </Route>
 
         {/* Pages WITHOUT Header */}

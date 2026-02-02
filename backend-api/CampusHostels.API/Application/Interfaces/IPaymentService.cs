@@ -8,6 +8,10 @@ namespace CampusHostels.API.Application.Interfaces;
 public interface IPaymentService
 {
     /// <summary>Initialize a payment and return reference + auth URL.</summary>
+    Task<(string Reference, string AuthorizationUrl)> InitializePaymentAsync(int tenancyId, decimal amount, string customerEmail, string callbackUrl);
+    /// <summary>Extended initialize that accepts optional metadata and currency.</summary>
+    Task<(string Reference, string AuthorizationUrl)> InitializePaymentAsync(int tenancyId, decimal amount, string customerEmail, string callbackUrl, string? phone = null, string? provider = null, int? unitId = null, string currency = "GHS");
+    // Backwards-compatible overload used by existing tests and callers
     Task<(string Reference, string AuthorizationUrl)> InitializePaymentAsync(int tenancyId, decimal amount);
 
     /// <summary>Verify a payment by reference and update Payment/PaymentSummary records.</summary>
