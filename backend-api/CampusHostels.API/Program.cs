@@ -75,6 +75,20 @@ builder.Services.AddScoped<IPaymentService, PaymentService>();
 builder.Services.AddScoped<ITenancyService, TenancyService>();
 #endregion
 
+#region Paystack
+builder.Services.AddHttpClient<CampusHostels.API.Application.Interfaces.IPaystackService, CampusHostels.API.Application.Services.PaystackService>((client) =>
+{
+    var baseUrl = builder.Configuration["Paystack:BaseUrl"] ?? "https://api.paystack.co/";
+    client.BaseAddress = new Uri(baseUrl);
+    client.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
+    var secret = builder.Configuration["Paystack:SecretKey"];
+    if (!string.IsNullOrEmpty(secret))
+    {
+        client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", secret);
+    }
+});
+#endregion
+
 #region Database
 if (builder.Environment.IsDevelopment())
 {
