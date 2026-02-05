@@ -1,27 +1,14 @@
 using System;
+using CampusHostels.API.Domain.Enums;
 
 namespace CampusHostels.API.Domain.Entities;
-
-public enum PaymentProvider
-{
-    Paystack,
-    Stripe,
-    Manual
-}
-
-public enum PaymentStatus
-{
-    Pending,
-    Success,
-    Failed
-}
 
 public class Payment
 {
     public int Id { get; set; }
     public string Email { get; set; } = string.Empty;
     public decimal Amount { get; set; }
-    public string Currency { get; set; } = "GHS";
+    public string Currency { get; set; } = CurrencyTypes.GHS.ToString();
     public string? Phone { get; set; }
     public PaymentProvider Provider { get; set; } = PaymentProvider.Paystack;
     public string Reference { get; set; } = string.Empty;

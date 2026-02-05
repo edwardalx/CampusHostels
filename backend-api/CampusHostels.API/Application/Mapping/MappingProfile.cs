@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using AutoMapper;
 using CampusHostels.API.Application.DTOs;
 using CampusHostels.API.Domain.Entities;
@@ -10,6 +11,7 @@ public partial class MappingProfile : Profile
     {
         CreateMap<Property, PropertyDto>();
         CreateMap<PropertyCreateDto, Property>();
+        CreateMap<InitializePaymentRequest, Payment>();
         ConfigureExtraMappings();
     }
 

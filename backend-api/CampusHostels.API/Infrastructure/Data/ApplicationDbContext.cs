@@ -68,6 +68,9 @@ public class ApplicationDbContext : DbContext
             entity.HasKey(e => e.Id);
             entity.HasIndex(e => e.Reference).IsUnique();
             entity.HasOne(e => e.Unit).WithMany().HasForeignKey(e => e.UnitId).OnDelete(DeleteBehavior.Cascade);
+            entity.Property(e => e.Currency).HasConversion<string>().IsRequired();
+            entity.Property(e => e.Status).HasConversion<string>();
+            entity.Property(e => e.Provider).HasConversion<string>();
             // tenancy relationship configured from TenancyAgreement side
         });
 

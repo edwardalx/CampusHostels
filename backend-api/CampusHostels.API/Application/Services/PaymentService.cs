@@ -2,6 +2,7 @@ using CampusHostels.API.Application.Interfaces;
 using CampusHostels.API.Domain.Entities;
 using CampusHostels.API.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
+using CampusHostels.API.Domain.Enums;
 
 namespace CampusHostels.API.Application.Services;
 
@@ -41,8 +42,13 @@ public class PaymentService : IPaymentService
             TenancyAgreementId = tenancyId,
             UnitId = tenancy.UnitId,
             Amount = amount,
+            TenantId = tenancy.TenantId,
+            Channel = provider ?? "unknown",
+            Phone = phone ?? throw new InvalidOperationException("Tenant phone number is required."),
             Reference = reference,
             Status = PaymentStatus.Pending,
+            Email = customerEmail,      // ← ADD THIS!
+            Currency = currency,
             CreatedAt = DateTime.UtcNow
         };
 
@@ -109,11 +115,17 @@ public class PaymentService : IPaymentService
             return payment; // Idempotency safety
 
         // 2. Verify with gateway (Paystack verify endpoint)
-        var isValid = await _paystack.VerifyTransactionAsync(reference);
+        var (isValid, actualChannel, gatewayResponse) = await _paystack.VerifyTransactionAsync(reference);
+        // Update the EXISTING payment with channel info
+        if (!string.IsNullOrEmpty(actualChannel))
+        {
+            payment.Channel = actualChannel; // Update with actual payment channel used
+        }
 
         if (!isValid)
         {
             payment.Status = PaymentStatus.Failed;
+            payment.PaidAt = DateTime.UtcNow;
             await _db.SaveChangesAsync();
             return payment;
         }

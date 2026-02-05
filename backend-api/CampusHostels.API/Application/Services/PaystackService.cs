@@ -64,21 +64,61 @@ public class PaystackService : IPaystackService
         return (authUrl, paystackRef);
     }
 
-    public async Task<bool> VerifyTransactionAsync(string reference)
+    public async Task<(bool IsValid, string? Channel, string? GatewayResponse)> VerifyTransactionAsync(string reference)
     {
-        using var resp = await _http.GetAsync($"transaction/verify/{reference}");
-        var body = await resp.Content.ReadAsStringAsync();
-        if (!resp.IsSuccessStatusCode) return false;
+        try
+        {
+            using var resp = await _http.GetAsync($"transaction/verify/{reference}");
+            var body = await resp.Content.ReadAsStringAsync();
 
-        using var doc = JsonDocument.Parse(body);
-        var root = doc.RootElement;
-        if (!root.GetProperty("status").GetBoolean()) return false;
+            if (!resp.IsSuccessStatusCode)
+                return (false, null, null);
 
-        var data = root.GetProperty("data");
-        var status = data.GetProperty("status").GetString() ?? string.Empty;
-        return string.Equals(status, "success", StringComparison.OrdinalIgnoreCase);
+            using var doc = JsonDocument.Parse(body);
+            var root = doc.RootElement;
+
+            if (!root.GetProperty("status").GetBoolean())
+                return (false, null, null);
+
+            var data = root.GetProperty("data");
+
+            var status = data.GetProperty("status").GetString() ?? string.Empty;
+            var isValid = string.Equals(status, "success", StringComparison.OrdinalIgnoreCase);
+
+            // Extract channel - use Paystack's value directly
+            string? channel = null;
+            if (data.TryGetProperty("channel", out var channelElement))
+            {
+                channel = channelElement.GetString();
+            }
+
+            // Extract gateway response
+            string? gatewayResponse = null;
+            if (data.TryGetProperty("gateway_response", out var gatewayElement))
+            {
+                gatewayResponse = gatewayElement.GetString();
+            }
+
+            // For mobile money, you might want the specific provider
+            if (channel == "mobile_money" && data.TryGetProperty("authorization", out var authElement))
+            {
+                if (authElement.TryGetProperty("mobile_money", out var mmElement))
+                {
+                    if (mmElement.TryGetProperty("provider", out var providerElement))
+                    {
+                        // Use the specific provider (MTN, Vodafone, etc.)
+                        channel = providerElement.GetString();
+                    }
+                }
+            }
+
+            return (isValid, channel, gatewayResponse);
+        }
+        catch (Exception ex)
+        {
+            return (false, null, $"Verification error: {ex.Message}");
+        }
     }
-
     public Task<bool> ValidateWebhookSignatureAsync(string payload, string signatureHeader)
     {
         if (string.IsNullOrEmpty(_secretKey)) return Task.FromResult(false);

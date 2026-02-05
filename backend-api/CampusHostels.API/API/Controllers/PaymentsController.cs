@@ -1,10 +1,12 @@
 using System.IO;
 using System.Text;
 using System.Text.Json;
+using AutoMapper;
 using System.Threading.Tasks;
 using CampusHostels.API.Application.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using CampusHostels.API.Application.DTOs;
 using System.ComponentModel.DataAnnotations;
 
 namespace CampusHostels.API.API.Controllers;
@@ -15,44 +17,47 @@ public class PaymentsController : ControllerBase
 {
     private readonly IPaymentService _paymentService;
     private readonly IPaystackService _paystack;
+    private readonly IMapper _mapper;
 
-    public PaymentsController(IPaymentService paymentService, IPaystackService paystack)
+    public PaymentsController(IPaymentService paymentService, IPaystackService paystack, IMapper mapper)
     {
         _paymentService = paymentService;
         _paystack = paystack;
+        _mapper = mapper;
     }
 
-    public class InitializeRequest
-{
-    [Required]
-    public int TenancyId { get; set; }
+    //     public class InitializeRequest
+    // {
+    //     [Required]
+    //     public int TenancyId { get; set; }
 
-    [Required]
-    [Range(1, double.MaxValue)]
-    public decimal Amount { get; set; }
+    //     [Required]
+    //     [Range(1, double.MaxValue)]
+    //     public decimal Amount { get; set; }
 
-    [Required]
-    [EmailAddress]
-    public string Email { get; set; } = string.Empty;
+    //     [Required]
+    //     [EmailAddress]
+    //     public string Email { get; set; } = string.Empty;
 
-    public string? CallbackUrl { get; set; }
+    //     public string? CallbackUrl { get; set; }
 
-    [Required]
-    [Phone]
-    public string Phone { get; set; } = string.Empty;
+    //     [Required]
+    //     [Phone]
+    //     public string Phone { get; set; } = string.Empty;
 
-    public string? Provider { get; set; }
+    //     public string? Provider { get; set; }
 
-    public int? UnitId { get; set; }
+    //     public int? UnitId { get; set; }
 
-    [Required]
-    public string Currency { get; set; } = "GHS";
-}
+    //     [Required]
+    //     public string Currency { get; set; } = "GHS";
+    // }
 
     [HttpPost("initialize")]
-    public async Task<IActionResult> Initialize([FromBody] InitializeRequest req)
+    public async Task<IActionResult> Initialize([FromBody] InitializePaymentRequest req)
     {
-        var (reference, authorizationUrl) = await _paymentService.InitializePaymentAsync(req.TenancyId, req.Amount, req.Email, req.CallbackUrl!, req.Phone, req.Provider, req.UnitId, req.Currency);
+        // var entity = _mapper.Map<Domain.Entities.Payment>(req);
+        var (reference, authorizationUrl) = await _paymentService.InitializePaymentAsync(req.TenancyId, req.Amount, req.Email, req.CallbackUrl!, req.Phone, req.Provider.ToString(), req.UnitId, req.Currency);
         return Ok(new { reference, authorizationUrl });
     }
 
@@ -67,8 +72,8 @@ public class PaymentsController : ControllerBase
         if (req == null || string.IsNullOrWhiteSpace(req.Reference)) return BadRequest("reference required");
 
         // Optionally check with Paystack first
-        var valid = await _paystack.VerifyTransactionAsync(req.Reference);
-        if (!valid) return BadRequest("Payment not successful or not found");
+        var (isValid, actualChannel, gatewayResponse) = await _paystack.VerifyTransactionAsync(req.Reference);
+        if (!isValid) return BadRequest("Payment not successful or not found");
 
         var payment = await _paymentService.VerifyPaymentAsync(req.Reference);
         return Ok(payment);
@@ -137,8 +142,8 @@ public class PaymentsController : ControllerBase
 
         if (string.IsNullOrWhiteSpace(reference)) return BadRequest("reference required");
 
-        var valid = await _paystack.VerifyTransactionAsync(reference);
-        if (!valid) return BadRequest("Payment not successful or not found");
+        var (isValid, actualChannel, gatewayResponse) = await _paystack.VerifyTransactionAsync(reference);
+        if (!isValid) return BadRequest("Payment not successful or not found");
 
         var payment = await _paymentService.VerifyPaymentAsync(reference);
         return Ok(payment);
