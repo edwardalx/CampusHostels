@@ -28,6 +28,12 @@ public class PaymentService : IPaymentService
 
         if (amount <= 0)
             throw new ArgumentException("Payment amount must be greater than zero.");
+        
+        // Validate Email
+        var tenant = await _db.Users.FirstOrDefaultAsync(u => u.TenantId == tenancy.TenantId)
+        ?? throw new InvalidOperationException($"Tenant {tenancy.TenantId} not found.");
+        if(tenant.Email != customerEmail)
+            throw new ArgumentException("Customer email does not match tenant email on record.");
 
         // 2. Generate payment reference
         var reference = $"PAY-{Guid.NewGuid():N}".Substring(0, 18);
