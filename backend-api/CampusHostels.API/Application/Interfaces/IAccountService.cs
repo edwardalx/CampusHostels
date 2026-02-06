@@ -10,4 +10,5 @@ public interface IAccountService
 
     /// <summary>Authenticate a user by username/email and password, return auth response with token.</summary>
     Task<AuthResponseDto> LoginAsync(LoginDto dto);
+    Task<UserExistsDto> EmailPhoneNoCheckAsync(LoginDto dto);
 }

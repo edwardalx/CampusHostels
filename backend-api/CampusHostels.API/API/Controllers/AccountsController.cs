@@ -19,9 +19,9 @@ public class AccountsController : ControllerBase
     public async Task<IActionResult> Register([FromBody] RegisterDto dto)
     {
         try
-            {
-                var response = await _accountService.RegisterAsync(dto);
-                return CreatedAtAction(null, new { id = response.Email }, response);
+        {
+            var response = await _accountService.RegisterAsync(dto);
+            return CreatedAtAction(null, new { id = response.Email }, response);
         }
         catch (InvalidOperationException ex)
         {
@@ -41,5 +41,20 @@ public class AccountsController : ControllerBase
         {
             return Unauthorized(new { error = ex.Message });
         }
+    }
+
+    [HttpPost("check-email-phone")]
+    public async Task<IActionResult> CheckEmailPhone([FromBody] LoginDto dto)
+    {
+        var result = await _accountService.EmailPhoneNoCheckAsync(dto);
+        return Ok(result);
+    }
+
+    [HttpGet("check-email-phone")]
+    public async Task<IActionResult> CheckEmailPhone([FromQuery] string email, [FromQuery] string phoneNumber)
+    {
+        var dto = new LoginDto { Email = email, PhoneNumber = phoneNumber };
+        var result = await _accountService.EmailPhoneNoCheckAsync(dto);
+        return Ok(result);
     }
 }

@@ -22,7 +22,11 @@ public class ExceptionHandlingMiddleware
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "An unhandled exception occurred.");
+            // Log full exception for internal debugging
+            _logger.LogError(ex, "Unhandled exception occurred for request {Method} {Path}", 
+                             context.Request.Method, context.Request.Path);
+
+            // Return safe response to client
             await HandleExceptionAsync(context, ex);
         }
     }
@@ -30,15 +34,28 @@ public class ExceptionHandlingMiddleware
     private static Task HandleExceptionAsync(HttpContext context, Exception exception)
     {
         context.Response.ContentType = "application/json";
-        context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
+
+        int statusCode = (int)HttpStatusCode.InternalServerError;
+        string userMessage = "An unexpected error occurred. Please try again later.";
+        string? details = null;
+
+        // Handle safe exceptions for the client
+        if (exception is ArgumentException || exception is InvalidOperationException)
+        {
+            statusCode = (int)HttpStatusCode.BadRequest; // 400 for client errors
+            userMessage = "Validation failed.";
+            details = exception.Message; // safe message
+        }
+
+        context.Response.StatusCode = statusCode;
 
         var response = new
         {
-            error = "An internal server error occurred.",
-            details = exception.Message,
+            error = userMessage,
+            details = details,
             timestamp = DateTime.UtcNow
         };
 
-        return context.Response.WriteAsync(JsonSerializer.Serialize(response));
+        return context.Response.WriteAsJsonAsync(response);
     }
 }

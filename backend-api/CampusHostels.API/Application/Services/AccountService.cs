@@ -158,4 +158,19 @@ public class AccountService : IAccountService
         var hashOfInput = HashPassword(password);
         return hashOfInput == hash;
     }
+
+    public async Task<UserExistsDto> EmailPhoneNoCheckAsync(LoginDto dto)
+    {
+        var normalizedEmail = dto.Email?.Trim().ToLowerInvariant() ?? string.Empty;
+        var normalizedPhone = NormalizePhone(dto.PhoneNumber ?? string.Empty);
+
+        var emailExists = await _db.Users.AnyAsync(u => u.Email.ToLower() == normalizedEmail);
+        var phoneExists = await _db.Users.AnyAsync(u => u.PhoneNumber == normalizedPhone);
+
+        return new UserExistsDto
+        {
+            EmailExists = emailExists,
+            PhoneExists = phoneExists
+        };
+    }
 }

@@ -29,3 +29,9 @@ public class AuthResponseDto
     public string Role { get; set; } = string.Empty;
     public DateTime Expires { get; set; }
 }
+
+public class UserExistsDto
+{
+    public bool EmailExists { get; set; } = false;
+    public bool PhoneExists { get; set; } = false;
+}
