@@ -12,8 +12,10 @@ export const LiginApi = async ({loginData}) => {
   if (!response.ok) {
     throw data;
   }
-
   console.log("API service data", data);
+  localStorage.setItem("token", data.token);
+  // localStorage.setItem("user", JSON.stringify(data.phoneNumber));
+  localStorage.setItem("user", JSON.stringify({"phone":data.phoneNumber, "fname":data.firstName}))
   return data;
 };
 
@@ -32,7 +34,7 @@ export const RegisterApi = async (regData) => {
     throw data;
   }
   localStorage.setItem("token", data.token);
-  localStorage.setItem("user", JSON.stringify(data.phoneNumber));
+  localStorage.setItem("user", JSON.stringify({"phone":data.phoneNumber, "fname":data.firstName}));
   return data;
 };
 

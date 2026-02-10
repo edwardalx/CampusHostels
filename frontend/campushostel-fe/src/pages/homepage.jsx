@@ -24,6 +24,7 @@ export default function HomePage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isEmpty, setIsEmpty] = useState(false);
   const [filteredHostels, setFilteredHostels] = useState([]);
+  const storeUser = JSON.parse(localStorage.getItem("user"));
   let links = ["Home", "About", "Contact"];
   const navigate = useNavigate();
   //fetch hostels
@@ -65,7 +66,7 @@ export default function HomePage() {
         results = results.filter(
           (h) =>
             h.location.toLowerCase().includes(filters.location.toLowerCase()) ||
-            h.name.toLowerCase().includes(filters.location.toLowerCase())
+            h.name.toLowerCase().includes(filters.location.toLowerCase()),
         );
       }
 
@@ -83,7 +84,7 @@ export default function HomePage() {
   // Handle hostel like/favorite
   const handleHostelLike = useCallback((hostelId, isFavorite) => {
     setFilteredHostels((prev) =>
-      prev.map((h) => (h.id === hostelId ? { ...h, isFavorite } : h))
+      prev.map((h) => (h.id === hostelId ? { ...h, isFavorite } : h)),
     );
   }, []);
 
@@ -94,7 +95,7 @@ export default function HomePage() {
       console.log("View details for:", hostel);
       // Navigate to detail page: navigate(`/hostel/${hostelId}`)
     },
-    [filteredHostels]
+    [filteredHostels],
   );
 
   // Handle filter button click
@@ -169,9 +170,27 @@ export default function HomePage() {
               <span className="text-primary-teal">EXPLORE</span>{" "}
               <span className="text-primary-coral">HOSTELS & CO-LIVING</span>
             </h2>
-            <p className="text-secondary-gray text-sm sm:text-base">
-              {!isLoading ? hostels.length : ""} properties available
-            </p>
+            <div className="flex flex-row items-center justify-between">
+              <p className="text-secondary-gray text-sm sm:text-base">
+                {!isLoading ? hostels.length : ""} properties available
+              </p>
+              <h4 className="text-secondary-gray text-sm sm:text-base ml-auto">
+                {storeUser ? (
+                  <>
+                    Welcome,{" "}
+                    {
+                      <span className="font-bold">
+                        {storeUser.fname}
+                      </span>
+                    }
+                    !
+                  </>
+                ) : (
+                  ""
+                )}
+                {/* Welcome,{" "}{storeUser ? storeUser.fname : "Guest"}! */}
+              </h4>
+            </div>
           </div>
 
           {/* Grid */}

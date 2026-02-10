@@ -76,8 +76,8 @@ export default function LoginPage() {
       if (response && response.token) {
         setEmail("");
         setPassword("");
-        localStorage.setItem("token", response.token);
-        localStorage.setItem("user", JSON.stringify(response.phoneNumber));
+        // localStorage.setItem("token", response.token);
+        // localStorage.setItem("user", JSON.stringify(response.phoneNumber));
         navigate("/");
       }
     }
