@@ -170,7 +170,7 @@ export default function HomePage() {
               <span className="text-primary-teal">EXPLORE</span>{" "}
               <span className="text-primary-coral">HOSTELS & CO-LIVING</span>
             </h2>
-            <div className="flex flex-row items-center justify-between">
+            <div className="flex flex-row items-center justify-between mx-4">
               <p className="text-secondary-gray text-sm sm:text-base">
                 {!isLoading ? hostels.length : ""} properties available
               </p>
