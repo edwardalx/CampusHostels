@@ -139,7 +139,7 @@ export default function LoginPage() {
           </div>
 
           {/* Login Form */}
-          <form onSubmit={handleLogin} className="flex flex-col gap-10">
+          <form onSubmit={handleLogin} className="flex flex-col items-center md:items-stretch gap-10">
             {/* Email Input */}
             <div>
               <label
