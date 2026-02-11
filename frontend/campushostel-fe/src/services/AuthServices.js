@@ -38,3 +38,18 @@ export const RegisterApi = async (regData) => {
   return data;
 };
 
+export const RegisterAjax = async (regData) => {
+  const response = await fetch(`${baseUrl}/check-email-phone`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(regData),
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    // 🔥 throw backend validation errors
+    throw data;
+  }
+  return data;
+};

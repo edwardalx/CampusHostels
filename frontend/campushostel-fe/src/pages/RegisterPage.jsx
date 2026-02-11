@@ -1,7 +1,7 @@
 import React, { use, useEffect, useState } from "react";
 import { Eye, EyeOff, Briefcase } from "lucide-react";
 import { Link } from "react-router-dom";
-import { RegisterApi } from "../services/AuthServices";
+import { RegisterApi, RegisterAjax } from "../services/AuthServices";
 import RegSuccessModel from "../components/RegSuccessModel";
 
 // Layout constants
@@ -208,6 +208,23 @@ export default function RegisterPage() {
     console.log("Response:", resData?.email);
     // TODO: Handle registration logic
   };
+  const handleBlur = async (e) => {
+    const ajaxData = {
+      email: formData.email,
+      phoneNumber: formData.phoneNumber,
+    };
+    const checkUnique = await RegisterAjax(ajaxData);
+    if (checkUnique.emailExists) {
+      setErrorMessage({ email: "Email already exists" });
+    }
+    else {setErrorMessage({ email: "" });}
+    // setErrorMessage({email:""});
+    if (checkUnique.phoneExists) {
+      setErrorMessage({ phoneNumber: "Phone number already exists" });
+    }
+    else {setErrorMessage({ phoneNumber: "" });}
+    // setErrorMessage({ phoneNumber: "" });
+  };
 
   return storedToken ? (
     <RegSuccessModel />
@@ -261,6 +278,7 @@ export default function RegisterPage() {
               {/* Form */}
               <form
                 onSubmit={handleSubmit}
+                onBlur={handleBlur}
                 noValidate
                 className={`flex flex-col ${SPACING.FORM_GAP}`}
               >
