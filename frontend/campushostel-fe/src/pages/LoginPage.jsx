@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Eye, EyeOff, Briefcase } from "lucide-react";
+import { Eye, EyeOff, Home } from "lucide-react";
 import { Chrome, Facebook } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { FcGoogle } from "react-icons/fc";
@@ -114,7 +114,7 @@ export default function LoginPage() {
               <Link to="/">
                 <div className="flex items-center space-x-3">
                   <div className="bg-cyan-400 p-2 rounded-lg">
-                    <Briefcase className="w-6 h-6 text-teal-900" />
+                    <Home className="w-6 h-6 text-teal-900" />
                   </div>
                   <span className="text-3xl font-bold text-white">RentIn</span>
                 </div>

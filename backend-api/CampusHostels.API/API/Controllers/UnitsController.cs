@@ -6,18 +6,21 @@ using Microsoft.AspNetCore.Mvc;
 namespace CampusHostels.API.API.Controllers;
 
 [ApiController]
-[Route("api/properties/{propertyId:int}/[controller]")]
+[Route("api/properties/{propertyId:int}/[controller]")]  // Controller route has propertyId
 public class UnitsController : ControllerBase
 {
     private readonly IUnitRepository _repo;
+    private readonly IPropertyRepository _propertyRepo;
     private readonly IMapper _mapper;
 
-    public UnitsController(IUnitRepository repo, IMapper mapper)
+    public UnitsController(IUnitRepository repo, IPropertyRepository propertyRepo, IMapper mapper)
     {
         _repo = repo;
         _mapper = mapper;
+        _propertyRepo = propertyRepo;
     }
 
+    // GET api/properties/{propertyId}/units
     [HttpGet]
     public async Task<IActionResult> GetByProperty(int propertyId)
     {
@@ -25,14 +28,19 @@ public class UnitsController : ControllerBase
         return Ok(items.Select(u => _mapper.Map<UnitDto>(u)));
     }
 
-    [HttpGet("../units/{id:int}")]
-    public async Task<IActionResult> Get(int propertyId, int id)
+    // GET api/properties/{propertyId}/units/{unitId}
+    [HttpGet("{unitId:int}")]  // Removed redundant propertyId here
+    public async Task<IActionResult> Get(int propertyId, int unitId)
     {
-        var item = await _repo.GetByIdAsync(id);
+        var item = await _repo.GetByIdAsync(unitId);
+        var property = await _propertyRepo.GetByIdAsync(item!.PropertyId);
         if (item == null || item.PropertyId != propertyId) return NotFound();
-        return Ok(_mapper.Map<UnitDto>(item));
+        var unitDto = _mapper.Map<UnitDto>(item);
+        unitDto.PropertyName = property?.Name; // Set property name in DTO
+        return Ok(unitDto);
     }
 
+    // POST api/properties/{propertyId}/units
     [HttpPost]
     public async Task<IActionResult> Create(int propertyId, [FromBody] UnitCreateDto dto)
     {

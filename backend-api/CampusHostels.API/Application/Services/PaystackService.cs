@@ -37,12 +37,12 @@ public class PaystackService : IPaystackService
             reference = clientReference,
             currency = currency,
             callback_url = callbackUrl,
-            channels = currency switch
-            {
-                "GHS" => new[] { "card", "mobile_money_ghana" }, // <-- GHS channels
-                "NGN" => new[] { "card", "bank", "ussd" },       // NGN channels
-                _ => new[] { "card" }                            // fallback
-            },
+            // channels = currency switch
+            // {
+            //     "GHS" => new[] {  "mobile_money_ghana","card" }, // <-- GHS channels
+            //     "NGN" => new[] { "card", "bank", "ussd" },       // NGN channels
+            //     _ => new[] { "mobile_money_ghana" }                            // fallback
+            // },
             metadata
         };
 

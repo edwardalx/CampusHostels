@@ -1,9 +1,12 @@
+using CampusHostels.API.Domain.Entities;
+
 namespace CampusHostels.API.Application.DTOs;
 
 public class UnitDto
 {
     public int Id { get; set; }
     public int PropertyId { get; set; }
+    public string? PropertyName { get; set; } 
     public int Floor { get; set; }
     public string? RoomNumber { get; set; }
     public string? ImageUrl { get; set; }

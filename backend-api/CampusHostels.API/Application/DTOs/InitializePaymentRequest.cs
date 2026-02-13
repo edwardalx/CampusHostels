@@ -29,3 +29,18 @@ public class InitializePaymentRequest
     [Required]
     public string Currency { get; set; } = CurrencyTypes.GHS.ToString();
 }
+
+public class VerifyRequest
+{
+    public string Reference { get; set; } = string.Empty;
+}
+
+public class PaymentResponseDto
+{
+    public string Reference { get; set; } = string.Empty;
+    public decimal Amount { get; set; }
+    public string Currency { get; set; } = string.Empty;
+    public string Status { get; set; } = string.Empty;
+    public string Channel { get; set; } = string.Empty;
+    public DateTime? PaidAt { get; set; }
+}

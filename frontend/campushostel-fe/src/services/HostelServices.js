@@ -1,4 +1,3 @@
-
 let baseUrl = "/api/Properties";
 
 export const getHostels = async () => {
@@ -27,6 +26,17 @@ export const getHostelById = async (id) => {
 
 export const getUnitsByPropertyId = async (id) => {
   const response = await fetch(`${baseUrl}/${id}/Units`); //
+  if (!response.ok) {
+    throw new Error("Failed to fetch hostels");
+  }
+
+  const data = await response.json(); // ✅ THIS is the real data
+  console.log("Units", data);
+  return data;
+};
+
+export const getUnitByIdPropertyById = async (propertyId, unitId) => {
+  const response = await fetch(`${baseUrl}/${propertyId}/Units/${unitId}`); //
   if (!response.ok) {
     throw new Error("Failed to fetch hostels");
   }

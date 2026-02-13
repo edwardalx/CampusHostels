@@ -193,7 +193,9 @@ builder.Services.AddCors(options =>
                 "http://localhost:5000",
                 "https://localhost:5000",
                 "http://your-frontend-domain.com",
-                "https://campushostels.duckdns.org/")
+                "https://campushostels.duckdns.org/",
+                "http://localhost:5173",      // React dev server
+                "https://campushostels.duckdns.org") // Production fro
             .AllowAnyHeader()
             .AllowAnyMethod()
             .AllowCredentials();

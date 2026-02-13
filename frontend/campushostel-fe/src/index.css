@@ -98,6 +98,20 @@ img, video, picture {
   height: auto;
   display: block;
 }
+/* Hide the up/down arrows for WebKit browsers (Chrome, Safari, etc.) */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Hide the number input arrows in WebKit (Chrome, Safari, etc.), Firefox, and standard browsers */
+input[type="number"] {
+  -webkit-appearance: none; /* For WebKit browsers (Chrome, Safari, etc.) */
+  -moz-appearance: textfield; /* For Firefox */
+  appearance: none; /* Standard, unprefixed version */
+}
+
 
 /* Responsive breakpoints */
 @media (max-width: 768px) {

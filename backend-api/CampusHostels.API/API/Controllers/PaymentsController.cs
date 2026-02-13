@@ -7,6 +7,8 @@ using CampusHostels.API.Application.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using CampusHostels.API.Application.DTOs;
+using CampusHostels.API.Domain.Entities;
+
 using System.ComponentModel.DataAnnotations;
 
 namespace CampusHostels.API.API.Controllers;
@@ -61,22 +63,40 @@ public class PaymentsController : ControllerBase
         return Ok(new { reference, authorizationUrl });
     }
 
-    public class VerifyRequest
-    {
-        public string Reference { get; set; } = string.Empty;
-    }
+    // public class VerifyRequest
+    // {
+    //     public string Reference { get; set; } = string.Empty;
+    // }
 
     [HttpPost("verify")]
     public async Task<IActionResult> Verify([FromBody] VerifyRequest req)
     {
-        if (req == null || string.IsNullOrWhiteSpace(req.Reference)) return BadRequest("reference required");
+        if (req == null || string.IsNullOrWhiteSpace(req.Reference))
+            return BadRequest("Reference is required");
 
-        // Optionally check with Paystack first
-        var (isValid, actualChannel, gatewayResponse) = await _paystack.VerifyTransactionAsync(req.Reference);
-        if (!isValid) return BadRequest("Payment not successful or not found");
+        // Let the service handle verification and DB updates
+        Payment payment;
+        try
+        {
+            payment = await _paymentService.VerifyPaymentAsync(req.Reference);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return NotFound(ex.Message);
+        }
 
-        var payment = await _paymentService.VerifyPaymentAsync(req.Reference);
-        return Ok(payment);
+        // Map to DTO
+        var dto = new PaymentResponseDto
+        {
+            Reference = payment.Reference,
+            Amount = payment.Amount,
+            Currency = payment.Currency,
+            Status = payment.Status.ToString(),
+            Channel = payment.Channel!,
+            PaidAt = payment.PaidAt
+        };
+
+        return Ok(dto);
     }
 
     [AllowAnonymous]
@@ -89,18 +109,23 @@ public class PaymentsController : ControllerBase
         var body = await sr.ReadToEndAsync();
         Request.Body.Position = 0;
 
-        var signature = Request.Headers.ContainsKey("x-paystack-signature") ? Request.Headers["x-paystack-signature"].ToString() : string.Empty;
+        var signature = Request.Headers.ContainsKey("x-paystack-signature")
+            ? Request.Headers["x-paystack-signature"].ToString()
+            : string.Empty;
+
         var valid = await _paystack.ValidateWebhookSignatureAsync(body, signature);
         if (!valid) return BadRequest();
 
         using var doc = JsonDocument.Parse(body);
         var evt = doc.RootElement.GetProperty("event").GetString();
+
         if (evt == "charge.success")
         {
             var data = doc.RootElement.GetProperty("data");
             var reference = data.GetProperty("reference").GetString();
             if (!string.IsNullOrEmpty(reference))
             {
+                // Let PaymentService handle DB update
                 await _paymentService.VerifyPaymentAsync(reference);
             }
         }

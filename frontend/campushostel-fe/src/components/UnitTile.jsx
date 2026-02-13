@@ -36,7 +36,7 @@ export function Tile({ hostel = {}, unit = {} }) {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 px-2 py-1 rounded bg-[rgba(1,1,1,.06)] border border-blue-200 text-sm">
               <span>💷</span>
-              <span>£{unit.cost}</span>
+              <span>GH₵{unit.cost}</span>
             </div>
             <button
               onClick={handleClick}
