@@ -90,8 +90,8 @@ export default function Payments() {
               </div>
             </div>
 
-            <h1 className="text-5xl font-bold text-white mb-8">Make Payment</h1>
-            <div className="text-gray-300 mb-4">
+            <p className="text-5xl font-bold text-white mb-8">Make Payment</p>
+            <div className="text-gray-300 mb-4 text-center">
               {
                 <Divider
                   text={"Please enter your payment details to proceed."}
@@ -229,14 +229,17 @@ export default function Payments() {
                     </span>
                   )}
                 </div>
-                <input
-                  type="number"
+                <select
+                  type="select"
                   id="duration"
-                  value={duration}
                   onChange={(e) => setDuration(e.target.value)}
-                  placeholder="Enter duration of stay in months"
                   className="w-90 mx-2 md:w-full md:mx-0 h-10 px-4 py-5 bg-teal-700/50 border border-teal-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-transparent text-center"
-                />
+                >
+                  <option value="">Select Duration</option>
+                  <option value="6">6 Months</option>
+                  <option value="12">12 Months</option>
+                  <option value="24">24 Months</option>
+                </select>
               </div>
 
               {/* Amount Input */}
@@ -272,7 +275,7 @@ export default function Payments() {
               type="submit"
               className="w-90 mx-2 md:w-full md:mx-0 py-4 bg-white text-teal-900 rounded-lg font-semibold hover:bg-gray-100 transition-colors duration-200 shadow-lg mt-6"
             >
-              Log In
+              Pay Now
             </button>
           </form>
           {<Divider text={" "} />}
