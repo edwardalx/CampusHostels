@@ -77,7 +77,7 @@ export default function Payments() {
   return (
     <div>
       {/* Right Side - Login Form */}
-      <div className=" flex min-h-screen w-full lg:w-1/2 mx-auto flex-col items-center justify-center bg-gradient-to-br from-teal-800 to-teal-900 dark:bg-gray-900">
+      <div className=" flex min-h-screen w-full  mx-auto flex-col items-center justify-center bg-gradient-to-br from-teal-800 to-teal-900 dark:bg-gray-900">
         <div className="w-full max-w-md flex flex-col">
           {/* Header */}
           <div className="mb-12 flex flex-col items-center">
@@ -235,7 +235,7 @@ export default function Payments() {
                   onChange={(e) => setDuration(e.target.value)}
                   className="w-90 mx-2 md:w-full md:mx-0 h-10 px-4 py-5 bg-teal-700/50 border border-teal-600 rounded-lg text-white 
                   placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-transparent 
-                  text-center [text-align-last:center] appearance-none"
+                  text-center [text-align-last:center]"
                 >
                   <option value="">Select Duration</option>
                   <option value="6">6 Months</option>
