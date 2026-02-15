@@ -5,8 +5,10 @@ import { useState } from "react";
 import { useParams } from "react-router-dom";
 import { getUnitByIdPropertyById } from "../services/HostelServices";
 import Divider from "../components/Divider";
+import DurationSelect from "../components/SelectDuration";
 
 export default function Payments() {
+  
   const [property, setProperty] = useState("");
   const [unit, setUnit] = useState("");
   const [email, setEmail] = useState("");
@@ -229,19 +231,30 @@ export default function Payments() {
                     </span>
                   )}
                 </div>
-                <select
-                  type="select"
-                  id="duration"
-                  onChange={(e) => setDuration(e.target.value)}
-                  className="w-90 mx-2 md:w-full md:mx-0 h-10 px-4 py-5 bg-teal-700/50 border border-teal-600 rounded-lg text-white 
-                  placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-transparent 
-                  text-center [text-align-last:center]"
-                >
-                  <option value="">Select Duration</option>
-                  <option value="6">6 Months</option>
-                  <option value="12">12 Months</option>
-                  <option value="24">24 Months</option>
-                </select>
+                <div className="relative mx-2">
+  <select
+    value={duration}
+    onChange={(e) => setDuration(e.target.value)}
+    className="w-full h-10 px-4 pr-10 
+               bg-teal-700/50 border border-teal-600 
+               rounded-lg text-white text-center 
+               appearance-none 
+               [text-align-last:center]
+               focus:outline-none focus:ring-2 
+               focus:ring-cyan-400 focus:border-transparent"
+  >
+    <option value="">Select Duration</option>
+    <option value="6">6 Months</option>
+    <option value="12">12 Months</option>
+    <option value="24">24 Months</option>
+  </select>
+
+  {/* Custom Arrow */}
+  <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-white">
+    ▼
+  </div>
+</div>
+
               </div>
 
               {/* Amount Input */}
