@@ -233,7 +233,9 @@ export default function Payments() {
                   type="select"
                   id="duration"
                   onChange={(e) => setDuration(e.target.value)}
-                  className="w-90 mx-2 md:w-full md:mx-0 h-10 px-4 py-5 bg-teal-700/50 border border-teal-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-transparent text-center"
+                  className="w-90 mx-2 md:w-full md:mx-0 h-10 px-4 py-5 bg-teal-700/50 border border-teal-600 rounded-lg text-white 
+                  placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-transparent 
+                  text-center [text-align-last:center] appearance-none"
                 >
                   <option value="">Select Duration</option>
                   <option value="6">6 Months</option>
