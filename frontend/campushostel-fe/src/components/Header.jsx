@@ -13,6 +13,11 @@
 import React, { useState } from "react";
 import { Menu, X } from "lucide-react";
 import { useNavigate, NavLink, Link } from "react-router-dom";
+import {
+  useIdleTimeout,
+  showSessionExpiredAlert,
+} from "../hooks/useIdleTimeout";
+import { LogoutApi } from "../services/AuthServices";
 
 export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -59,11 +64,11 @@ export default function Header() {
   };
   const handleLogout = () => {
     console.log("Logging out");
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
+    LogoutApi();
     setToken(null);
     navigate("/");
   };
+ 
 
   return (
     <header className="bg-gradient-to-r from-cyan-500 via-teal-600 to-red-500 shadow-lg sticky top-0 z-50">

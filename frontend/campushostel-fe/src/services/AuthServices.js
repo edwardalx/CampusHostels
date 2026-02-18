@@ -1,24 +1,36 @@
+import { showSessionExpiredAlert } from "../hooks/useIdleTimeout";
 let baseUrl = "/api/Accounts";
 
-export const LiginApi = async ({loginData}) => {
-  const response = await fetch(`${baseUrl}/login`,{
+
+export const LiginApi = async ({ loginData }) => {
+  const response = await fetch(`${baseUrl}/login`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify(loginData),      
+    body: JSON.stringify(loginData),
   });
- const data = await response.json(); // ✅ THIS is the real data
+  const data = await response.json(); // ✅ THIS is the real data
   if (!response.ok) {
     throw data;
   }
   console.log("API service data", data);
   localStorage.setItem("token", data.token);
-  // localStorage.setItem("user", JSON.stringify(data.phoneNumber));
-  localStorage.setItem("user", JSON.stringify({"phone":data.phoneNumber, "fname":data.firstName}))
+  localStorage.setItem("expires", JSON.stringify(data.expires));
+  localStorage.setItem(
+    "user",
+    JSON.stringify({ phone: data.phoneNumber, fname: data.firstName }),
+  );
   return data;
 };
 
+export const LogoutApi = async () => {
+  showSessionExpiredAlert("You have been logged out, please log back in.");
+  localStorage.removeItem("token");
+  localStorage.removeItem("user");
+  localStorage.removeItem("expires");
+  return true;
+};
 
 export const RegisterApi = async (regData) => {
   const response = await fetch(`${baseUrl}/register`, {
@@ -34,7 +46,10 @@ export const RegisterApi = async (regData) => {
     throw data;
   }
   localStorage.setItem("token", data.token);
-  localStorage.setItem("user", JSON.stringify({"phone":data.phoneNumber, "fname":data.firstName}));
+  localStorage.setItem(
+    "user",
+    JSON.stringify({ phone: data.phoneNumber, fname: data.firstName }),
+  );
   return data;
 };
 

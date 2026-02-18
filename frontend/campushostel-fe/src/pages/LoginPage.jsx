@@ -4,7 +4,12 @@ import { Chrome, Facebook } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { FcGoogle } from "react-icons/fc";
 import { FaFacebook } from "react-icons/fa";
-import { LiginApi } from "../services/AuthServices";
+import { LiginApi, LogoutApi } from "../services/AuthServices";
+import {
+  setTokenExpiryTimeout,
+  showSessionExpiredAlert,
+  useIdleTimeout,
+} from "../hooks/useIdleTimeout";
 
 export default function LoginPage() {
   const [resData, setResData] = useState(null);
@@ -21,10 +26,11 @@ export default function LoginPage() {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
   }, []);
+
   let response;
   const handleLogin = async (e) => {
     e.preventDefault();
-  
+
     const loginData = {
       email: email_phoneNumber,
       phoneNumber: email_phoneNumber,
@@ -35,6 +41,16 @@ export default function LoginPage() {
       response = await LiginApi({ loginData });
       setResData(response);
       console.log("Response:", response);
+      if (localStorage.getItem("token")) {
+        setTokenExpiryTimeout(() => {
+          showSessionExpiredAlert(
+            "Your session has expired. Please log in again.",
+          );
+          localStorage.removeItem("token");
+          localStorage.removeItem("user");
+          navigate("/login");
+        });
+      }
     } catch (error) {
       console.error("Login error:", error);
       // setErrorMsg({ email: "", password: "", general: "" });
@@ -118,7 +134,10 @@ export default function LoginPage() {
           </div>
 
           {/* Login Form */}
-          <form onSubmit={handleLogin} className="flex flex-col  md:items-stretch gap-10">
+          <form
+            onSubmit={handleLogin}
+            className="flex flex-col  md:items-stretch gap-10"
+          >
             {/* Email Input */}
             <div>
               <label
