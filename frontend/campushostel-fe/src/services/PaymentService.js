@@ -1,6 +1,6 @@
 let baseUrl = "/api/Payments";
 
-export const initailizePayments = async ({ payload }) => {
+export const initailizePayments = async ( payload ) => {
   const response = await fetch(`${baseUrl}/initialize`, {
     method: "POST",
     headers: {

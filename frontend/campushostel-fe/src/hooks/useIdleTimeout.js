@@ -51,7 +51,7 @@ export const useIdleTimeout = (onLogout) => {
       });
     }, IDLE_TIME - WARNING_TIME);
 
-    // ⛔ Final logout
+    //  Final logout
     logoutTimer.current = setTimeout(() => {
       onLogout();
     }, IDLE_TIME);

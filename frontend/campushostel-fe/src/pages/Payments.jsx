@@ -4,11 +4,12 @@ import { Briefcase } from "lucide-react";
 import { useState } from "react";
 import { useParams } from "react-router-dom";
 import { getUnitByIdPropertyById } from "../services/HostelServices";
+import { createTenancy } from "../services/OtherServices";
+import { initailizePayments } from "../services/PaymentService";
 import Divider from "../components/Divider";
 import DurationSelect from "../components/SelectDuration";
 
 export default function Payments() {
-  
   const [property, setProperty] = useState("");
   const [unit, setUnit] = useState("");
   const [email, setEmail] = useState("");
@@ -40,19 +41,28 @@ export default function Payments() {
     }
   }, []);
   const cost = (duration / 12) * (selectedHostel ? selectedHostel.cost : 0);
+
   const handlePayment = (e) => {
+    let tenancyId;
     e.preventDefault();
     if (!duration || duration <= 0) {
-      setErrorMsg({duration:"Please enter a valid duration of stay in months."});
+      setErrorMsg({
+        duration: "Please enter a valid duration of stay in months.",
+      });
       return;
     }
     const payload = {
-      property: property,
-      unit: unit,
+      tenancyId: tenancyId || localStorage.getItem("tenancy"),
+      amount: amount || cost,
       email: email,
-      phonenumber: phonenumber,
-      amount: amount,
+      callbackUrl: "",
+      phone: phonenumber,
+      provider: 0,
+      property: property,
+      unitId: roomId,
+      currency: "GHS",
     };
+
     const tenancyPayload = {
       contractStartDate: new Date().toISOString(),
       contractDurationMonths: duration,
@@ -63,7 +73,41 @@ export default function Payments() {
     console.log("Payment initiated");
     console.log(payload);
     console.log(tenancyPayload);
+    const handleCreateTenancy = async () => {
+      try {
+        const response = await createTenancy(tenancyPayload);
+        console.log("Tenancy created successfully:", response);
+        localStorage.setItem("tenancy", JSON.stringify(response.id));
+        tenancyId = response.id;
+      } catch (error) {
+        console.error("Error creating tenancy:", error);
+      }
+    };
+    const handleInitializePayment = async () => {
+      try {
+        const response = await initailizePayments(payload);
+        console.log("Payment initialized successfully:", response);
+        window.location.href = response.authorizationUrl; // Redirect to the payment gateway
+        localStorage.removeItem("tenancy");
+        localStorage.setItem("Reference", JSON.stringify(response.reference));
+        setAmount("");
+        setEmail("");
+        setPhonenumber("");
+        setDuration("");
+        setProperty("");
+        setUnit("");
+      } catch (error) {
+        console.error("Error initializing payment:", error);
+      }
+    };
+
+    // handleCreateTenancy();
+    if (!localStorage.getItem("tenancy")) {
+      return;
+    }
+    handleInitializePayment();
   };
+
   const resetErrorMsg = () => {
     setErrorMsg({
       property: "",
@@ -74,7 +118,7 @@ export default function Payments() {
       amount: "",
       general: "",
     });
-  }
+  };
 
   return (
     <div>
@@ -232,29 +276,28 @@ export default function Payments() {
                   )}
                 </div>
                 <div className="relative mx-2">
-  <select
-    value={duration}
-    onChange={(e) => setDuration(e.target.value)}
-    className="w-full h-10 px-4 pr-10 
+                  <select
+                    value={duration}
+                    onChange={(e) => setDuration(e.target.value)}
+                    className="w-full h-10 px-4 pr-10 
                bg-teal-700/50 border border-teal-600 
                rounded-lg text-white text-center 
                appearance-none 
                [text-align-last:center]
                focus:outline-none focus:ring-2 
                focus:ring-cyan-400 focus:border-transparent"
-  >
-    <option value="">Select Duration</option>
-    <option value="6">6 Months</option>
-    <option value="12">12 Months</option>
-    <option value="24">24 Months</option>
-  </select>
+                  >
+                    <option value="">Select Duration</option>
+                    <option value="6">6 Months</option>
+                    <option value="12">12 Months</option>
+                    <option value="24">24 Months</option>
+                  </select>
 
-  {/* Custom Arrow */}
-  <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-white">
-    ▼
-  </div>
-</div>
-
+                  {/* Custom Arrow */}
+                  <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-white">
+                    ▼
+                  </div>
+                </div>
               </div>
 
               {/* Amount Input */}
