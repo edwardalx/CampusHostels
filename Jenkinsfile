@@ -39,8 +39,7 @@ pipeline {
 
                             echo "🔄 Restarting services…"
                             docker compose down
-                            docker compose up -d
-
+                            docker compose up -d --build --remove-orphans
                             echo "⏳ Waiting for services to start (30 seconds)…"
                             sleep 30
 
