@@ -10,7 +10,8 @@ import Divider from "../components/Divider";
 import DurationSelect from "../components/SelectDuration";
 
 export default function Payments() {
-  const [loading, setLoading] = useState(false);
+  const [pageloading, setPageLoading] = useState(false);
+  const [paymentloading, setPaymentLoading] = useState(false);
   const [property, setProperty] = useState("");
   const [unit, setUnit] = useState("");
   const [email, setEmail] = useState("");
@@ -51,7 +52,7 @@ export default function Payments() {
 
   useEffect(() => {
     try {
-      setLoading(true);
+      setPageLoading(true);
       const fetchSelectedHostel = async () => {
         const hostel = await getUnitByIdPropertyById(hostelId, roomId);
         setSelectedHostel(hostel || {}); // Default to an empty object if no hostel is found
@@ -63,27 +64,36 @@ export default function Payments() {
       });
     } finally {
       setTimeout(() => {
-        setLoading(false);
+        setPageLoading(false);
       }, 1000);
     }
   }, []);
 
   const handleCreateTenancy = async () => {
     try {
+      setPaymentLoading(true);
+      console.info("Creating tenancy with payload:");
       const response = await createTenancy(tenancyPayload);
-      console.log("Tenancy created successfully:", response);
       const tenancyId = response.id;
-      console.log("Tenancy ID stored in direct api:", tenancyId);
+      localStorage.setItem("tenancy", tenancyId);
       return tenancyId;
     } catch (error) {
       console.error("Error creating tenancy:", error);
+    } finally {
+      setPaymentLoading(false);
     }
   };
 
   const handleInitializePayment = async () => {
     let tenancyId;
     try {
-      tenancyId = await handleCreateTenancy();
+      setPaymentLoading(true);
+      if (!localStorage.getItem("tenancy")) {
+        tenancyId = await handleCreateTenancy();
+      } else {
+        tenancyId = localStorage.getItem("tenancy");
+      }
+
       // const paymentPayload = {
       //   ...payload,
       //   tenancyId: tenancyId,
@@ -115,12 +125,13 @@ export default function Payments() {
               error.details ||
               "An error occurred while initializing payment. Please try again.",
           });
+    } finally {
+      setPaymentLoading(false);
     }
   };
   const handlePayment = async (e) => {
     e.preventDefault();
     resetErrorMsg();
-
     if (!duration || duration <= 0) {
       setErrorMsg({
         duration: "Please enter a valid duration of stay in months.",
@@ -128,63 +139,10 @@ export default function Payments() {
       return;
     }
     await handleInitializePayment();
+    setTimeout(() => {
+      setPaymentLoading(false);
+    }, 1000);
   };
-  // const handlePayment = async (e) => {
-  //   e.preventDefault();
-  //   resetErrorMsg();
-
-  //   if (!duration || duration <= 0) {
-  //     setErrorMsg({
-  //       duration: "Please enter a valid duration of stay in months.",
-  //     });
-  //     return;
-  //   }
-
-  //   try {
-  //     let tenancyId = localStorage.getItem("tenancy");
-
-  //     // If tenancy doesn't exist → create it
-  //     if (!tenancyId) {
-  //       console.info("No tenancy found, creating a new tenancy...");
-  //       const tenancyResponse = await createTenancy(tenancyPayload);
-
-  //       tenancyId = tenancyResponse.id;
-  //       localStorage.setItem("tenancy", tenancyId);
-  //     }
-
-  //     // Now initialize payment using the real tenancyId
-  //     const paymentPayload = {
-  //       ...payload,
-  //       tenancyId: tenancyId,
-  //     };
-
-  //     const paymentResponse = await initailizePayments(paymentPayload);
-
-  //     console.log("Payment initialized:", paymentResponse);
-
-  //     localStorage.removeItem("tenancy");
-  //     setAmount("");
-  //     setEmail("");
-  //     setPhonenumber("");
-  //     setDuration("");
-  //     setProperty("");
-  //     setUnit("");
-  //   } catch (error) {
-  //     console.error("Payment flow error:", error);
-  //     const backendErrors = error?.errors;
-  //     backendErrors
-  //       ? setErrorMsg({
-  //           // general: error.details || "An error occurred while initializing payment. Please try again.",
-  //           email: backendErrors?.Email?.[0] || "",
-  //           phone: backendErrors?.Phone?.[0] || "",
-  //         })
-  //       : setErrorMsg({
-  //           general:
-  //             error.details ||
-  //             "An error occurred while initializing payment. Please try again.",
-  //         });
-  //   }
-  // };
 
   const resetErrorMsg = () => {
     setErrorMsg({
@@ -200,6 +158,22 @@ export default function Payments() {
 
   return (
     <div>
+     {pageloading && ( 
+        <div className="fixed inset-0 bg-teal-900/70  flex items-center justify-center z-50">
+          <div className="bg-teal-800 p-6 rounded-xl shadow-lg flex flex-col items-center gap-4">
+            <div className="animate-spin h-10 w-10 border-4 border-teal-400 border-t-transparent rounded-full"></div>
+            {/* <p className="text-gray-200 font-medium">Loading payment details...</p> */}
+          </div>
+        </div>
+      )}
+      {paymentloading && (
+        <div className="fixed inset-0 bg-teal-900/70  flex items-center justify-center z-50">
+          <div className="bg-teal-800 p-6 rounded-xl shadow-lg flex flex-col items-center gap-4">
+            <div className="animate-spin h-10 w-10 border-4 border-teal-400 border-t-transparent rounded-full"></div>
+            <p className="text-gray-200 font-medium">Processing payment...</p>
+          </div>
+        </div>
+      )}
       {/* Right Side - Login Form */}
       <div className=" flex min-h-screen w-full  mx-auto flex-col items-center justify-center bg-gradient-to-br from-teal-800 to-teal-900 dark:bg-gray-900">
         <div className="w-full max-w-md flex flex-col">
@@ -398,6 +372,7 @@ export default function Payments() {
             <button
               type="submit"
               className="w-90 mx-2 md:w-full md:mx-0 py-4 bg-white text-teal-900 rounded-lg font-semibold hover:bg-gray-100 transition-colors duration-200 shadow-lg mt-6"
+              disabled={paymentloading}
             >
               Pay Now
             </button>
