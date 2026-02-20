@@ -4,7 +4,12 @@ import { Chrome, Facebook } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { FcGoogle } from "react-icons/fc";
 import { FaFacebook } from "react-icons/fa";
-import { LiginApi } from "../services/AuthServices";
+import { LiginApi, LogoutApi } from "../services/AuthServices";
+import {
+  setTokenExpiryTimeout,
+  showSessionExpiredAlert,
+  useIdleTimeout,
+} from "../hooks/useIdleTimeout";
 
 export default function LoginPage() {
   const [resData, setResData] = useState(null);
@@ -21,31 +26,11 @@ export default function LoginPage() {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
   }, []);
+
   let response;
   const handleLogin = async (e) => {
     e.preventDefault();
-    // if (!email_phoneNumber && !password) {
-    //   setErrorMsg((prev) => ({
-    //     ...prev,
-    //     general: "Please enter both email and password.",
-    //   }));
-    //   return;
-    // }
-    // if (!email_phoneNumber.includes("@")) {
-    //   setErrorMsg((prev) => ({
-    //     ...prev,
-    //     email: "Please enter a valid email address.",
-    //   }));
-    //   return;
-    // }
-    // if (!email_phoneNumber) {
-    //   setErrorMsg((prev) => ({ ...prev, email: "Email is required." }));
-    //   return;
-    // }
-    // if (!password) {
-    //   setErrorMsg((prev) => ({ ...prev, password: "Password is required." }));
-    //   return;
-    // }
+
     const loginData = {
       email: email_phoneNumber,
       phoneNumber: email_phoneNumber,
@@ -56,6 +41,16 @@ export default function LoginPage() {
       response = await LiginApi({ loginData });
       setResData(response);
       console.log("Response:", response);
+      if (localStorage.getItem("token")) {
+        setTokenExpiryTimeout(() => {
+          showSessionExpiredAlert(
+            "Your session has expired. Please log in again.",
+          );
+          localStorage.removeItem("token");
+          localStorage.removeItem("user");
+          navigate("/login");
+        });
+      }
     } catch (error) {
       console.error("Login error:", error);
       // setErrorMsg({ email: "", password: "", general: "" });
@@ -94,7 +89,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex">
+    <div className="min-h-[100svh] flex">
       {/* Left Side - Image */}
       <div className="hidden lg:block lg:w-1/2 relative">
         <img
@@ -106,7 +101,7 @@ export default function LoginPage() {
       </div>
 
       {/* Right Side - Login Form */}
-      <div className=" flex min-h-screen w-full lg:w-1/2 flex-col items-center justify-center bg-gradient-to-br from-teal-800 to-teal-900 dark:bg-gray-900">
+      <div className=" flex min-h-[100svh]  w-full lg:w-1/2 flex-col items-center justify-center bg-gradient-to-br from-teal-800 to-teal-900 dark:bg-gray-900">
         <div className="w-full max-w-md flex flex-col">
           {/* Header */}
           <div className="mb-12 ">
@@ -139,12 +134,15 @@ export default function LoginPage() {
           </div>
 
           {/* Login Form */}
-          <form onSubmit={handleLogin} className="flex flex-col items-center md:items-stretch gap-10">
+          <form
+            onSubmit={handleLogin}
+            className="flex flex-col  md:items-stretch gap-10"
+          >
             {/* Email Input */}
             <div>
               <label
                 htmlFor="email"
-                className="block text-white font-medium mb-3"
+                className="block text-white font-medium mb-3 mx-auto"
               >
                 Email or Phone Number
               </label>
@@ -163,7 +161,7 @@ export default function LoginPage() {
                 value={email_phoneNumber}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="youname@email.com   or +233 123 456 7890"
-                className="w-90 mx-2 md:w-full md:mx-0 h-10 px-4 py-5 bg-teal-700/50 border border-teal-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-transparent"
+                className="w-full h-10 px-4 py-5 bg-teal-700/50 border border-teal-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-transparent"
               />
             </div>
 
@@ -171,7 +169,7 @@ export default function LoginPage() {
             <div>
               <label
                 htmlFor="password"
-                className="block text-white font-medium mb-3"
+                className="block text-white font-medium mb-3 mx-auto"
               >
                 Password
               </label>
@@ -191,7 +189,7 @@ export default function LoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Enter your password"
-                  className="w-90 mx-2 md:w-full md:mx-0 h-10 px-4 py-5 bg-teal-700/50 border border-teal-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-transparent pr-12"
+                  className="w-full h-10 px-4 py-5 bg-teal-700/50 border border-teal-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-transparent pr-12"
                 />
                 <div
                   type="button"
@@ -215,7 +213,7 @@ export default function LoginPage() {
             {/* Login Button */}
             <button
               type="submit"
-              className="w-90 mx-2 md:w-full md:mx-0 py-4 bg-white text-teal-900 rounded-lg font-semibold hover:bg-gray-100 transition-colors duration-200 shadow-lg mt-6"
+              className="w-full  px-4 py-3 bg-white text-teal-900 rounded-lg font-semibold hover:bg-gray-100 transition-colors duration-200 shadow-lg mt-6 mx-auto"
             >
               Log In
             </button>

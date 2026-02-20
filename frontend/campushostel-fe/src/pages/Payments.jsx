@@ -4,11 +4,14 @@ import { Briefcase } from "lucide-react";
 import { useState } from "react";
 import { useParams } from "react-router-dom";
 import { getUnitByIdPropertyById } from "../services/HostelServices";
+import { createTenancy } from "../services/OtherServices";
+import { initailizePayments } from "../services/PaymentService";
 import Divider from "../components/Divider";
 import DurationSelect from "../components/SelectDuration";
 
 export default function Payments() {
-  
+  const [pageloading, setPageLoading] = useState(false);
+  const [paymentloading, setPaymentLoading] = useState(false);
   const [property, setProperty] = useState("");
   const [unit, setUnit] = useState("");
   const [email, setEmail] = useState("");
@@ -20,14 +23,36 @@ export default function Payments() {
   const [errorMsg, setErrorMsg] = useState({
     property: "",
     unit: "",
+    phone: "",
     email: "",
     password: "",
     duration: "",
     amount: "",
     general: "",
   });
+  const cost = (duration / 12) * (selectedHostel ? selectedHostel.cost : 0);
+  const payload = {
+    tenancyId: 0, // Placeholder, will be set after tenancy creation
+    amount: amount || cost,
+    email: email,
+    callbackUrl: "",
+    phone: phonenumber,
+    provider: 0,
+    property: property,
+    unitId: roomId,
+    currency: "GHS",
+  };
+
+  const tenancyPayload = {
+    contractStartDate: new Date().toISOString(),
+    contractDurationMonths: duration,
+    propertyId: hostelId,
+    unitId: roomId,
+  };
+
   useEffect(() => {
     try {
+      setPageLoading(true);
       const fetchSelectedHostel = async () => {
         const hostel = await getUnitByIdPropertyById(hostelId, roomId);
         setSelectedHostel(hostel || {}); // Default to an empty object if no hostel is found
@@ -37,33 +62,88 @@ export default function Payments() {
       setErrorMsg({
         general: "Please select hostel and room to proceed with payment.",
       });
+    } finally {
+      setTimeout(() => {
+        setPageLoading(false);
+      }, 1000);
     }
   }, []);
-  const cost = (duration / 12) * (selectedHostel ? selectedHostel.cost : 0);
-  const handlePayment = (e) => {
+
+  const handleCreateTenancy = async () => {
+    try {
+      setPaymentLoading(true);
+      console.info("Creating tenancy with payload:");
+      const response = await createTenancy(tenancyPayload);
+      const tenancyId = response.id;
+      localStorage.setItem("tenancy", tenancyId);
+      return tenancyId;
+    } catch (error) {
+      console.error("Error creating tenancy:", error);
+    } finally {
+      setPaymentLoading(false);
+    }
+  };
+
+  const handleInitializePayment = async () => {
+    let tenancyId;
+    try {
+      setPaymentLoading(true);
+      if (!localStorage.getItem("tenancy")) {
+        tenancyId = await handleCreateTenancy();
+      } else {
+        tenancyId = localStorage.getItem("tenancy");
+      }
+
+      // const paymentPayload = {
+      //   ...payload,
+      //   tenancyId: tenancyId,
+      // };
+      payload.tenancyId = tenancyId;
+      const response = await initailizePayments(payload);
+      console.log("Payment initialized successfully:", response);
+      window.location.href = response.authorizationUrl; // Redirect to the payment gateway
+      localStorage.removeItem("tenancy");
+      localStorage.setItem("Reference", JSON.stringify(response.reference));
+      setAmount("");
+      setEmail("");
+      setPhonenumber("");
+      setDuration("");
+      setProperty("");
+      setUnit("");
+    } catch (error) {
+      console.error("Error initializing payment:", error);
+      const backendErrors = error?.errors;
+      backendErrors
+        ? setErrorMsg({
+            // general: error.details || "An error occurred while initializing payment. Please try again.",
+            email: backendErrors?.Email?.[0] || "",
+            phone: backendErrors?.Phone?.[0] || "",
+            amount: backendErrors?.Amount?.[0] || "",
+          })
+        : setErrorMsg({
+            general:
+              error.details ||
+              "An error occurred while initializing payment. Please try again.",
+          });
+    } finally {
+      setPaymentLoading(false);
+    }
+  };
+  const handlePayment = async (e) => {
     e.preventDefault();
+    resetErrorMsg();
     if (!duration || duration <= 0) {
-      setErrorMsg({duration:"Please enter a valid duration of stay in months."});
+      setErrorMsg({
+        duration: "Please enter a valid duration of stay in months.",
+      });
       return;
     }
-    const payload = {
-      property: property,
-      unit: unit,
-      email: email,
-      phonenumber: phonenumber,
-      amount: amount,
-    };
-    const tenancyPayload = {
-      contractStartDate: new Date().toISOString(),
-      contractDurationMonths: duration,
-      propertyId: hostelId,
-      unitId: roomId,
-    };
-
-    console.log("Payment initiated");
-    console.log(payload);
-    console.log(tenancyPayload);
+    await handleInitializePayment();
+    setTimeout(() => {
+      setPaymentLoading(false);
+    }, 1000);
   };
+
   const resetErrorMsg = () => {
     setErrorMsg({
       property: "",
@@ -74,10 +154,26 @@ export default function Payments() {
       amount: "",
       general: "",
     });
-  }
+  };
 
   return (
     <div>
+     {pageloading && ( 
+        <div className="fixed inset-0 bg-teal-900/70  flex items-center justify-center z-50">
+          <div className="bg-teal-800 p-6 rounded-xl shadow-lg flex flex-col items-center gap-4">
+            <div className="animate-spin h-10 w-10 border-4 border-teal-400 border-t-transparent rounded-full"></div>
+            {/* <p className="text-gray-200 font-medium">Loading payment details...</p> */}
+          </div>
+        </div>
+      )}
+      {paymentloading && (
+        <div className="fixed inset-0 bg-teal-900/70  flex items-center justify-center z-50">
+          <div className="bg-teal-800 p-6 rounded-xl shadow-lg flex flex-col items-center gap-4">
+            <div className="animate-spin h-10 w-10 border-4 border-teal-400 border-t-transparent rounded-full"></div>
+            <p className="text-gray-200 font-medium">Processing payment...</p>
+          </div>
+        </div>
+      )}
       {/* Right Side - Login Form */}
       <div className=" flex min-h-screen w-full  mx-auto flex-col items-center justify-center bg-gradient-to-br from-teal-800 to-teal-900 dark:bg-gray-900">
         <div className="w-full max-w-md flex flex-col">
@@ -117,12 +213,10 @@ export default function Payments() {
                 {<Divider text={"Property"} />}
               </label>
               <div>
-                {errorMsg.general && (
-                  <span
-                    className={`text-red-400 text-base font-normal leading-normal mt-2`}
-                  >
-                    {errorMsg.general}
-                  </span>
+                {errorMsg.property && (
+                  <p className="w-full text-red-400 text-base text-center font-normal mt-2">
+                    {errorMsg.property}
+                  </p>
                 )}
               </div>
               <input
@@ -143,12 +237,10 @@ export default function Payments() {
                 {<Divider text={"Room Number"} />}
               </label>
               <div>
-                {errorMsg.general && (
-                  <span
-                    className={`text-red-400 text-base font-normal leading-normal mt-2`}
-                  >
-                    {errorMsg.general}
-                  </span>
+                {errorMsg.unit && (
+                  <p className="w-full text-red-400 text-base text-center font-normal mt-2">
+                    {errorMsg.unit}
+                  </p>
                 )}
               </div>
               <input
@@ -169,12 +261,10 @@ export default function Payments() {
                 {<Divider text={"Email"} />}
               </label>
               <div>
-                {errorMsg.general && (
-                  <span
-                    className={`text-red-400 text-base font-normal leading-normal mt-2`}
-                  >
-                    {errorMsg.general}
-                  </span>
+                {errorMsg.email && (
+                  <p className="w-full text-red-400 text-base text-center font-normal mt-2">
+                    {errorMsg.email}
+                  </p>
                 )}
               </div>
               <input
@@ -196,12 +286,10 @@ export default function Payments() {
                 {<Divider text={"Phone Number"} />}
               </label>
               <div>
-                {errorMsg.password && (
-                  <span
-                    className={`text-red-400 text-base font-normal leading-normal mt-2`}
-                  >
-                    {errorMsg.password}
-                  </span>
+                {errorMsg.phone && (
+                  <p className="w-full text-red-400 text-base text-center font-normal mt-2">
+                    {errorMsg.phone}
+                  </p>
                 )}
               </div>
               <div className="relative">
@@ -224,37 +312,34 @@ export default function Payments() {
                 </label>
                 <div>
                   {errorMsg.duration && (
-                    <span
-                      className={`text-red-400 text-base font-normal leading-normal mt-2`}
-                    >
+                    <p className="w-full text-red-400 text-base text-center font-normal mt-2">
                       {errorMsg.duration}
-                    </span>
+                    </p>
                   )}
                 </div>
                 <div className="relative mx-2">
-  <select
-    value={duration}
-    onChange={(e) => setDuration(e.target.value)}
-    className="w-full h-10 px-4 pr-10 
+                  <select
+                    value={duration}
+                    onChange={(e) => setDuration(e.target.value)}
+                    className="w-full h-10 px-4 pr-10 
                bg-teal-700/50 border border-teal-600 
                rounded-lg text-white text-center 
                appearance-none 
                [text-align-last:center]
                focus:outline-none focus:ring-2 
                focus:ring-cyan-400 focus:border-transparent"
-  >
-    <option value="">Select Duration</option>
-    <option value="6">6 Months</option>
-    <option value="12">12 Months</option>
-    <option value="24">24 Months</option>
-  </select>
+                  >
+                    <option value="">Select Duration</option>
+                    <option value="6">6 Months</option>
+                    <option value="12">12 Months</option>
+                    <option value="24">24 Months</option>
+                  </select>
 
-  {/* Custom Arrow */}
-  <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-white">
-    ▼
-  </div>
-</div>
-
+                  {/* Custom Arrow */}
+                  <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-white">
+                    ▼
+                  </div>
+                </div>
               </div>
 
               {/* Amount Input */}
@@ -266,12 +351,10 @@ export default function Payments() {
                   {<Divider text={"Amount"} />}
                 </label>
                 <div>
-                  {errorMsg.general && (
-                    <span
-                      className={`text-red-400 text-base font-normal leading-normal mt-2`}
-                    >
-                      {errorMsg.general}
-                    </span>
+                  {errorMsg.amount && (
+                    <p className="w-full text-red-400 text-base text-center font-normal mt-2">
+                      {errorMsg.amount}
+                    </p>
                   )}
                 </div>
                 <input
@@ -289,11 +372,22 @@ export default function Payments() {
             <button
               type="submit"
               className="w-90 mx-2 md:w-full md:mx-0 py-4 bg-white text-teal-900 rounded-lg font-semibold hover:bg-gray-100 transition-colors duration-200 shadow-lg mt-6"
+              disabled={paymentloading}
             >
               Pay Now
             </button>
           </form>
-          {<Divider text={" "} />}
+          {<Divider text={""} />}
+          <div>
+            {errorMsg.general && (
+              <>
+                <p className="w-full text-red-400 text-base text-center font-normal mt-2">
+                  {errorMsg.general}
+                </p>
+                <Divider text={""} />
+              </>
+            )}
+          </div>
         </div>
       </div>
     </div>

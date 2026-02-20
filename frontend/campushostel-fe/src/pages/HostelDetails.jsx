@@ -37,6 +37,7 @@ export default function HostelDetails() {
         setLoading(false);
       }, 600);
     }
+    localStorage.removeItem("tenancy");
   }, [hostelId]);
 
   useEffect(() => {

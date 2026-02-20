@@ -1,6 +1,6 @@
 let baseUrl = "/api/Payments";
 
-export const initailizePayments = async ({ payload }) => {
+export const initailizePayments = async ( payload ) => {
   const response = await fetch(`${baseUrl}/initialize`, {
     method: "POST",
     headers: {
@@ -10,7 +10,7 @@ export const initailizePayments = async ({ payload }) => {
   });
   const data = await response.json();
   if (!response.ok) {
-    throw new Error(data);
+    throw data;
   }
   console.log(data);
   return data;

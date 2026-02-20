@@ -1,8 +1,7 @@
 import {
-  BrowserRouter as Router,
   Routes,
   Route,
-  Navigate,
+  useNavigate,
 } from "react-router-dom";
 import HomePage from "./pages/homepage";
 import RegisterPage from "./pages/RegisterPage";
@@ -11,6 +10,8 @@ import MainLayout from "./components/MainLayout";
 import HostelDetails from "./pages/HostelDetails";
 import Payments from "./pages/Payments";
 import PaymentReceipt from "./pages/PaymentReceipt";
+import { LogoutApi } from "./services/AuthServices";
+import { useIdleTimeout } from "./hooks/useIdleTimeout";
 import {
   PrivateRoute,
   ProtectedRegistrationRoute,
@@ -19,9 +20,18 @@ import { ToastContainer } from "react-toastify";
 import "./App.css";
 
 function App() {
+  const navigate = useNavigate();
+  const handleLogout = () => {
+    console.log("Logging out");
+    LogoutApi();
+    navigate("/");
+  };
+  useIdleTimeout(() => {
+    handleLogout();
+  });
   // const token = localStorage.getItem("token");
   return (
-    <Router>
+    <>
       <ToastContainer />
       <Routes>
         {/* Pages WITH Header */}
@@ -48,7 +58,10 @@ function App() {
               </PrivateRoute>
             }
           />
-          <Route path="/payments/receipt/:reference" element={<PaymentReceipt />} />
+          <Route
+            path="/payments/receipt/:reference"
+            element={<PaymentReceipt />}
+          />
         </Route>
 
         {/* Pages WITHOUT Header */}
@@ -71,7 +84,7 @@ function App() {
           element={<p className="text-red-600">⚠️ Page not found</p>}
         />
       </Routes>
-    </Router>
+    </>
   );
 }
 
