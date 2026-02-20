@@ -7,14 +7,14 @@ export const createTenancy = async (tenancyPayload) => {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "Authorization": `Bearer ${token}`,
+      Authorization: `Bearer ${token}`,
     },
     body: JSON.stringify(tenancyPayload),
   });
-
+  const data = await response.json();
   if (!response.ok) {
-    throw new Error(`HTTP error! Status: ${response.status}`);
+    throw data;
   }
 
-  return response.json();
+  return data;
 };

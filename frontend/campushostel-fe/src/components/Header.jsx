@@ -66,6 +66,7 @@ export default function Header() {
     console.log("Logging out");
     LogoutApi();
     setToken(null);
+    showSessionExpiredAlert("You have  logged out successfully, please log back in.");
     navigate("/");
   };
  

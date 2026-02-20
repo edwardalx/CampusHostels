@@ -18,7 +18,7 @@ public class PaymentService : IPaymentService
     private readonly ApplicationDbContext _db;
     private readonly IPaystackService _paystack;
     private readonly string _baseUrl;
-    
+
 
     public PaymentService(ApplicationDbContext db, IPaystackService paystack, IConfiguration config)
     {
@@ -183,7 +183,7 @@ public class PaymentService : IPaymentService
         payment.PaidAt = DateTime.UtcNow;
 
         var tenancy = await _db.TenancyAgreements.Include(t => t.Unit).FirstAsync(t => t.Id == payment.TenancyAgreementId);
-
+        tenancy.TotalAmountPaid = tenancy.TotalAmountPaid + payment.Amount;
         var totalRent = tenancy.Unit?.Cost ?? 0m;
 
         var summary = await _db.PaymentSummaries.FirstOrDefaultAsync(s => s.TenancyAgreementId == tenancy.Id);
@@ -204,6 +204,7 @@ public class PaymentService : IPaymentService
         }
 
         summary.AmountLeft = Math.Max(totalRent - summary.TotalAmountPaid, 0m);
+
 
         await _db.SaveChangesAsync();
 

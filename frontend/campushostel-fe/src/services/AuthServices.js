@@ -25,11 +25,9 @@ export const LiginApi = async ({ loginData }) => {
 };
 
 export const LogoutApi = async () => {
-  showSessionExpiredAlert("You have been logged out, please log back in.");
   localStorage.removeItem("token");
   localStorage.removeItem("user");
   localStorage.removeItem("expires");
-  return true;
 };
 
 export const RegisterApi = async (regData) => {

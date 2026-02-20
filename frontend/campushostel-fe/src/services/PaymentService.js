@@ -10,7 +10,7 @@ export const initailizePayments = async ( payload ) => {
   });
   const data = await response.json();
   if (!response.ok) {
-    throw new Error(data);
+    throw data;
   }
   console.log(data);
   return data;

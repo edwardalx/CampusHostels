@@ -36,6 +36,7 @@ export const useIdleTimeout = (onLogout) => {
 
             if (timeLeft <= 0) {
               clearInterval(timerInterval);
+              onLogout();
             }
           }, 1000);
         },

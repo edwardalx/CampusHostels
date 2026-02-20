@@ -44,6 +44,7 @@ export default function HomePage() {
       console.warn("Error fetching hostels:", error);
       setIsEmpty(true);
     }
+    localStorage.removeItem("tenancy");
     // finally {
     //   if (hostels.length > 0) {
     //     setIsLoading(false);

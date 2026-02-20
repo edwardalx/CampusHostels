@@ -10,6 +10,7 @@ import Divider from "../components/Divider";
 import DurationSelect from "../components/SelectDuration";
 
 export default function Payments() {
+  const [loading, setLoading] = useState(false);
   const [property, setProperty] = useState("");
   const [unit, setUnit] = useState("");
   const [email, setEmail] = useState("");
@@ -21,14 +22,36 @@ export default function Payments() {
   const [errorMsg, setErrorMsg] = useState({
     property: "",
     unit: "",
+    phone: "",
     email: "",
     password: "",
     duration: "",
     amount: "",
     general: "",
   });
+  const cost = (duration / 12) * (selectedHostel ? selectedHostel.cost : 0);
+  const payload = {
+    tenancyId: 0, // Placeholder, will be set after tenancy creation
+    amount: amount || cost,
+    email: email,
+    callbackUrl: "",
+    phone: phonenumber,
+    provider: 0,
+    property: property,
+    unitId: roomId,
+    currency: "GHS",
+  };
+
+  const tenancyPayload = {
+    contractStartDate: new Date().toISOString(),
+    contractDurationMonths: duration,
+    propertyId: hostelId,
+    unitId: roomId,
+  };
+
   useEffect(() => {
     try {
+      setLoading(true);
       const fetchSelectedHostel = async () => {
         const hostel = await getUnitByIdPropertyById(hostelId, roomId);
         setSelectedHostel(hostel || {}); // Default to an empty object if no hostel is found
@@ -38,75 +61,130 @@ export default function Payments() {
       setErrorMsg({
         general: "Please select hostel and room to proceed with payment.",
       });
+    } finally {
+      setTimeout(() => {
+        setLoading(false);
+      }, 1000);
     }
   }, []);
-  const cost = (duration / 12) * (selectedHostel ? selectedHostel.cost : 0);
 
-  const handlePayment = (e) => {
+  const handleCreateTenancy = async () => {
+    try {
+      const response = await createTenancy(tenancyPayload);
+      console.log("Tenancy created successfully:", response);
+      const tenancyId = response.id;
+      console.log("Tenancy ID stored in direct api:", tenancyId);
+      return tenancyId;
+    } catch (error) {
+      console.error("Error creating tenancy:", error);
+    }
+  };
+
+  const handleInitializePayment = async () => {
     let tenancyId;
+    try {
+      tenancyId = await handleCreateTenancy();
+      // const paymentPayload = {
+      //   ...payload,
+      //   tenancyId: tenancyId,
+      // };
+      payload.tenancyId = tenancyId;
+      const response = await initailizePayments(payload);
+      console.log("Payment initialized successfully:", response);
+      window.location.href = response.authorizationUrl; // Redirect to the payment gateway
+      localStorage.removeItem("tenancy");
+      localStorage.setItem("Reference", JSON.stringify(response.reference));
+      setAmount("");
+      setEmail("");
+      setPhonenumber("");
+      setDuration("");
+      setProperty("");
+      setUnit("");
+    } catch (error) {
+      console.error("Error initializing payment:", error);
+      const backendErrors = error?.errors;
+      backendErrors
+        ? setErrorMsg({
+            // general: error.details || "An error occurred while initializing payment. Please try again.",
+            email: backendErrors?.Email?.[0] || "",
+            phone: backendErrors?.Phone?.[0] || "",
+            amount: backendErrors?.Amount?.[0] || "",
+          })
+        : setErrorMsg({
+            general:
+              error.details ||
+              "An error occurred while initializing payment. Please try again.",
+          });
+    }
+  };
+  const handlePayment = async (e) => {
     e.preventDefault();
+    resetErrorMsg();
+
     if (!duration || duration <= 0) {
       setErrorMsg({
         duration: "Please enter a valid duration of stay in months.",
       });
       return;
     }
-    const payload = {
-      tenancyId: tenancyId || localStorage.getItem("tenancy"),
-      amount: amount || cost,
-      email: email,
-      callbackUrl: "",
-      phone: phonenumber,
-      provider: 0,
-      property: property,
-      unitId: roomId,
-      currency: "GHS",
-    };
-
-    const tenancyPayload = {
-      contractStartDate: new Date().toISOString(),
-      contractDurationMonths: duration,
-      propertyId: hostelId,
-      unitId: roomId,
-    };
-
-    console.log("Payment initiated");
-    console.log(payload);
-    console.log(tenancyPayload);
-    const handleCreateTenancy = async () => {
-      try {
-        const response = await createTenancy(tenancyPayload);
-        console.log("Tenancy created successfully:", response);
-        localStorage.setItem("tenancy", JSON.stringify(response.id));
-        tenancyId = response.id;
-      } catch (error) {
-        console.error("Error creating tenancy:", error);
-      }
-    };
-    const handleInitializePayment = async () => {
-      try {
-        const response = await initailizePayments(payload);
-        console.log("Payment initialized successfully:", response);
-        window.location.href = response.authorizationUrl; // Redirect to the payment gateway
-        localStorage.removeItem("tenancy");
-        localStorage.setItem("Reference", JSON.stringify(response.reference));
-        setAmount("");
-        setEmail("");
-        setPhonenumber("");
-        setDuration("");
-        setProperty("");
-        setUnit("");
-      } catch (error) {
-        console.error("Error initializing payment:", error);
-      }
-    };
-
-    // handleCreateTenancy();
-    if (!localStorage.getItem("tenancy")) {
-      return;
-    }
-    handleInitializePayment();
+    await handleInitializePayment();
   };
+  // const handlePayment = async (e) => {
+  //   e.preventDefault();
+  //   resetErrorMsg();
+
+  //   if (!duration || duration <= 0) {
+  //     setErrorMsg({
+  //       duration: "Please enter a valid duration of stay in months.",
+  //     });
+  //     return;
+  //   }
+
+  //   try {
+  //     let tenancyId = localStorage.getItem("tenancy");
+
+  //     // If tenancy doesn't exist → create it
+  //     if (!tenancyId) {
+  //       console.info("No tenancy found, creating a new tenancy...");
+  //       const tenancyResponse = await createTenancy(tenancyPayload);
+
+  //       tenancyId = tenancyResponse.id;
+  //       localStorage.setItem("tenancy", tenancyId);
+  //     }
+
+  //     // Now initialize payment using the real tenancyId
+  //     const paymentPayload = {
+  //       ...payload,
+  //       tenancyId: tenancyId,
+  //     };
+
+  //     const paymentResponse = await initailizePayments(paymentPayload);
+
+  //     console.log("Payment initialized:", paymentResponse);
+
+  //     localStorage.removeItem("tenancy");
+  //     setAmount("");
+  //     setEmail("");
+  //     setPhonenumber("");
+  //     setDuration("");
+  //     setProperty("");
+  //     setUnit("");
+  //   } catch (error) {
+  //     console.error("Payment flow error:", error);
+  //     const backendErrors = error?.errors;
+  //     backendErrors
+  //       ? setErrorMsg({
+  //           // general: error.details || "An error occurred while initializing payment. Please try again.",
+  //           email: backendErrors?.Email?.[0] || "",
+  //           phone: backendErrors?.Phone?.[0] || "",
+  //         })
+  //       : setErrorMsg({
+  //           general:
+  //             error.details ||
+  //             "An error occurred while initializing payment. Please try again.",
+  //         });
+  //   }
+  // };
 
   const resetErrorMsg = () => {
     setErrorMsg({
@@ -161,12 +239,10 @@ export default function Payments() {
                 {<Divider text={"Property"} />}
               </label>
               <div>
-                {errorMsg.general && (
-                  <span
-                    className={`text-red-400 text-base font-normal leading-normal mt-2`}
-                  >
-                    {errorMsg.general}
-                  </span>
+                {errorMsg.property && (
+                  <p className="w-full text-red-400 text-base text-center font-normal mt-2">
+                    {errorMsg.property}
+                  </p>
                 )}
               </div>
               <input
@@ -187,12 +263,10 @@ export default function Payments() {
                 {<Divider text={"Room Number"} />}
               </label>
               <div>
-                {errorMsg.general && (
-                  <span
-                    className={`text-red-400 text-base font-normal leading-normal mt-2`}
-                  >
-                    {errorMsg.general}
-                  </span>
+                {errorMsg.unit && (
+                  <p className="w-full text-red-400 text-base text-center font-normal mt-2">
+                    {errorMsg.unit}
+                  </p>
                 )}
               </div>
               <input
@@ -213,12 +287,10 @@ export default function Payments() {
                 {<Divider text={"Email"} />}
               </label>
               <div>
-                {errorMsg.general && (
-                  <span
-                    className={`text-red-400 text-base font-normal leading-normal mt-2`}
-                  >
-                    {errorMsg.general}
-                  </span>
+                {errorMsg.email && (
+                  <p className="w-full text-red-400 text-base text-center font-normal mt-2">
+                    {errorMsg.email}
+                  </p>
                 )}
               </div>
               <input
@@ -240,12 +312,10 @@ export default function Payments() {
                 {<Divider text={"Phone Number"} />}
               </label>
               <div>
-                {errorMsg.password && (
-                  <span
-                    className={`text-red-400 text-base font-normal leading-normal mt-2`}
-                  >
-                    {errorMsg.password}
-                  </span>
+                {errorMsg.phone && (
+                  <p className="w-full text-red-400 text-base text-center font-normal mt-2">
+                    {errorMsg.phone}
+                  </p>
                 )}
               </div>
               <div className="relative">
@@ -268,11 +338,9 @@ export default function Payments() {
                 </label>
                 <div>
                   {errorMsg.duration && (
-                    <span
-                      className={`text-red-400 text-base font-normal leading-normal mt-2`}
-                    >
+                    <p className="w-full text-red-400 text-base text-center font-normal mt-2">
                       {errorMsg.duration}
-                    </span>
+                    </p>
                   )}
                 </div>
                 <div className="relative mx-2">
@@ -309,12 +377,10 @@ export default function Payments() {
                   {<Divider text={"Amount"} />}
                 </label>
                 <div>
-                  {errorMsg.general && (
-                    <span
-                      className={`text-red-400 text-base font-normal leading-normal mt-2`}
-                    >
-                      {errorMsg.general}
-                    </span>
+                  {errorMsg.amount && (
+                    <p className="w-full text-red-400 text-base text-center font-normal mt-2">
+                      {errorMsg.amount}
+                    </p>
                   )}
                 </div>
                 <input
@@ -336,7 +402,17 @@ export default function Payments() {
               Pay Now
             </button>
           </form>
-          {<Divider text={" "} />}
+          {<Divider text={""} />}
+          <div>
+            {errorMsg.general && (
+              <>
+                <p className="w-full text-red-400 text-base text-center font-normal mt-2">
+                  {errorMsg.general}
+                </p>
+                <Divider text={""} />
+              </>
+            )}
+          </div>
         </div>
       </div>
     </div>

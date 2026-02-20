@@ -17,6 +17,7 @@ export default function PaymentReceipt() {
         .then(data => setStatus(data.status || "success"))
         .catch(() => setStatus("failed"));
     }
+    localStorage.removeItem("tenancy");
   }, [reference]);
 
   return (
