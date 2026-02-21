@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import Swal from "sweetalert2";
 
-const IDLE_TIME = 15 * 60 * 1000; // 15 minutes
+const IDLE_TIME = 1 * 60 * 1000; // 15 minutes
 const WARNING_TIME = 30 * 1000; // 1 min before logout
 let token = localStorage.getItem("token");
 
@@ -36,6 +36,7 @@ export const useIdleTimeout = (onLogout) => {
 
             if (timeLeft <= 0) {
               clearInterval(timerInterval);
+              Swal.close(); // ensures modal closes
               onLogout();
             }
           }, 1000);
@@ -47,6 +48,7 @@ export const useIdleTimeout = (onLogout) => {
         if (result.isConfirmed) {
           resetTimers(); // restart session
         } else {
+          Swal.close(); // close modal immediately on manual logout
           onLogout();
         }
       });
@@ -55,6 +57,7 @@ export const useIdleTimeout = (onLogout) => {
     //  Final logout
     logoutTimer.current = setTimeout(() => {
       onLogout();
+      Swal.close();
     }, IDLE_TIME);
   };
 
