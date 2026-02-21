@@ -25,7 +25,7 @@ export default function RegSuccessModal({ response }) {
 
       {/* Modal */}
       <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
-        <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 text-center space-y-4 animate-fadeIn">
+        <div className="bg-white rounded-2xl shadow-2xl max-w-2xl min-h-[500px]  w-full p-6 text-center space-y-4 animate-fadeIn">
           <h1 className="text-2xl font-semibold text-teal-700">
             🎉 Registration Successful!
           </h1>
