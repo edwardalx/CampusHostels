@@ -1,13 +1,15 @@
 // src/pages/PaymentReceipt.tsx
-import { data, useParams } from "react-router-dom";
+import { data, useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { verifyPayments } from "../services/PaymentService";
 
 export default function PaymentReceipt() {
   const { reference } = useParams(); // grabs {reference} from URL
+  const navigate = useNavigate();
   const [payment, setPayment] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
 
   useEffect(() => {
     setLoading(true);
@@ -62,7 +64,7 @@ export default function PaymentReceipt() {
             >
               {payment.status}
             </span>
-            <p className="text-gray-600 text-sm">{payment.channel}</p>
+            <p className="text-gray-600 text-sm">{payment.channel === "mobile_money" ? `Channel: Mobile Money` : `Channel: ${payment.channel}`}</p>
           </div>
 
           {/* Payment Details */}
@@ -86,6 +88,7 @@ export default function PaymentReceipt() {
               ? "Your payment has been successfully processed. You will receive a confirmation shortly."
               : "Payment failed. Please try again or contact support if the issue persists."}
           </p>
+          <div className="text-gray-700 bg-teal-600 rounded-xl text-center w-24 font-semibold hover:bg-teal-300 cursor-pointer" onClick={() => navigate("/")} >HOME</div>
         </div>
       )}
 
