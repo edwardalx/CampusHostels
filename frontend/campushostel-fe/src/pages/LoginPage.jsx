@@ -73,7 +73,7 @@ export default function LoginPage() {
         setPassword("");
         // localStorage.setItem("token", response.token);
         // localStorage.setItem("user", JSON.stringify(response.phoneNumber));
-        navigate("/");
+        navigate("-1");
       }
     }
     console.log("Login attempted", errorMsg);
