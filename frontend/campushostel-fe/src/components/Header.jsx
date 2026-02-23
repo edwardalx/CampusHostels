@@ -10,7 +10,7 @@
  * - onNavClick: (link: string) => void - Called when nav link clicked
  */
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Menu, X } from "lucide-react";
 import { useNavigate, NavLink, Link } from "react-router-dom";
 import {
@@ -28,7 +28,9 @@ export default function Header() {
     ? (navLinks = ["HOME", "HISTORY", "TENANCY"])
     : (navLinks = ["HOME", "ABOUT", "CONTACT"]);
   const navigate = useNavigate();
-
+  useEffect(() => {
+    setToken(localStorage.getItem("token"));
+  }, [localStorage.getItem("token")]);
   // Handle navigation
   const handleNavClick = (link) => {
     setMenuOpen(false);
@@ -66,10 +68,12 @@ export default function Header() {
     console.log("Logging out");
     LogoutApi();
     setToken(null);
-    showSessionExpiredAlert("You have  logged out successfully, please log back in.");
-    navigate("/");
+    showSessionExpiredAlert(
+      "You have  logged out successfully, please log back in.",
+      () => navigate("/"),
+    );
+    // navigate("/");
   };
- 
 
   return (
     <header className="bg-gradient-to-r from-cyan-500 via-teal-600 to-red-500 shadow-lg sticky top-0 z-50">

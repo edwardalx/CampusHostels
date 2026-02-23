@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import Swal from "sweetalert2";
+import { useNavigate } from "react-router-dom";
 
-const IDLE_TIME = 15 * 60 * 1000; // 15 minutes
+const IDLE_TIME = 5 * 60 * 1000; // 15 minutes
 const WARNING_TIME = 30 * 1000; // 1 min before logout
 let token = localStorage.getItem("token");
 
@@ -78,9 +79,12 @@ export const useIdleTimeout = (onLogout) => {
 
 export const setTokenExpiryTimeout = (onLogout) => {
   const expiryTime = JSON.parse(localStorage.getItem("expires"));
+  if (!expiryTime) return;
   const currentTime = Date.now();
   const expireTimeMs = new Date(expiryTime).getTime();
-  const timeoutDuration = expireTimeMs - currentTime;
+  const timeoutDuration =
+  (expireTimeMs - currentTime) / 2; // Subtract 3hours for warning
+  console.log("Token expires in (ms):", timeoutDuration);
 
   if (timeoutDuration > 0) {
     setTimeout(() => {
@@ -101,11 +105,16 @@ export const isTokenExpired = () => {
   return true;
 };
 
-export const showSessionExpiredAlert = (message) => {
+export const showSessionExpiredAlert = (message, onConfirm) => {
   Swal.fire({
     title: "Logged Out",
     text: message || "You are logged out. Please log in again.",
     icon: "info",
     confirmButtonText: "OK",
+    allowOutsideClick: false,
+  }).then((result) => {
+    if(result.isConfirmed && onConfirm) {
+      onConfirm();
+    }
   });
 };

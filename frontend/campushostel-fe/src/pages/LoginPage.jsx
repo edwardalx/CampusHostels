@@ -41,16 +41,6 @@ export default function LoginPage() {
       response = await LiginApi({ loginData });
       setResData(response);
       console.log("Response:", response);
-      if (localStorage.getItem("token")) {
-        setTokenExpiryTimeout(() => {
-          showSessionExpiredAlert(
-            "Your session has expired. Please log in again.",
-          );
-          localStorage.removeItem("token");
-          localStorage.removeItem("user");
-          navigate("/login");
-        });
-      }
     } catch (error) {
       console.error("Login error:", error);
       // setErrorMsg({ email: "", password: "", general: "" });

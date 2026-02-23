@@ -1,8 +1,4 @@
-import {
-  Routes,
-  Route,
-  useNavigate,
-} from "react-router-dom";
+import { Routes, Route, useNavigate } from "react-router-dom";
 import HomePage from "./pages/homepage";
 import RegisterPage from "./pages/RegisterPage";
 import LoginPage from "./pages/LoginPage";
@@ -11,7 +7,11 @@ import HostelDetails from "./pages/HostelDetails";
 import Payments from "./pages/Payments";
 import PaymentReceipt from "./pages/PaymentReceipt";
 import { LogoutApi } from "./services/AuthServices";
-import { useIdleTimeout } from "./hooks/useIdleTimeout";
+import {
+  useIdleTimeout,
+  setTokenExpiryTimeout,
+  showSessionExpiredAlert,
+} from "./hooks/useIdleTimeout";
 import {
   PrivateRoute,
   ProtectedRegistrationRoute,
@@ -23,10 +23,21 @@ function App() {
   const navigate = useNavigate();
   const handleLogout = () => {
     console.log("Logging out");
-    LogoutApi();
-    navigate("/");
+    
+    showSessionExpiredAlert(
+      "Your session has expired. Please log in again.",
+      () => {
+        LogoutApi();
+        navigate("/");
+      },
+    );
+    // window.location.href = "/"; // Force reload to clear state
+    // navigate("/");
   };
   useIdleTimeout(() => {
+    handleLogout();
+  });
+  setTokenExpiryTimeout(() => {
     handleLogout();
   });
   // const token = localStorage.getItem("token");
