@@ -19,7 +19,7 @@ export  function PrivateRoute({ children }) {
           <h1>To access this page, you have to login</h1>
           <p>Click the button below to login</p>
           <button
-            className="bg-yellow-600 border rounded-xl w-20 not-italic"
+            className="bg-teal-400 border rounded-xl w-20 not-italic"
             onClick={() => navigate("/login")}
             type="button"
           >
