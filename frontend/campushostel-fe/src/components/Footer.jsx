@@ -67,7 +67,7 @@ export default function Footer({
 
         {/* Copyright */}
         <div className="mt-8 pt-8 border-t border-gray-200 text-center">
-          <p className="text-secondary-gray text-sm">
+          <p className="text-teal-400 text-sm">
             &copy; 2025 CampusHostels. All rights reserved.
           </p>
         </div>

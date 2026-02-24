@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import Swal from "sweetalert2";
 import { useNavigate } from "react-router-dom";
 
-const IDLE_TIME = 5 * 60 * 1000; // 15 minutes
+const IDLE_TIME = 1 * 60 * 1000; // 15 minutes
 const WARNING_TIME = 30 * 1000; // 1 min before logout
 let token = localStorage.getItem("token");
 
