@@ -4,7 +4,7 @@ import { Chrome, Facebook } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { FcGoogle } from "react-icons/fc";
 import { FaFacebook } from "react-icons/fa";
-import { LiginApi, LogoutApi } from "../services/AuthServices";
+import { LoginApi, LogoutApi } from "../services/AuthServices";
 import {
   setTokenExpiryTimeout,
   showSessionExpiredAlert,
@@ -38,7 +38,7 @@ export default function LoginPage() {
     };
     try {
       setErrorMsg({ email: "", password: "", general: "" });
-      response = await LiginApi({ loginData });
+      response = await LoginApi({ loginData });
       setResData(response);
       console.log("Response:", response);
     } catch (error) {

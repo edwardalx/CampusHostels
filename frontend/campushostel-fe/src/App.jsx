@@ -23,7 +23,10 @@ function App() {
   const navigate = useNavigate();
   const handleLogout = () => {
     console.log("Logging out");
-    
+    if(!localStorage.getItem("token")){
+      console.log("No token found, skipping logout");
+      return;
+    }
     showSessionExpiredAlert(
       "Your session has expired. Please log in again.",
       () => {

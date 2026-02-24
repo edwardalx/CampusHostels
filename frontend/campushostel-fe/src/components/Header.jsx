@@ -30,6 +30,18 @@ export default function Header() {
   const navigate = useNavigate();
   useEffect(() => {
     setToken(localStorage.getItem("token"));
+    // On mount, set token from localStorage
+    setToken(localStorage.getItem("token"));
+
+    // Listen for token changes in other tabs
+    const handleStorageChange = (event) => {
+      if (event.key === "token") {
+        const user = localStorage.getItem("user");
+        setToken(event.newValue); // or just localStorage.getItem("token")
+      }
+    };
+    window.addEventListener("storage", handleStorageChange);
+    return () => window.removeEventListener("storage", handleStorageChange);
   }, [localStorage.getItem("token")]);
   // Handle navigation
   const handleNavClick = (link) => {

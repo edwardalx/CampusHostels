@@ -2,7 +2,7 @@ import { showSessionExpiredAlert } from "../hooks/useIdleTimeout";
 let baseUrl = "/api/Accounts";
 
 
-export const LiginApi = async ({ loginData }) => {
+export const LoginApi = async ({ loginData }) => {
   const response = await fetch(`${baseUrl}/login`, {
     method: "POST",
     headers: {
