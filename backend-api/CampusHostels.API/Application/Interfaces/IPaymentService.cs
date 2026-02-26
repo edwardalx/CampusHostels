@@ -1,3 +1,4 @@
+using CampusHostels.API.Application.DTOs;
 using CampusHostels.API.Domain.Entities;
 using System;
 using System.Collections.Generic;
@@ -22,4 +23,7 @@ public interface IPaymentService
 
     /// <summary>Get a payment by id.</summary>
     Task<Payment?> GetPaymentByIdAsync(int id);
+
+    /// <summary>Get a payment by tenantId.</summary>
+    Task<IEnumerable<PaymentDto>> GetPaymentsByTenantAsync(Guid tenantId);
 }

@@ -22,7 +22,11 @@ public class EfTenancyRepository : ITenancyRepository
 
     public async Task<TenancyAgreement?> GetByIdAsync(int id)
     {
-        return await _db.TenancyAgreements.FindAsync(id);
+        return await _db.TenancyAgreements
+            .Include(t => t.Payments)
+            .Include(t => t.Unit)
+            .Include(t => t.Property)
+            .FirstOrDefaultAsync(t => t.Id == id);
     }
 
     public async Task SaveChangesAsync()

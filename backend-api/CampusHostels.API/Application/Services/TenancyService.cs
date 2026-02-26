@@ -3,36 +3,73 @@ using CampusHostels.API.Application.DTOs;
 using CampusHostels.API.Application.Interfaces;
 using CampusHostels.API.Domain.Entities;
 using CampusHostels.API.Infrastructure.Repositories;
+using CampusHostels.API.Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
 using System.Threading.Tasks;
 
 namespace CampusHostels.API.Application.Services;
 
 public class TenancyService : ITenancyService
 {
+    private readonly ApplicationDbContext _db;
     private readonly ITenancyRepository _repo;
     private readonly IMapper _mapper;
 
-    public TenancyService(ITenancyRepository repo, IMapper mapper)
+    public TenancyService(ITenancyRepository repo, IMapper mapper, ApplicationDbContext db)
     {
         _repo = repo;
         _mapper = mapper;
+        _db = db;
     }
 
-  public async Task<TenancyAgreement> CreateAsync(
-    TenancyCreateDto dto,
-    Guid tenantId
-)
-{
-    var entity = _mapper.Map<TenancyAgreement>(dto);
+    public async Task<TenancyAgreement> CreateAsync(
+      TenancyCreateDto dto,
+      Guid tenantId
+  )
+    {
+        var entity = _mapper.Map<TenancyAgreement>(dto);
 
-    entity.TenantId = tenantId;
-    entity.ComputeContractEndDate();
+        entity.TenantId = tenantId;
+        entity.ComputeContractEndDate();
 
-    var created = await _repo.AddAsync(entity);
-    await _repo.SaveChangesAsync();
+        var created = await _repo.AddAsync(entity);
+        await _repo.SaveChangesAsync();
 
-    return created;
-}
+        return created;
+    }
 
-    public Task<TenancyAgreement?> GetByIdAsync(int id) => _repo.GetByIdAsync(id);
+    public async Task<TenancyDetailsDto?> GetByIdAsync(int id)
+    {
+        var tenancy = await _repo.GetByIdAsync(id);
+        if (tenancy == null) return null;
+
+        var dto = new TenancyDetailsDto
+        {
+            Id = tenancy.Id,
+            TotalAmountPaid = tenancy.TotalAmountPaid ?? 0m,
+            Payments = tenancy.Payments.Select(p => new PaymentDto
+            {
+                Id = p.Id,
+                Amount = p.Amount,
+                Reference = p.Reference,
+                PaidAt = p.PaidAt,
+                Status = p.Status.ToString(),
+                Channel = p.Channel,
+                Currency = p.Currency
+            }).ToList(),
+            Unit = tenancy.Unit != null ? new UnitDto
+            {
+                Id = tenancy.Unit.Id,
+                Cost = tenancy.Unit.Cost
+            } : null,
+            Property = tenancy.Property != null ? new PropertyDto
+            {
+                Id = tenancy.Property.Id,
+                Name = tenancy.Property.Name,
+                Location = tenancy.Property.Location
+            } : null
+        };
+
+        return dto;
+    }
 }

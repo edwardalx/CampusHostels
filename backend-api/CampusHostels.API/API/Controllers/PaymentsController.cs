@@ -173,5 +173,17 @@ public class PaymentsController : ControllerBase
         var payment = await _paymentService.VerifyPaymentAsync(reference);
         return Ok(payment);
     }
+    [HttpGet("tenancy/{tenancyId}")]
+    public async Task<IActionResult> GetPaymentsByTenancy(int tenancyId)
+    {
+        var payments = await _paymentService.GetPaymentsByTenancyAsync(tenancyId);
+        return Ok(payments);
+    }
+    [HttpGet("tenant/{tenantId}")]
+    public async Task<IActionResult> GetPaymentsByTenant(Guid tenantId)
+    {
+        var payments = await _paymentService.GetPaymentsByTenantAsync(tenantId);
+        return Ok(payments);
+    }
 }
 

@@ -183,7 +183,7 @@ public class PaymentService : IPaymentService
         payment.PaidAt = DateTime.UtcNow;
 
         var tenancy = await _db.TenancyAgreements.Include(t => t.Unit).FirstAsync(t => t.Id == payment.TenancyAgreementId);
-        tenancy.TotalAmountPaid = tenancy.TotalAmountPaid + payment.Amount;
+        tenancy.TotalAmountPaid = (tenancy.TotalAmountPaid ?? 0m) + payment.Amount;
         var totalRent = tenancy.Unit?.Cost ?? 0m;
 
         var summary = await _db.PaymentSummaries.FirstOrDefaultAsync(s => s.TenancyAgreementId == tenancy.Id);
@@ -222,5 +222,22 @@ public class PaymentService : IPaymentService
     public async Task<Payment?> GetPaymentByIdAsync(int id)
     {
         return await _db.Payments.FindAsync(id);
+    }
+    public async Task<IEnumerable<PaymentDto>> GetPaymentsByTenantAsync(Guid tenantId)
+    {
+        return await _db.Payments
+            .Where(p => p.TenantId == tenantId)
+            .OrderByDescending(p => p.CreatedAt)
+            .Select(p => new PaymentDto
+            {
+                Id = p.Id,
+                Amount = p.Amount,
+                Reference = p.Reference,
+                PaidAt = p.PaidAt,
+                Status = p.Status.ToString(),
+                Channel = p.Channel,
+                Currency = p.Currency
+            })
+            .ToListAsync();
     }
 }
