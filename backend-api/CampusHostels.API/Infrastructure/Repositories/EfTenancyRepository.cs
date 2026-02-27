@@ -23,6 +23,7 @@ public class EfTenancyRepository : ITenancyRepository
     public async Task<TenancyAgreement?> GetByIdAsync(int id)
     {
         return await _db.TenancyAgreements
+            .AsNoTracking()
             .Include(t => t.Payments)
             .Include(t => t.Unit)
             .Include(t => t.Property)

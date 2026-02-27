@@ -16,7 +16,7 @@ public interface IPaymentService
     Task<(string Reference, string AuthorizationUrl)> InitializePaymentAsync(int tenancyId, decimal amount);
 
     /// <summary>Verify a payment by reference and update Payment/PaymentSummary records.</summary>
-    Task<Payment> VerifyPaymentAsync(string reference);
+    Task<PaymentDto> VerifyPaymentAsync(string reference);
 
     /// <summary>Get all payments for a tenancy.</summary>
     Task<IEnumerable<Payment>> GetPaymentsByTenancyAsync(int tenancyId);

@@ -21,6 +21,7 @@ public class PaymentsController : ControllerBase
     private readonly IPaystackService _paystack;
     private readonly IMapper _mapper;
 
+
     public PaymentsController(IPaymentService paymentService, IPaystackService paystack, IMapper mapper)
     {
         _paymentService = paymentService;
@@ -71,32 +72,21 @@ public class PaymentsController : ControllerBase
     [HttpPost("verify")]
     public async Task<IActionResult> Verify([FromBody] VerifyRequest req)
     {
+
         if (req == null || string.IsNullOrWhiteSpace(req.Reference))
             return BadRequest("Reference is required");
 
         // Let the service handle verification and DB updates
-        Payment payment;
+        // Payment payment;
         try
         {
-            payment = await _paymentService.VerifyPaymentAsync(req.Reference);
+            var payments = await _paymentService.VerifyPaymentAsync(req.Reference);
+            return Ok(payments);
         }
         catch (InvalidOperationException ex)
         {
             return NotFound(ex.Message);
         }
-
-        // Map to DTO
-        var dto = new PaymentResponseDto
-        {
-            Reference = payment.Reference,
-            Amount = payment.Amount,
-            Currency = payment.Currency,
-            Status = payment.Status.ToString(),
-            Channel = payment.Channel!,
-            PaidAt = payment.PaidAt
-        };
-
-        return Ok(dto);
     }
 
     [AllowAnonymous]

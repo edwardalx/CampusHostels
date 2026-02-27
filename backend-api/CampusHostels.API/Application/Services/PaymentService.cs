@@ -158,13 +158,17 @@ public class PaymentService : IPaymentService
     // ------------------------------
     // Payment Verification
     // ------------------------------
-    public async Task<Payment> VerifyPaymentAsync(string reference)
+    public async Task<PaymentDto> VerifyPaymentAsync(string reference)
     {
         var payment = await _db.Payments.FirstOrDefaultAsync(p => p.Reference == reference)
             ?? throw new InvalidOperationException($"Payment {reference} not found.");
 
+        var dto = MapToDto(payment);
+
         if (payment.Status == PaymentStatus.Success)
-            return payment;
+        {
+            return dto;
+        }
 
         var (isValid, actualChannel, _) = await _paystack.VerifyTransactionAsync(reference);
 
@@ -176,7 +180,7 @@ public class PaymentService : IPaymentService
             payment.Status = PaymentStatus.Failed;
             payment.PaidAt = DateTime.UtcNow;
             await _db.SaveChangesAsync();
-            return payment;
+            return dto;
         }
 
         payment.Status = PaymentStatus.Success;
@@ -208,7 +212,7 @@ public class PaymentService : IPaymentService
 
         await _db.SaveChangesAsync();
 
-        return payment;
+        return dto;
     }
 
     public async Task<IEnumerable<Payment>> GetPaymentsByTenancyAsync(int tenancyId)
@@ -239,5 +243,18 @@ public class PaymentService : IPaymentService
                 Currency = p.Currency
             })
             .ToListAsync();
+    }
+    private PaymentDto MapToDto(Payment payment)
+    {
+        return new PaymentDto
+        {
+            Id = payment.Id,
+            Amount = payment.Amount,
+            Reference = payment.Reference,
+            PaidAt = payment.PaidAt,
+            Status = payment.Status.ToString(),
+            Channel = payment.Channel,
+            Currency = payment.Currency
+        };
     }
 }
