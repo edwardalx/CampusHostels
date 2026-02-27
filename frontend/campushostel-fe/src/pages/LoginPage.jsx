@@ -94,8 +94,8 @@ export default function LoginPage() {
       <div className=" flex min-h-[100svh]  w-full lg:w-1/2 flex-col items-center justify-center bg-gradient-to-br from-teal-800 to-teal-900 dark:bg-gray-900">
         <div className="w-full max-w-md flex flex-col">
           {/* Header */}
-          <div className="mb-12 ">
-            <div className="flex items-center justify-between mb-12">
+          <div className="mb-12 mx-2 md:mx-0">
+            <div className="flex items-center justify-between mb-12 mt-2">
               <Link to="/">
                 <div className="flex items-center space-x-3">
                   <div className="bg-cyan-400 p-2 rounded-lg">
@@ -126,7 +126,7 @@ export default function LoginPage() {
           {/* Login Form */}
           <form
             onSubmit={handleLogin}
-            className="flex flex-col  md:items-stretch gap-10"
+            className="flex flex-col  md:items-stretch gap-10 m-2 md:mx-0"
           >
             {/* Email Input */}
             <div>

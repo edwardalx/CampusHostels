@@ -29,9 +29,21 @@ public class EfTenancyRepository : ITenancyRepository
             .Include(t => t.Property)
             .FirstOrDefaultAsync(t => t.Id == id);
     }
-
+    public async Task<List<TenancyAgreement>> GetPaidTenancyAsync(Guid tenantId)
+    {
+        return await _db.TenancyAgreements
+            .AsNoTracking()
+            .Where(t => t.TenantId == tenantId &&
+                        t.TotalAmountPaid != null &&
+                        t.TotalAmountPaid > 0)
+            .Include(t => t.Property)
+            .Include(t => t.Unit)
+            .OrderByDescending(t => t.ContractStartDate)
+            .ToListAsync();
+    }
     public async Task SaveChangesAsync()
     {
         await _db.SaveChangesAsync();
     }
+
 }

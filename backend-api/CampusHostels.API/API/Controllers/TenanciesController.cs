@@ -50,4 +50,20 @@ public class TenanciesController : ControllerBase
         if (tenancy == null) return NotFound();
         return Ok(tenancy);
     }
+
+    [HttpGet("paid/{tenantId:guid}")]
+    public async Task<IActionResult> GetPaidTenancy(Guid tenantId)
+    {
+        // var tenantIdClaim = User.FindFirst("tenantId")?.Value;
+        // if (tenantIdClaim is null)
+        //     return Unauthorized();
+
+        // var tenantId = Guid.Parse(tenantIdClaim);
+
+        var paidTenancies = await _service.GetPaidTenancyAsync(tenantId);
+
+        return Ok(paidTenancies); // returns [] if none
+    }
+
+
 }

@@ -72,4 +72,27 @@ public class TenancyService : ITenancyService
 
         return dto;
     }
+
+    public async Task<List<PaidTenancyDto>> GetPaidTenancyAsync(Guid tenantId)
+    {
+        var tenancies = await _repo.GetPaidTenancyAsync(tenantId);
+        if (tenancies == null || !tenancies.Any()) return new List<PaidTenancyDto>();
+
+        var dtos = tenancies.Select(tenancy =>  new PaidTenancyDto
+        {
+            Id = tenancy.Id,
+            ContractStartDate = tenancy.ContractStartDate,
+            ContractDurationMonths = tenancy.ContractDurationMonths,
+            ContractEndDate = tenancy.ContractEndDate,
+            TenantId = tenancy.TenantId,
+            PropertyId = tenancy.PropertyId,
+            UnitId = tenancy.UnitId,
+            PropertyName = tenancy.Property?.Name,
+            UnitName = tenancy.Unit?.RoomNumber,
+            TotalAmountPaid = tenancy.TotalAmountPaid ?? 0m
+        }).ToList();
+
+        return dtos;
+    }
+
 }

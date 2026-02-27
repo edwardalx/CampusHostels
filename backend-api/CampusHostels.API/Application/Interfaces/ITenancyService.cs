@@ -8,4 +8,5 @@ public interface ITenancyService
 {
     Task<TenancyAgreement> CreateAsync(TenancyCreateDto dto, Guid tenantId);
     Task<TenancyDetailsDto?> GetByIdAsync(int id);
+    Task<List<PaidTenancyDto>> GetPaidTenancyAsync(Guid tenantId);
 }
