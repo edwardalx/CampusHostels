@@ -7,12 +7,19 @@ using CampusHostels.API.Application.Interfaces;
 using CampusHostels.API.Application.Validators;
 using CampusHostels.API.Infrastructure.Data;
 using CampusHostels.API.Infrastructure.Repositories;
+using CampusHostels.API.Infrastructure.Services;
 using FluentValidation;
 using FluentValidation.AspNetCore;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Load .env first
+DotNetEnv.Env.Load();
+
+// Add environment variables to configuration
+builder.Configuration.AddEnvironmentVariables();
 
 #region Core MVC & API
 builder.Services.AddControllers();
@@ -73,6 +80,15 @@ builder.Services.AddScoped<IAccountService, AccountService>();
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IPaymentService, PaymentService>();
 builder.Services.AddScoped<ITenancyService, TenancyService>();
+#region PasswordReset & Email
+builder.Services.Configure<SmtpOptions>(builder.Configuration.GetSection("Smtp"));
+builder.Services.AddTransient<IEmailSender, SmtpEmailSender>();
+builder.Services.AddScoped<IPasswordResetService, PasswordResetService>();
+#endregion
+#region WhatsApp & Messaging
+builder.Services.Configure<TwilioWhatsAppOptions>(builder.Configuration.GetSection("Twilio"));
+builder.Services.AddScoped<IWhatsAppService, TwilioWhatsAppService>();
+#endregion
 #endregion
 
 #region Paystack

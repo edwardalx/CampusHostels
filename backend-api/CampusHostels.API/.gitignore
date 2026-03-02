@@ -114,3 +114,6 @@ __pycache__/
 # OS files
 .DS_Store
 Thumbs.db
+
+# Ignore appsettings files with sensitive data
+appsettings.Development.json

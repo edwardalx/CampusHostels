@@ -1,4 +1,5 @@
 using CampusHostels.API.Application.DTOs;
+using CampusHostels.API.Application.DTOs.Account;
 using CampusHostels.API.Application.Interfaces;
 using CampusHostels.API.Domain.Entities;
 using CampusHostels.API.Infrastructure.Data;
@@ -15,11 +16,13 @@ public class AccountService : IAccountService
 {
     private readonly ApplicationDbContext _db;
     private readonly ITokenService _tokenService;
+    private readonly IWhatsAppService _whatsAppService;
 
-    public AccountService(ApplicationDbContext db, ITokenService tokenService)
+    public AccountService(ApplicationDbContext db, ITokenService tokenService, IWhatsAppService whatsAppService)
     {
         _db = db;
         _tokenService = tokenService;
+        _whatsAppService = whatsAppService;
     }
 
     public async Task<AuthResponseDto> RegisterAsync(RegisterDto dto)
@@ -129,6 +132,10 @@ public class AccountService : IAccountService
 
         // Generate token
         var token = _tokenService.CreateToken(user, out var expires);
+        await _whatsAppService.SendMessageAsync(
+            "+233244429422",
+            "OTP test message from backend   - replace with real OTP logic in production"
+        );
 
         return new AuthResponseDto
         {
@@ -172,5 +179,24 @@ public class AccountService : IAccountService
             EmailExists = emailExists,
             PhoneExists = phoneExists
         };
+    }
+
+    public async Task<bool> UpdateUserAsync(UpdateUserDto dto)
+    {
+        var normalizedEmail = dto.Email?.Trim().ToLowerInvariant() ?? string.Empty;
+        var user = await _db.Users.FirstOrDefaultAsync(u => u.Email.ToLower() == normalizedEmail);
+        if (user == null) return false;
+
+        if (!string.IsNullOrWhiteSpace(dto.PhoneNumber))
+            user.PhoneNumber = NormalizePhone(dto.PhoneNumber);
+
+        if (!string.IsNullOrWhiteSpace(dto.FirstName))
+            user.FirstName = dto.FirstName;
+
+        if (!string.IsNullOrWhiteSpace(dto.LastName))
+            user.LastName = dto.LastName;
+
+        await _db.SaveChangesAsync();
+        return true;
     }
 }
