@@ -85,7 +85,6 @@ builder.Services.AddScoped<IWhatsAppService, WhatsAppService>();
 
 #region WhatsApp Service (Whapi.Cloud)
 builder.Services.AddHttpClient<IWhatsAppService, WhatsAppService>(); // Configuration and token handling is done inside the service constructor
-var token = builder.Configuration["Whapi:Token"]; // Gets from any source
 #endregion
 
 #region Paystack
