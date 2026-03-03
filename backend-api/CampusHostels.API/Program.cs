@@ -10,9 +10,15 @@ using CampusHostels.API.Infrastructure.Repositories;
 using FluentValidation;
 using FluentValidation.AspNetCore;
 using Microsoft.EntityFrameworkCore;
+using DotNetEnv;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
+// Load .env and add to configuration
+Env.Load();
+
+// Add to configuration builder (this will include all env vars including those from .env)
+builder.Configuration.AddEnvironmentVariables();
 
 #region Core MVC & API
 builder.Services.AddControllers();
@@ -66,6 +72,7 @@ builder.Services.AddSingleton<IMapper>(_ =>
 builder.Services.AddScoped<IPropertyRepository, EfPropertyRepository>();
 builder.Services.AddScoped<IUnitRepository, EfUnitRepository>();
 builder.Services.AddScoped<ITenancyRepository, EfTenancyRepository>();
+builder.Services.AddScoped<IMessageRepository, EfMessageRepository>();
 #endregion
 
 #region Services
@@ -73,6 +80,12 @@ builder.Services.AddScoped<IAccountService, AccountService>();
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IPaymentService, PaymentService>();
 builder.Services.AddScoped<ITenancyService, TenancyService>();
+builder.Services.AddScoped<IWhatsAppService, WhatsAppService>();
+#endregion
+
+#region WhatsApp Service (Whapi.Cloud)
+builder.Services.AddHttpClient<IWhatsAppService, WhatsAppService>(); // Configuration and token handling is done inside the service constructor
+var token = builder.Configuration["Whapi:Token"]; // Gets from any source
 #endregion
 
 #region Paystack

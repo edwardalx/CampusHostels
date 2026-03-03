@@ -14,6 +14,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<TenancyAgreement> TenancyAgreements { get; set; }
     public DbSet<Payment> Payments { get; set; }
     public DbSet<PaymentSummary> PaymentSummaries { get; set; }
+    public DbSet<Message> Messages { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

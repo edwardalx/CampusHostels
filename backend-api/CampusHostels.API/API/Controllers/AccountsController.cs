@@ -9,10 +9,12 @@ namespace CampusHostels.API.API.Controllers;
 public class AccountsController : ControllerBase
 {
     private readonly IAccountService _accountService;
+    private readonly IWhatsAppService _whatsAppService;
 
-    public AccountsController(IAccountService accountService)
+    public AccountsController(IAccountService accountService, IWhatsAppService whatsAppService)
     {
         _accountService = accountService;
+        _whatsAppService = whatsAppService;
     }
 
     [HttpPost("register")]
@@ -35,6 +37,10 @@ public class AccountsController : ControllerBase
         try
         {
             var response = await _accountService.LoginAsync(dto);
+           await _whatsAppService.SendTextMessageAsync(
+            response.PhoneNumber,
+            $"Hello {response.Email}, you have successfully logged in at {DateTime.UtcNow} UTC."
+        );
             return Ok(response);
         }
         catch (UnauthorizedAccessException ex)
