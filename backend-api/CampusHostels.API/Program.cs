@@ -82,15 +82,17 @@ builder.Services.AddScoped<IPaymentService, PaymentService>();
 builder.Services.AddScoped<ITenancyService, TenancyService>();
 builder.Services.AddScoped<IWhatsAppService, WhatsAppService>();
 builder.Services.AddScoped<EmailService>(); // Not interface-based since it's only used internally by other services
+builder.Services.AddScoped<IEmailSender, SmtpEmailSender>(); // Register IEmailSender to resolve to EmailService
+builder.Services.AddScoped<IPasswordResetService, PasswordResetService>();
 #endregion
 
 #region WhatsApp Service (Whapi.Cloud)
 builder.Services.AddHttpClient<IWhatsAppService, WhatsAppService>(); // Configuration and token handling is done inside the service constructor
 #endregion
 
-#region Email Service (SendGrid)
-builder.Services.AddTransient<EmailService>();
-#endregion
+// #region Email Service (SendGrid)
+// builder.Services.AddTransient<EmailService>();
+// #endregion
 
 #region Paystack
 builder.Services.AddHttpClient<CampusHostels.API.Application.Interfaces.IPaystackService, CampusHostels.API.Application.Services.PaystackService>((client) =>

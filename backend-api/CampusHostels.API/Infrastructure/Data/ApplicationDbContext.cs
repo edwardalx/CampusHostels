@@ -15,6 +15,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<Payment> Payments { get; set; }
     public DbSet<PaymentSummary> PaymentSummaries { get; set; }
     public DbSet<Message> Messages { get; set; }
+    public DbSet<PasswordResetToken> PasswordResetTokens { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -80,6 +81,14 @@ public class ApplicationDbContext : DbContext
         {
             entity.HasKey(e => e.Id);
             entity.HasOne(e => e.TenancyAgreement).WithOne().HasForeignKey<PaymentSummary>(e => e.TenancyAgreementId).OnDelete(DeleteBehavior.Cascade);
+        });
+        // PasswordResetToken configuration
+        modelBuilder.Entity<PasswordResetToken>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasOne(e => e.User).WithMany().HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasIndex(e => e.TokenHash).IsUnique(false);
+            entity.Property(e => e.Used).HasDefaultValue(false);
         });
     }
 }
