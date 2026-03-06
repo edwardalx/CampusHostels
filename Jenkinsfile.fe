@@ -36,14 +36,10 @@ pipeline {
                                 
                                 echo "🔨 Building frontend..."
                                 cd frontend/campushostel-fe
-                           
-                                echo "🔨 Building frontend..."
-
-                                # Clean install
+                                
+                                # Build
                                 rm -rf node_modules package-lock.json
-
-                                # Use npm install (since package-lock.json isn't committed)
-                                npm install
+                                npm install --force --legacy-peer-deps
                                 npm run build
                                 
                                 echo "✅ Frontend built successfully"
