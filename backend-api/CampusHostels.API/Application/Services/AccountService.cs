@@ -143,7 +143,7 @@ public class AccountService : IAccountService
     }
 
     /// <summary>Hash a password using SHA256 (dev-only; replace with Identity later).</summary>
-    private string HashPassword(string password)
+    public static string HashPassword(string password)
     {
         using (var sha256 = SHA256.Create())
         {
@@ -153,7 +153,7 @@ public class AccountService : IAccountService
     }
 
     /// <summary>Verify a password against its hash.</summary>
-    private bool VerifyPassword(string password, string hash)
+    public static bool VerifyPassword(string password, string hash)
     {
         var hashOfInput = HashPassword(password);
         return hashOfInput == hash;
@@ -172,5 +172,24 @@ public class AccountService : IAccountService
             EmailExists = emailExists,
             PhoneExists = phoneExists
         };
+    }
+
+     public async Task<bool> UpdateUserAsync(UpdateUserDto dto)
+    {
+        var normalizedEmail = dto.Email?.Trim().ToLowerInvariant() ?? string.Empty;
+        var user = await _db.Users.FirstOrDefaultAsync(u => u.Email.ToLower() == normalizedEmail);
+        if (user == null) return false;
+
+        if (!string.IsNullOrWhiteSpace(dto.PhoneNumber))
+            user.PhoneNumber = NormalizePhone(dto.PhoneNumber);
+
+        if (!string.IsNullOrWhiteSpace(dto.FirstName))
+            user.FirstName = dto.FirstName;
+
+        if (!string.IsNullOrWhiteSpace(dto.LastName))
+            user.LastName = dto.LastName;
+
+        await _db.SaveChangesAsync();
+        return true;
     }
 }

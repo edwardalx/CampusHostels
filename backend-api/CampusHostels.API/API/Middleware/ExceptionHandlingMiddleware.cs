@@ -1,5 +1,7 @@
 using System.Net;
 using System.Text.Json;
+using Microsoft.AspNetCore.Hosting;
+
 
 namespace CampusHostels.API.API.Middleware;
 
@@ -7,11 +9,16 @@ public class ExceptionHandlingMiddleware
 {
     private readonly RequestDelegate _next;
     private readonly ILogger<ExceptionHandlingMiddleware> _logger;
+    private readonly IWebHostEnvironment _env;
 
-    public ExceptionHandlingMiddleware(RequestDelegate next, ILogger<ExceptionHandlingMiddleware> logger)
+    public ExceptionHandlingMiddleware(
+        RequestDelegate next,
+        ILogger<ExceptionHandlingMiddleware> logger,
+        IWebHostEnvironment env)
     {
         _next = next;
         _logger = logger;
+        _env = env;
     }
 
     public async Task InvokeAsync(HttpContext context)
@@ -23,7 +30,7 @@ public class ExceptionHandlingMiddleware
         catch (Exception ex)
         {
             // Log full exception for internal debugging
-            _logger.LogError(ex, "Unhandled exception occurred for request {Method} {Path}", 
+            _logger.LogError(ex, "Unhandled exception occurred for request {Method} {Path}",
                              context.Request.Method, context.Request.Path);
 
             // Return safe response to client
@@ -31,31 +38,47 @@ public class ExceptionHandlingMiddleware
         }
     }
 
-    private static Task HandleExceptionAsync(HttpContext context, Exception exception)
+    private async Task HandleExceptionAsync(HttpContext context, Exception exception)
     {
         context.Response.ContentType = "application/json";
 
-        int statusCode = (int)HttpStatusCode.InternalServerError;
-        string userMessage = "An unexpected error occurred. Please try again later.";
+        int statusCode;
+        string message;
         string? details = null;
 
-        // Handle safe exceptions for the client
-        if (exception is ArgumentException || exception is InvalidOperationException)
+        switch (exception)
         {
-            statusCode = (int)HttpStatusCode.BadRequest; // 400 for client errors
-            userMessage = "Validation failed.";
-            details = exception.Message; // safe message
+            case ArgumentException:
+                statusCode = StatusCodes.Status400BadRequest;
+                message = "Validation failed.";
+                details = exception.Message;
+                break;
+
+            case UnauthorizedAccessException:
+                statusCode = StatusCodes.Status401Unauthorized;
+                message = exception.Message;
+                break;
+
+            case KeyNotFoundException:
+                statusCode = StatusCodes.Status404NotFound;
+                message = exception.Message;
+                break;
+
+            default:
+                statusCode = StatusCodes.Status500InternalServerError;
+                message = "An unexpected error occurred. Please try again later.";
+                break;
         }
 
         context.Response.StatusCode = statusCode;
 
         var response = new
         {
-            error = userMessage,
-            details = details,
+            error = message,
+            details = _env.IsDevelopment() ? details : null, // ✅ now works
             timestamp = DateTime.UtcNow
         };
 
-        return context.Response.WriteAsJsonAsync(response);
+        await context.Response.WriteAsJsonAsync(response);
     }
 }

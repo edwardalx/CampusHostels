@@ -10,9 +10,15 @@ using CampusHostels.API.Infrastructure.Repositories;
 using FluentValidation;
 using FluentValidation.AspNetCore;
 using Microsoft.EntityFrameworkCore;
+using DotNetEnv;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
+// Load .env and add to configuration
+Env.Load();
+
+// Add to configuration builder (this will include all env vars including those from .env)
+builder.Configuration.AddEnvironmentVariables();
 
 #region Core MVC & API
 builder.Services.AddControllers();
@@ -66,6 +72,7 @@ builder.Services.AddSingleton<IMapper>(_ =>
 builder.Services.AddScoped<IPropertyRepository, EfPropertyRepository>();
 builder.Services.AddScoped<IUnitRepository, EfUnitRepository>();
 builder.Services.AddScoped<ITenancyRepository, EfTenancyRepository>();
+builder.Services.AddScoped<IMessageRepository, EfMessageRepository>();
 #endregion
 
 #region Services
@@ -73,7 +80,19 @@ builder.Services.AddScoped<IAccountService, AccountService>();
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IPaymentService, PaymentService>();
 builder.Services.AddScoped<ITenancyService, TenancyService>();
+builder.Services.AddScoped<IWhatsAppService, WhatsAppService>();
+builder.Services.AddScoped<EmailService>(); // Not interface-based since it's only used internally by other services
+builder.Services.AddScoped<IEmailSender, SmtpEmailSender>(); // Register IEmailSender to resolve to EmailService
+builder.Services.AddScoped<IPasswordResetService, PasswordResetService>();
 #endregion
+
+#region WhatsApp Service (Whapi.Cloud)
+builder.Services.AddHttpClient<IWhatsAppService, WhatsAppService>(); // Configuration and token handling is done inside the service constructor
+#endregion
+
+// #region Email Service (SendGrid)
+// builder.Services.AddTransient<EmailService>();
+// #endregion
 
 #region Paystack
 builder.Services.AddHttpClient<CampusHostels.API.Application.Interfaces.IPaystackService, CampusHostels.API.Application.Services.PaystackService>((client) =>
