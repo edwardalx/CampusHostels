@@ -37,7 +37,7 @@ pipeline {
                                 echo "🔨 Building frontend..."
                                 cd frontend/campushostel-fe
                                 
-                                # Build
+                                // # Build
                                 rm -rf node_modules package-lock.json
                                 npm ci
                                 npm run build
