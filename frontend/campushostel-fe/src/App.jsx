@@ -5,6 +5,7 @@ import LoginPage from "./pages/LoginPage";
 import MainLayout from "./components/MainLayout";
 import HostelDetails from "./pages/HostelDetails";
 import Payments from "./pages/Payments";
+import PaymentHistory from "./pages/PaymentHistory";
 import PaymentReceipt from "./pages/PaymentReceipt";
 import { LogoutApi } from "./services/AuthServices";
 import {
@@ -23,7 +24,7 @@ function App() {
   const navigate = useNavigate();
   const handleLogout = () => {
     console.log("Logging out");
-    if(!localStorage.getItem("token")){
+    if (!localStorage.getItem("token")) {
       console.log("No token found, skipping logout");
       return;
     }
@@ -55,7 +56,7 @@ function App() {
             path="/payment-history"
             element={
               <PrivateRoute>
-                <p>Payment History (Coming Soon)</p>{" "}
+                <PaymentHistory />
               </PrivateRoute>
             }
           />

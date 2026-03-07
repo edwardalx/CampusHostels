@@ -44,20 +44,26 @@ public class AccountsController : ControllerBase
         try
         {
             var response = await _accountService.LoginAsync(dto);
-            await _whatsAppService.SendTextMessageAsync(
-             response.PhoneNumber,
-             $"Hello {response.Email}, you have successfully logged in at {DateTime.UtcNow} UTC."
-         );
-            await _emailService.SendEmailAsync(
-                response.Email,
-                "Login Successful",
-                $"<p>Hello {response.Email}, you have successfully logged in at {DateTime.UtcNow} UTC.</p>"
-            );
-            await _emailSender.SendEmailAsync(
-                response.Email,
-                "Login Notification",
-                $"<p>Hello {response.Email}, you have successfully logged in at {DateTime.UtcNow} UTC.</p>"
-            );
+            if (dto.PhoneNumber== response.PhoneNumber)
+            {
+                await _whatsAppService.SendTextMessageAsync(
+                    response.PhoneNumber,
+                    $"Hello {response.FirstName}, you have successfully logged in to RentIn App at {DateTime.UtcNow} UTC."
+                );
+            }
+            if (string.Equals(dto.Email, response.Email, StringComparison.OrdinalIgnoreCase))
+            {
+            //     await _emailService.SendEmailAsync(
+            //     response.Email,
+            //     "Login Successful",
+            //     $"<p>Hello {response.FirstName}, you have successfully logged in to RentIn App at {DateTime.UtcNow} UTC.</p>"
+            // );
+                await _emailSender.SendEmailAsync(
+                    response.Email,
+                    "Login Notification",
+                    $"<p>Hello {response.FirstName}, you have successfully logged in to RentIn App at {DateTime.UtcNow} UTC.</p>"
+                );
+            }
             return Ok(response);
         }
         catch (UnauthorizedAccessException ex)
@@ -95,7 +101,7 @@ public class AccountsController : ControllerBase
     [HttpGet("verify-reset")]
     public async Task<IActionResult> VerifyReset([FromQuery] ResetPasswordDto dto)
     {
-        if (string.IsNullOrWhiteSpace(dto.Token) || string.IsNullOrWhiteSpace(dto.Email)||string.IsNullOrWhiteSpace(dto.PhoneNumber))
+        if (string.IsNullOrWhiteSpace(dto.Token) || string.IsNullOrWhiteSpace(dto.Email) || string.IsNullOrWhiteSpace(dto.PhoneNumber))
             return BadRequest(new { message = "Token, email, and phone number are required" });
 
         var valid = await _passwordResetService.VerifyResetTokenAsync(dto);

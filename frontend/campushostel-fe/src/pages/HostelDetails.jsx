@@ -4,7 +4,7 @@ import {
   getUnitsByPropertyId,
 } from "../services/HostelServices";
 import { useNavigate, useParams } from "react-router-dom";
-import SkeletonCard from "../components/SkeletonCard";
+import {SkeletonCard} from "../components/SkeletonCard";
 import { HeroSection } from "../components";
 import { Tile } from "../components/UnitTile";
 import { Tile2 } from "../components/UnitTile2";

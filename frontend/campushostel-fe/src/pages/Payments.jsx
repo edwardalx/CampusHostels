@@ -6,6 +6,7 @@ import { useParams } from "react-router-dom";
 import { getUnitByIdPropertyById } from "../services/HostelServices";
 import { createTenancy } from "../services/OtherServices";
 import { initailizePayments } from "../services/PaymentService";
+import { LoadingSpinner } from "../components/SkeletonCard";
 import Divider from "../components/Divider";
 import DurationSelect from "../components/SelectDuration";
 
@@ -158,14 +159,8 @@ export default function Payments() {
 
   return (
     <div>
-     {pageloading && ( 
-        <div className="fixed inset-0 bg-teal-900/70  flex items-center justify-center z-50">
-          <div className="bg-teal-800 p-6 rounded-xl shadow-lg flex flex-col items-center gap-4">
-            <div className="animate-spin h-10 w-10 border-4 border-teal-400 border-t-transparent rounded-full"></div>
-            {/* <p className="text-gray-200 font-medium">Loading payment details...</p> */}
-          </div>
-        </div>
-      )}
+      {pageloading && <LoadingSpinner />}
+
       {paymentloading && (
         <div className="fixed inset-0 bg-teal-900/70  flex items-center justify-center z-50">
           <div className="bg-teal-800 p-6 rounded-xl shadow-lg flex flex-col items-center gap-4">

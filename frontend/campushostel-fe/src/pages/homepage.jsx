@@ -17,7 +17,7 @@ import React, { useState, useCallback, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { getHostels } from "../services/HostelServices";
 import { HeroSection, SearchBar, HostelGrid, Footer } from "../components";
-import SkeletonCard from "../components/SkeletonCard";
+import {SkeletonCard} from "../components/SkeletonCard";
 
 export default function HomePage() {
   const [hostels, setHostels] = useState([]);

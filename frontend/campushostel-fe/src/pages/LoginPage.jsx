@@ -4,6 +4,7 @@ import { Chrome, Facebook } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { FcGoogle } from "react-icons/fc";
 import { FaFacebook } from "react-icons/fa";
+import { LoadingSpinner } from "../components/SkeletonCard";
 import { LoginApi, LogoutApi } from "../services/AuthServices";
 import {
   setTokenExpiryTimeout,
@@ -12,7 +13,7 @@ import {
 } from "../hooks/useIdleTimeout";
 
 export default function LoginPage() {
-  const [resData, setResData] = useState(null);
+  const [loading, setLoading] = useState(false);
   const [email_phoneNumber, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errorMsg, setErrorMsg] = useState({
@@ -30,16 +31,16 @@ export default function LoginPage() {
   let response;
   const handleLogin = async (e) => {
     e.preventDefault();
-
     const loginData = {
       email: email_phoneNumber,
       phoneNumber: email_phoneNumber,
       password: password,
     };
     try {
+      setLoading(true);
       setErrorMsg({ email: "", password: "", general: "" });
       response = await LoginApi({ loginData });
-      setResData(response);
+     
       console.log("Response:", response);
     } catch (error) {
       console.error("Login error:", error);
@@ -58,6 +59,7 @@ export default function LoginPage() {
         }));
       }
     } finally {
+      setLoading(false);
       if (response && response.token) {
         setEmail("");
         setPassword("");
@@ -77,6 +79,9 @@ export default function LoginPage() {
   const handleFacebookLogin = () => {
     console.log("Continue with Facebook");
   };
+  if (loading) {
+    return <div><LoadingSpinner /></div>;
+  }
 
   return (
     <div className="min-h-[100svh] flex">

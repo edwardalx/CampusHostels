@@ -13,7 +13,7 @@
 
 import React from 'react';
 import HostelCard from './HostelCard';
-import SkeletonCard  from './SkeletonCard';
+import {SkeletonCard}  from './SkeletonCard';
 
 // const SkeletonCard = () => (
 //   <div className="bg-white rounded-2xl overflow-hidden shadow-md animate-pulse flex flex-col h-full">

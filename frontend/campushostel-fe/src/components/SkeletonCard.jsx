@@ -1,5 +1,5 @@
 
-export default function SkeletonCard() {
+export  function SkeletonCard() {
   return (
     <div>
       <div className="bg-white rounded-2xl overflow-hidden shadow-md animate-pulse flex flex-col h-full">
@@ -10,7 +10,17 @@ export default function SkeletonCard() {
           <div className="h-3 bg-gray-300 rounded w-1/3"></div>
         </div>
       </div>
-      ;
+    </div>
+  );
+}
+
+export function LoadingSpinner() {
+  return (
+    <div className="fixed inset-0 bg-teal-900/70  flex items-center justify-center z-50">
+      <div className="bg-teal-800 p-6 rounded-xl shadow-lg flex flex-col items-center gap-4">
+        <div className="animate-spin h-10 w-10 border-4 border-teal-400 border-t-transparent rounded-full"></div>
+        {/* <p className="text-gray-200 font-medium">Loading payment details...</p> */}
+      </div>
     </div>
   );
 }
