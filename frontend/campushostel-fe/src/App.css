@@ -35,3 +35,26 @@ html {
   transform: translateY(-4px);
   box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
 }
+/* Force safe colors for html2canvas */
+.printable * {
+  color: #000 !important;
+  background-color: #fff !important;
+  border-color: #000 !important;
+}
+.printable b {
+  color: #000 !important;
+}
+/* Hide everything by default in print */
+@media print {
+  /* Hide all siblings of #agreement */
+  body > *:not(#agreement) {
+    display: none !important;
+  }
+
+  /* Ensure #agreement and its content are visible */
+  #agreement {
+    display: block !important;
+    position: static !important; /* flow normally */
+    width: 100% !important;
+  }
+}

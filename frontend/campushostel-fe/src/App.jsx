@@ -7,6 +7,8 @@ import HostelDetails from "./pages/HostelDetails";
 import Payments from "./pages/Payments";
 import PaymentHistory from "./pages/PaymentHistory";
 import PaymentReceipt from "./pages/PaymentReceipt";
+import TenancyAgreement from "./pages/TenancyAgreement";
+import AboutPage from "./pages/AboutPage";
 import { LogoutApi } from "./services/AuthServices";
 import {
   useIdleTimeout,
@@ -61,8 +63,8 @@ function App() {
             }
           />
 
-          <Route path="/tenancy" element={<p>Tenancy Page (Coming Soon)</p>} />
-          <Route path="/About" element={<p>About Page (Coming Soon)</p>} />
+          <Route path="/tenancy" element={<TenancyAgreement />} />
+          <Route path="/About" element={<AboutPage />} />
           <Route path="/Contact" element={<p>Contact Page (Coming Soon)</p>} />
           <Route path="/hostel/:id" element={<HostelDetails />}></Route>
           <Route
