@@ -28,7 +28,7 @@ export default function PaymentTable({payments=[]}) {
             <tbody className="divide-y">
               {payments.length === 0 ? (
                 <tr>
-                  <td colSpan="3" className="text-center py-4 text-gray-500">
+                  <td colSpan="4" className="text-center py-8 text-gray-500">
                     No payments found
                   </td>
                 </tr>

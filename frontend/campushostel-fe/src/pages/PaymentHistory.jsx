@@ -4,7 +4,7 @@ import PaymentTable from "../components/PaymentTable";
 
 export default function PaymentHistory() {
   const [paymentHistory, setPaymentHistory] = useState([])||response;
-  const storedUser = JSON.parse(localStorage.getItem("user"));
+  const storedUser = JSON.parse(localStorage.getItem("user2"));
   let response
 
   useEffect(() => {
