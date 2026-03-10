@@ -15,9 +15,9 @@ export default function PaymentTable({payments=[]}) {
     <div className="flex justify-center w-full">
       <div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-2xl">
         <div className="overflow-x-auto">
-          <table className="w-full text-sm text-left">
+          <table className="w-full text-sm text-left border">
             <thead className="border-b text-gray-600">
-              <tr>
+              <tr className="divide-x">
                 <th className="py-2">Date</th>
                 <th className="py-2">Amount</th>
                 <th className="py-2">Status</th>
