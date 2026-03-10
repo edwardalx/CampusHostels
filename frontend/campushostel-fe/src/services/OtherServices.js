@@ -18,3 +18,12 @@ export const createTenancy = async (tenancyPayload) => {
 
   return data;
 };
+
+export const getPaidTenancies = async (tenantId) => {
+  const response = await fetch(`${baseUrl}/paid/${tenantId}`);
+  const data = await response.json();
+  if (!response.ok) {
+    throw data;
+  }
+  return data;
+};

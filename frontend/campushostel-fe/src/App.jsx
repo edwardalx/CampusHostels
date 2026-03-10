@@ -63,7 +63,7 @@ function App() {
             }
           />
 
-          <Route path="/tenancy" element={<TenancyAgreement />} />
+          <Route path="/tenancy" element={<PrivateRoute><TenancyAgreement /></PrivateRoute>} />
           <Route path="/About" element={<AboutPage />} />
           <Route path="/Contact" element={<p>Contact Page (Coming Soon)</p>} />
           <Route path="/hostel/:id" element={<HostelDetails />}></Route>
