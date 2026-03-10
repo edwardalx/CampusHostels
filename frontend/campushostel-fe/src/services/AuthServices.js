@@ -19,7 +19,7 @@ export const LoginApi = async ({ loginData }) => {
   localStorage.setItem("expires", JSON.stringify(data.expires));
   localStorage.setItem(
     "user",
-    JSON.stringify({ phone: data.phoneNumber, fname: data.firstName }),
+    JSON.stringify({ phone: data.phoneNumber, fname: data.firstName, tenantId: data.tenantId }),
   );
   return data;
 };

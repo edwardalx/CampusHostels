@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import Swal from "sweetalert2";
 import { useNavigate } from "react-router-dom";
 
-const IDLE_TIME = 2 * 60 * 1000; // 15 minutes
+const IDLE_TIME = 5 * 60 * 1000; // 15 minutes
 const WARNING_TIME = 30 * 1000; // 1 min before logout
 let token = localStorage.getItem("token");
 
@@ -11,8 +11,11 @@ export const useIdleTimeout = (onLogout) => {
   const warningTimer = useRef(null);
 
   const resetTimers = () => {
-    clearTimeout(logoutTimer.current);
-    clearTimeout(warningTimer.current);
+    const clearTimers = () => {
+      clearTimeout(logoutTimer.current);
+      clearTimeout(warningTimer.current);
+    };
+    clearTimers();
 
     if (!localStorage.getItem("token")) return;
 
@@ -49,6 +52,7 @@ export const useIdleTimeout = (onLogout) => {
         if (result.isConfirmed) {
           resetTimers(); // restart session
         } else {
+          clearTimers();
           Swal.close(); // close modal immediately on manual logout
           onLogout();
         }
@@ -57,8 +61,9 @@ export const useIdleTimeout = (onLogout) => {
 
     //  Final logout
     logoutTimer.current = setTimeout(() => {
-      onLogout();
+      clearTimers();
       Swal.close();
+      onLogout();
     }, IDLE_TIME);
   };
 
@@ -82,8 +87,7 @@ export const setTokenExpiryTimeout = (onLogout) => {
   if (!expiryTime) return;
   const currentTime = Date.now();
   const expireTimeMs = new Date(expiryTime).getTime();
-  const timeoutDuration =
-  (expireTimeMs - currentTime) / 2; // Subtract 3hours for warning
+  const timeoutDuration = (expireTimeMs - currentTime) / 2; // Subtract 3hours for warning
   console.log("Token expires in (ms):", timeoutDuration);
 
   if (timeoutDuration > 0) {
@@ -113,7 +117,7 @@ export const showSessionExpiredAlert = (message, onConfirm) => {
     confirmButtonText: "OK",
     allowOutsideClick: false,
   }).then((result) => {
-    if(result.isConfirmed && onConfirm) {
+    if (result.isConfirmed && onConfirm) {
       onConfirm();
     }
   });

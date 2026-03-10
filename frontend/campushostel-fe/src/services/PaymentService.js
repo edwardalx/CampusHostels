@@ -29,3 +29,18 @@ export const verifyPayments = async (reference) => {
   console.log(data);
   return data;
 };
+
+export const getPaymentHistory = async (tenantId) => {
+  const response = await fetch(`${baseUrl}/tenant/${tenantId}`, { 
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data);
+  }
+  console.log(data);
+  return data;
+};
+

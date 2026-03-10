@@ -6,11 +6,11 @@ const payments = [
 ];
 
 const statusStyles = {
-  Paid: "bg-green-100 text-green-700",
+  Success: "bg-green-100 text-green-700",
   Pending: "bg-yellow-100 text-yellow-700",
 };
 
-export default function PaymentTable() {
+export default function PaymentTable({payments=[]}) {
   return (
     <div className="flex justify-center w-full">
       <div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-2xl">
@@ -21,6 +21,7 @@ export default function PaymentTable() {
                 <th className="py-2">Date</th>
                 <th className="py-2">Amount</th>
                 <th className="py-2">Status</th>
+                <th className="py-2">Reference</th>
               </tr>
             </thead>
 
@@ -33,8 +34,13 @@ export default function PaymentTable() {
                 </tr>
               ) : (
                 payments.map((payment) => (
-                  <tr key={payment.id} className="hover:bg-gray-50 transition">
-                    <td className="py-3">{payment.date}</td>
+                  <tr
+                    key={payment.id}
+                    className={`hover:bg-teal-50 transition divide-x ${
+                      payment.id % 2 === 1 ? "bg-gray-100" : "bg-white"
+                    }`}
+                  >
+                    <td className="py-3">{new Date(payment.paidAt).toLocaleString()}</td>
                     <td className="py-3 font-medium">{payment.amount}</td>
                     <td className="py-3">
                       <span
@@ -43,6 +49,7 @@ export default function PaymentTable() {
                         {payment.status}
                       </span>
                     </td>
+                    <td className="py-3">{payment.reference}</td>
                   </tr>
                 ))
               )}
