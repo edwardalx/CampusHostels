@@ -13,9 +13,9 @@ const statusStyles = {
 export default function PaymentTable({payments=[]}) {
   return (
     <div className="flex justify-center w-full">
-      <div className="bg-white rounded-xl shadow-lg p-6 w-full max-w-2xl">
+      <div className="bg-white shadow-lg p-6 w-full max-w-2xl">
         <div className="overflow-x-auto">
-          <table className="w-full text-sm text-left border">
+          <table className="w-full text-sm text-center border">
             <thead className="border-b text-gray-600">
               <tr className="divide-x">
                 <th className="py-2">Date</th>
