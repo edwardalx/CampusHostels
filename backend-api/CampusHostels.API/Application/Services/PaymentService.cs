@@ -238,6 +238,7 @@ public class PaymentService : IPaymentService
                 Amount = p.Amount,
                 Reference = p.Reference,
                 PaidAt = p.PaidAt,
+                CreatedAt = p.CreatedAt,
                 Status = p.Status.ToString(),
                 Channel = p.Channel,
                 Currency = p.Currency
@@ -252,6 +253,7 @@ public class PaymentService : IPaymentService
             Amount = payment.Amount,
             Reference = payment.Reference,
             PaidAt = payment.PaidAt,
+            CreatedAt = payment.CreatedAt,
             Status = payment.Status.ToString(),
             Channel = payment.Channel,
             Currency = payment.Currency

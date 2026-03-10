@@ -6,6 +6,7 @@ public class PaymentDto
     public decimal Amount { get; set; }
     public string? Reference { get; set; }
     public DateTime? PaidAt { get; set; }
+    public DateTime? CreatedAt{get; set;}
     public string? Status { get; set; } 
     public string? Channel { get; set; }
     public string? Currency { get; set; }

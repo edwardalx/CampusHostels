@@ -40,7 +40,7 @@ export default function PaymentTable({payments=[]}) {
                       payment.id % 2 === 1 ? "bg-gray-100" : "bg-white"
                     }`}
                   >
-                    <td className="py-3">{new Date(payment.paidAt).toLocaleString()}</td>
+                    <td className="py-3">{payment.paidAt?new Date(payment.paidAt).toLocaleString():"-"}</td>
                     <td className="py-3 font-medium">{payment.amount}</td>
                     <td className="py-3">
                       <span
