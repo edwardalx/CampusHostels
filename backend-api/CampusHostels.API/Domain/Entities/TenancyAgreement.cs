@@ -9,6 +9,7 @@ public class TenancyAgreement
     public int ContractDurationMonths { get; set; }
     public DateTime? ContractEndDate { get; set; }
 
+    public User? User { get; set; } 
     public Guid TenantId { get; set; }
     // optional navigation to User/Tenant stored separately
     public int PropertyId { get; set; }

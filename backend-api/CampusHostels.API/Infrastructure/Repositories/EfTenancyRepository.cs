@@ -38,6 +38,7 @@ public class EfTenancyRepository : ITenancyRepository
                         t.TotalAmountPaid > 0)
             .Include(t => t.Property)
             .Include(t => t.Unit)
+            .Include(t=>t.User)
             .OrderByDescending(t => t.ContractStartDate)
             .ToListAsync();
     }

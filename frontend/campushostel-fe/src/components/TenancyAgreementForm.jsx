@@ -2,19 +2,21 @@ import { useEffect, useRef, useState } from "react";
 import html2pdf from "html2pdf.js";
 import "../Css/TenancyCss.css";
 
-export default function TenancyAgreementForm({agreement}) {
-    const[user, setUser]=useState(JSON.parse(localStorage.getItem("user"))||{})
-//   const agreement = {
-//     tenantName: "John Doe",
-//     studentId: "ST1023",
-//     phone: "0551234567",
-//     email: "john@example.com",
-//     propertyName: "Campus Hostel A",
-//     roomNumber: "B12",
-//     startDate: "2025-09-01",
-//     endDate: "2026-06-30",
-//     rent: 1200,
-//   };
+export default function TenancyAgreementForm({ agreement }) {
+  const [user, setUser] = useState(
+    JSON.parse(localStorage.getItem("user")) || {},
+  );
+  //   const agreement = {
+  //     tenantName: "John Doe",
+  //     studentId: "ST1023",
+  //     phone: "0551234567",
+  //     email: "john@example.com",
+  //     propertyName: "Campus Hostel A",
+  //     roomNumber: "B12",
+  //     startDate: "2025-09-01",
+  //     endDate: "2026-06-30",
+  //     rent: 1200,
+  //   };
 
   const agreementRef = useRef();
 
@@ -80,7 +82,7 @@ export default function TenancyAgreementForm({agreement}) {
         <div className="details-row">
           <div className="details-group">
             <div className="details-label">Full Name</div>
-            <div className="details-value">{user.fname}</div>
+            <div className="details-value">{`${agreement.lastName}, ${agreement.firstName}`}</div>
           </div>
           <div className="details-group">
             <div className="details-label">Tenancy ID</div>
@@ -91,11 +93,11 @@ export default function TenancyAgreementForm({agreement}) {
         <div className="details-row">
           <div className="details-group">
             <div className="details-label">Phone Number</div>
-            <div className="details-value">{agreement.phone||"024412345678"}</div>
+            <div className="details-value">{agreement.phoneNumber}</div>
           </div>
           <div className="details-group">
             <div className="details-label">Email Address</div>
-            <div className="details-value">{agreement.email||"email@mail.com"}</div>
+            <div className="details-value">{agreement.email}</div>
           </div>
         </div>
 
@@ -107,8 +109,14 @@ export default function TenancyAgreementForm({agreement}) {
             <div className="details-value">{agreement.propertyName}</div>
           </div>
           <div className="details-group">
-            <div className="details-label">Room Number</div>
-            <div className="details-value">{agreement.unitId}</div>
+            <div className="details-label">Room Number & Cost</div>
+            <div
+              className="details-value flex gap-12"
+              // style={{ display: "flex", gap: "12px" }}
+            >
+              <span>Room {agreement.unitId}</span>
+              <span>Rent: {agreement.cost}/year</span>
+            </div>
           </div>
         </div>
 
@@ -116,11 +124,14 @@ export default function TenancyAgreementForm({agreement}) {
           <div className="details-group">
             <div className="details-label">Tenancy Start Date</div>
             <div className="details-value">
-              {new Date(agreement.contractStartDate).toLocaleDateString("en-US", {
-                year: "numeric",
-                month: "long",
-                day: "numeric",
-              })}
+              {new Date(agreement.contractStartDate).toLocaleDateString(
+                "en-US",
+                {
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                },
+              )}
             </div>
           </div>
           <div className="details-group">
@@ -142,9 +153,7 @@ export default function TenancyAgreementForm({agreement}) {
             <div className="payment-value">
               GHS {agreement.totalAmountPaid.toLocaleString()}
             </div>
-            <div className="payment-note">
-              * Rent must be paid upfront
-            </div>
+            <div className="payment-note">* Rent must be paid upfront</div>
           </div>
         </div>
 

@@ -79,6 +79,9 @@ export default function LoginPage() {
   const handleFacebookLogin = () => {
     console.log("Continue with Facebook");
   };
+  // const handleForgotPass = ()=>{
+  //   navigate("/password-reset")
+  // }
   if (loading) {
     return <div><LoadingSpinner /></div>;
   }
@@ -199,9 +202,9 @@ export default function LoginPage() {
                 </div>
               </div>
               <div className="text-right mt-3">
-                <a href="#" className="text-cyan-400 text-sm hover:underline">
+                <Link to="/password-reset" className="text-cyan-400 text-sm hover:underline">
                   Forgot Password?
-                </a>
+                </Link>
               </div>
             </div>
 
