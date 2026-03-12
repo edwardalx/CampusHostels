@@ -44,7 +44,7 @@ public class AccountsController : ControllerBase
         try
         {
             var response = await _accountService.LoginAsync(dto);
-            if (dto.PhoneNumber== response.PhoneNumber)
+            if (dto.PhoneNumber == response.PhoneNumber)
             {
                 await _whatsAppService.SendTextMessageAsync(
                     response.PhoneNumber,
@@ -53,11 +53,11 @@ public class AccountsController : ControllerBase
             }
             if (string.Equals(dto.Email, response.Email, StringComparison.OrdinalIgnoreCase))
             {
-            //     await _emailService.SendEmailAsync(
-            //     response.Email,
-            //     "Login Successful",
-            //     $"<p>Hello {response.FirstName}, you have successfully logged in to RentIn App at {DateTime.UtcNow} UTC.</p>"
-            // );
+                //     await _emailService.SendEmailAsync(
+                //     response.Email,
+                //     "Login Successful",
+                //     $"<p>Hello {response.FirstName}, you have successfully logged in to RentIn App at {DateTime.UtcNow} UTC.</p>"
+                // );
                 await _emailSender.SendEmailAsync(
                     response.Email,
                     "Login Notification",
@@ -98,11 +98,14 @@ public class AccountsController : ControllerBase
     }
 
     // GET: /api/account/verify-reset?token=xxx&email=yyy
-    [HttpGet("verify-reset")]
-    public async Task<IActionResult> VerifyReset([FromQuery] ResetPasswordDto dto)
+    [HttpPost("verify-reset")]
+    public async Task<IActionResult> VerifyReset([FromBody] ResetPasswordDto dto)
     {
-        if (string.IsNullOrWhiteSpace(dto.Token) || string.IsNullOrWhiteSpace(dto.Email) || string.IsNullOrWhiteSpace(dto.PhoneNumber))
-            return BadRequest(new { message = "Token, email, and phone number are required" });
+        if (string.IsNullOrWhiteSpace(dto.Token) ||
+    (string.IsNullOrWhiteSpace(dto.Email) && string.IsNullOrWhiteSpace(dto.PhoneNumber)))
+        {
+            return BadRequest(new { message = "Token and either email or phone number are required" });
+        }
 
         var valid = await _passwordResetService.VerifyResetTokenAsync(dto);
         if (!valid) return BadRequest(new { message = "Invalid or expired token" });

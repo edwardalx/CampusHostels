@@ -202,7 +202,7 @@ export default function LoginPage() {
                 </div>
               </div>
               <div className="text-right mt-3">
-                <Link to="/password-reset" className="text-cyan-400 text-sm hover:underline">
+                <Link to="/request/password-reset" className="text-cyan-400 text-sm hover:underline">
                   Forgot Password?
                 </Link>
               </div>

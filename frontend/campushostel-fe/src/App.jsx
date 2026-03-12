@@ -9,7 +9,8 @@ import PaymentHistory from "./pages/PaymentHistory";
 import PaymentReceipt from "./pages/PaymentReceipt";
 import TenancyAgreement from "./pages/TenancyAgreement";
 import ContactPage from "./pages/ContactPage";
-import PasswordResetPage from "./pages/PasswordResetPage";
+import RequestPasswordResetPage from "./pages/RequestPasswordResetPage";
+import ResetPasswordPage from "./pages/ResetPasswordPage";
 import AboutPage from "./pages/AboutPage";
 import { LogoutApi } from "./services/AuthServices";
 import {
@@ -65,7 +66,14 @@ function App() {
             }
           />
 
-          <Route path="/tenancy" element={<PrivateRoute><TenancyAgreement /></PrivateRoute>} />
+          <Route
+            path="/tenancy"
+            element={
+              <PrivateRoute>
+                <TenancyAgreement />
+              </PrivateRoute>
+            }
+          />
           <Route path="/About" element={<AboutPage />} />
           <Route path="/Contact" element={<ContactPage />} />
           <Route path="/hostel/:id" element={<HostelDetails />}></Route>
@@ -79,14 +87,18 @@ function App() {
           />
           <Route
             path="/payments/receipt/:reference"
-            element={<PrivateRoute><PaymentReceipt /></PrivateRoute>}
+            element={
+              <PrivateRoute>
+                <PaymentReceipt />
+              </PrivateRoute>
+            }
           />
-           <Route
-            path="/password-reset"
-            element={<PasswordResetPage />}
+          <Route
+            path="/request/password-reset"
+            element={<RequestPasswordResetPage />}
           />
+          <Route path="/password-reset" element={<ResetPasswordPage />} />
         </Route>
-        
 
         {/* Pages WITHOUT Header */}
         <Route path="/login" element={<LoginPage />} />

@@ -69,7 +69,7 @@ namespace CampusHostels.API.Application.Services
             var rawToken = Convert.ToBase64String(tokenBytes); // raw token
 
             // Store hash of the raw token
-            var tokenHash = AccountService.HashPassword(rawToken);
+            var tokenHash = ComputeSha256Hash(rawToken);
 
             var prt = new PasswordResetToken
             {
@@ -83,18 +83,18 @@ namespace CampusHostels.API.Application.Services
             _db.PasswordResetTokens.Add(prt);
             await _db.SaveChangesAsync();
             var baseUrl = string.IsNullOrWhiteSpace(dto.ResetUrlBase) ? _config["App:BaseUrl"] : dto.ResetUrlBase.TrimEnd('/');
+            var identifier = !string.IsNullOrWhiteSpace(dto.Email) ? "Email" : "phonenumber";
+            var identifierValue = !string.IsNullOrWhiteSpace(dto.Email) ? dto.Email : dto.PhoneNumber;
+            var resetLink = $"{baseUrl}/password-reset?token={WebUtility.UrlEncode(rawToken)}&{identifier}={WebUtility.UrlEncode(identifierValue)}";
+
             if (!string.IsNullOrWhiteSpace(dto.Email))
             {
-
-                var resetLink = $"{baseUrl}?token={WebUtility.UrlEncode(rawToken)}&email={WebUtility.UrlEncode(dto.Email)}";
-                // DEV: log the reset link so local testing can copy the token without SMTP
                 _logger.LogInformation("[DEV] Password reset link for {Email}: {Link}", user.Email, resetLink);
 
                 var html = $"<p>You requested a password reset. Click the link below to reset your password:</p>" +
                            $"<p><a href=\"{resetLink}\">Reset password</a></p>" +
                            $"<p>If you didn't request this, ignore this email.</p>";
 
-                // Send email asynchronously (fire-and-forget to avoid blocking on SMTP timeout)
                 try
                 {
                     await _emailSender.SendEmailAsync(user.Email, "Reset your password", html);
@@ -104,12 +104,13 @@ namespace CampusHostels.API.Application.Services
                 {
                     _logger.LogWarning(ex, "Failed to send password reset email to {Email}; continuing with WhatsApp", user.Email);
                 }
-                ;
             }
             else
             {
-                // Also send WhatsApp message with reset link
-                var whatsAppMessage = $"Your password reset link: {baseUrl} with your password reset Token: {rawToken}\n\nLink expires in 1 hour. If you didn't request this, ignore this message.";
+                // WhatsApp message
+                var whatsAppMessage = $"You requested a password reset. Click the link below to reset your password:\n{resetLink}\n\n" +
+                                      "Link expires in 1 hour. If you didn't request this, ignore this message.";
+
                 await _whatsAppService.SendTextMessageAsync(user.PhoneNumber, whatsAppMessage);
                 _logger.LogInformation("Password reset WhatsApp message sent to {PhoneNumber}", user.PhoneNumber);
             }
@@ -130,7 +131,7 @@ namespace CampusHostels.API.Application.Services
 
             // Accept token whether it's URL-encoded or not by decoding first
             var decoded = WebUtility.UrlDecode(dto.Token ?? string.Empty) ?? string.Empty;
-            var hash = AccountService.HashPassword(decoded);
+            var hash = ComputeSha256Hash(decoded);
 
             var match = _db.PasswordResetTokens
                 .Where(t => t.UserId == user.Id && !t.Used && t.ExpiresAt > DateTime.UtcNow)
