@@ -48,7 +48,7 @@ namespace CampusHostels.API.Migrations
 
                     b.HasIndex("UnitId");
 
-                    b.ToTable("Images");
+                    b.ToTable("Images", (string)null);
                 });
 
             modelBuilder.Entity("CampusHostels.API.Domain.Entities.Message", b =>
@@ -84,42 +84,7 @@ namespace CampusHostels.API.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Messages");
-                });
-
-            modelBuilder.Entity("CampusHostels.API.Domain.Entities.PasswordResetToken", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime>("ExpiresAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("TokenHash")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<bool>("Used")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(false);
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("TokenHash");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("PasswordResetTokens");
+                    b.ToTable("Messages", (string)null);
                 });
 
             modelBuilder.Entity("CampusHostels.API.Domain.Entities.Payment", b =>
@@ -183,7 +148,7 @@ namespace CampusHostels.API.Migrations
 
                     b.HasIndex("UnitId");
 
-                    b.ToTable("Payments");
+                    b.ToTable("Payments", (string)null);
                 });
 
             modelBuilder.Entity("CampusHostels.API.Domain.Entities.PaymentSummary", b =>
@@ -211,7 +176,7 @@ namespace CampusHostels.API.Migrations
                     b.HasIndex("TenancyAgreementId")
                         .IsUnique();
 
-                    b.ToTable("PaymentSummaries");
+                    b.ToTable("PaymentSummaries", (string)null);
                 });
 
             modelBuilder.Entity("CampusHostels.API.Domain.Entities.Property", b =>
@@ -252,7 +217,7 @@ namespace CampusHostels.API.Migrations
                     b.HasIndex("Name")
                         .IsUnique();
 
-                    b.ToTable("Properties");
+                    b.ToTable("Properties", (string)null);
                 });
 
             modelBuilder.Entity("CampusHostels.API.Domain.Entities.TenancyAgreement", b =>
@@ -288,11 +253,9 @@ namespace CampusHostels.API.Migrations
 
                     b.HasIndex("PropertyId");
 
-                    b.HasIndex("TenantId");
-
                     b.HasIndex("UnitId");
 
-                    b.ToTable("TenancyAgreements");
+                    b.ToTable("TenancyAgreements", (string)null);
                 });
 
             modelBuilder.Entity("CampusHostels.API.Domain.Entities.Unit", b =>
@@ -334,7 +297,7 @@ namespace CampusHostels.API.Migrations
                     b.HasIndex("PropertyId", "RoomNumber")
                         .IsUnique();
 
-                    b.ToTable("Units");
+                    b.ToTable("Units", (string)null);
                 });
 
             modelBuilder.Entity("CampusHostels.API.Domain.Entities.User", b =>
@@ -397,7 +360,7 @@ namespace CampusHostels.API.Migrations
                     b.HasIndex("PhoneNumber")
                         .IsUnique();
 
-                    b.ToTable("Users");
+                    b.ToTable("Users", (string)null);
                 });
 
             modelBuilder.Entity("CampusHostels.API.Domain.Entities.Image", b =>
@@ -415,17 +378,6 @@ namespace CampusHostels.API.Migrations
                     b.Navigation("Property");
 
                     b.Navigation("Unit");
-                });
-
-            modelBuilder.Entity("CampusHostels.API.Domain.Entities.PasswordResetToken", b =>
-                {
-                    b.HasOne("CampusHostels.API.Domain.Entities.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("CampusHostels.API.Domain.Entities.Payment", b =>
@@ -465,13 +417,6 @@ namespace CampusHostels.API.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("CampusHostels.API.Domain.Entities.User", "User")
-                        .WithMany()
-                        .HasForeignKey("TenantId")
-                        .HasPrincipalKey("TenantId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
                     b.HasOne("CampusHostels.API.Domain.Entities.Unit", "Unit")
                         .WithMany()
                         .HasForeignKey("UnitId")
@@ -481,8 +426,6 @@ namespace CampusHostels.API.Migrations
                     b.Navigation("Property");
 
                     b.Navigation("Unit");
-
-                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("CampusHostels.API.Domain.Entities.Unit", b =>
