@@ -48,7 +48,7 @@ export default function RequestPasswordResetPage() {
             password.
           </p>
           <p
-            className={`text-center  dark:text-gray-300 ${resData ? "text-purple-700" : "text-red-500"}  font-thin`}
+            className={`text-center  dark:text-gray-300 ${resData ? "text-amber-500" : "text-red-500"}  font-thin`}
             style={{ fontFamily: "Playfair Display" }}
           >
             {resData ? resData : error}

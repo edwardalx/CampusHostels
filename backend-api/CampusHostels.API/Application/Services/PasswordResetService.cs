@@ -147,9 +147,10 @@ namespace CampusHostels.API.Application.Services
             var user = _db.Users.FirstOrDefault(u => u.Email.ToLower() == normalizedEmail);
             if (user == null) return false;
 
-            var decoded = WebUtility.UrlDecode(dto.Token ?? string.Empty) ?? string.Empty;
+            // var decoded = WebUtility.UrlDecode(dto.Token ?? string.Empty) ?? string.Empty;
+            var token = dto.Token ?? string.Empty;
 
-            var prt = _db.PasswordResetTokens.FirstOrDefault(t => t.UserId == user.Id && !t.Used && t.ExpiresAt > DateTime.UtcNow && t.TokenHash == ComputeSha256Hash(decoded));
+            var prt = _db.PasswordResetTokens.FirstOrDefault(t => t.UserId == user.Id && !t.Used && t.ExpiresAt > DateTime.UtcNow && t.TokenHash == ComputeSha256Hash(token));
             if (prt == null) return false;
 
             // Update password using same hashing mechanism as AccountService (SHA256)

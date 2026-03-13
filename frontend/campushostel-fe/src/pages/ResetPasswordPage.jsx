@@ -51,16 +51,28 @@ export default function ResetPasswordPage() {
       return response.message;
     } catch (error) {
       setError(error.details || error.message);
+      if (error.errors) {
+        setError("Invalid token, please try again");
+      }
     }
   };
 
   const updatePassword = async () => {
+    const verificaionResult = await verifyPasswordApi();
+    const isValid = verificaionResult === "Token is valid";
+    if (!isValid) {
+      return;
+    }
     try {
       const response = await ResetPassword(payload);
       // setVerifyRes(response.message);
       setMessage(
         <>
-          Password reset successful. Click <a href="/login">here</a> to login.
+          Password reset successful. Click{" "}
+          <a href="/login" className="text-green-500">
+            here
+          </a>{" "}
+          to login.
         </>,
       );
       setConfirmPassword("");
@@ -81,11 +93,16 @@ export default function ResetPasswordPage() {
       setError("Password must include atleast 1  special character(s).");
       return;
     }
-    const verificaionResult = await verifyPasswordApi();
-    const isValid = verificaionResult === "Token is valid";
-    if (verificaionResult === "Token is valid") {
-      await updatePassword();
+    if (password !== confirmPassword) {
+      setError("Passwords do not match");
+      return;
     }
+    await updatePassword();
+    // const verificaionResult = await verifyPasswordApi();
+    // const isValid = verificaionResult === "Token is valid";
+    // if (verificaionResult === "Token is valid") {
+    //   await updatePassword();
+    // }
 
     console.log(payload);
     console.log(error);
