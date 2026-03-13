@@ -130,8 +130,9 @@ namespace CampusHostels.API.Application.Services
             }
 
             // Accept token whether it's URL-encoded or not by decoding first
-            var decoded = WebUtility.UrlDecode(dto.Token ?? string.Empty) ?? string.Empty;
-            var hash = ComputeSha256Hash(decoded);
+            // var decoded = WebUtility.UrlDecode(dto.Token ?? string.Empty) ?? string.Empty;
+            var token = dto.Token ?? string.Empty;
+            var hash = ComputeSha256Hash(token);
 
             var match = _db.PasswordResetTokens
                 .Where(t => t.UserId == user.Id && !t.Used && t.ExpiresAt > DateTime.UtcNow)
@@ -183,5 +184,7 @@ namespace CampusHostels.API.Application.Services
             var hash = sha256.ComputeHash(bytes);
             return Convert.ToBase64String(hash);
         }
+
+        
     }
 }
