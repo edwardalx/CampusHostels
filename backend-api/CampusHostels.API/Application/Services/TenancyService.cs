@@ -22,12 +22,16 @@ public class TenancyService : ITenancyService
         _db = db;
     }
 
-    public async Task<TenancyAgreement> CreateAsync(
-      TenancyCreateDto dto,
-      Guid tenantId
-  )
+    public async Task<TenancyAgreement> CreateAsync(TenancyCreateDto dto, Guid tenantId)
     {
         var entity = _mapper.Map<TenancyAgreement>(dto);
+        var tenancies = await _repo.GetActiveTenanciesByUnitAsync(dto.UnitId);
+        var activeTenants = tenancies.Count(t => t.ContractEndDate >= DateTime.UtcNow);
+        var maxNoOfTenants = tenancies.FirstOrDefault()?.Unit?.MaxNoOfPeople ?? 0;
+        if (activeTenants >= maxNoOfTenants)
+        {
+            throw new ArgumentException("Unit is full");
+        }
 
         entity.TenantId = tenantId;
         entity.ComputeContractEndDate();
@@ -76,7 +80,7 @@ public class TenancyService : ITenancyService
     public async Task<List<PaidTenancyDto>> GetPaidTenancyAsync(Guid tenantId)
     {
         var tenancies = await _repo.GetPaidTenancyAsync(tenantId);
-        if (tenancies == null || !tenancies.Any()) return new List<PaidTenancyDto>();
+        if (tenancies == null || !tenancies.Any()) return [];
 
         var dtos = tenancies.Select(tenancy => new PaidTenancyDto
         {
@@ -92,7 +96,7 @@ public class TenancyService : ITenancyService
             Cost = tenancy.Unit?.Cost ?? 0m,
             FirstName = tenancy.User!.FirstName,
             LastName = tenancy.User!.LastName,
-            PhoneNumber= tenancy.User!.PhoneNumber,
+            PhoneNumber = tenancy.User!.PhoneNumber,
             Email = tenancy.User!.Email,
             TotalAmountPaid = tenancy.TotalAmountPaid ?? 0m
 

@@ -18,7 +18,7 @@ public class TenancyAgreement
     public Unit? Unit { get; set; }
 
     public decimal? TotalAmountPaid { get; set; }
-    public ICollection<Payment> Payments { get; set; } = new List<Payment>();
+    public List<Payment> Payments { get; set; } = [];
 
     public void ComputeContractEndDate()
     {

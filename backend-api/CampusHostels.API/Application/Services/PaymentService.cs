@@ -53,6 +53,9 @@ public class PaymentService : IPaymentService
         if (tenant.Email != request.Email)
             throw new ArgumentException("Customer email does not match tenant email on record.");
 
+        if (tenant.PhoneNumber != request.Phone)
+            throw new ArgumentException("Customer Phone number does not match tenant email on record.");
+
         // 3️⃣ Generate reference
         var reference = $"PAY-{Guid.NewGuid():N}".Substring(0, 18);
         if (string.IsNullOrWhiteSpace(request.CallbackUrl))
