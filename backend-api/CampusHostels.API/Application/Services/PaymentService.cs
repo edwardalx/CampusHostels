@@ -197,6 +197,7 @@ public class PaymentService : IPaymentService
         tenancy.TotalAmountPaid = (tenancy.TotalAmountPaid ?? 0m) + payment.Amount;
         tenancy.IsActive = true;
         var activeTenants = tenancies.Count(t => t.ContractEndDate >= DateTime.UtcNow && t.TotalAmountPaid != null);
+        tenancy.Unit!.Availability = activeTenants < tenancy.Unit?.MaxNoOfPeople;
         if (tenancy.Unit != null)
         {
             tenancy.Unit.BedsLeft = tenancy.Unit.MaxNoOfPeople - activeTenants;
