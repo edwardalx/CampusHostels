@@ -16,9 +16,10 @@ public class TenancyAgreement
     public Property? Property { get; set; }
     public int UnitId { get; set; }
     public Unit? Unit { get; set; }
+    public bool IsActive{get;set;} = false;
 
     public decimal? TotalAmountPaid { get; set; }
-    public ICollection<Payment> Payments { get; set; } = new List<Payment>();
+    public List<Payment> Payments { get; set; } = [];
 
     public void ComputeContractEndDate()
     {

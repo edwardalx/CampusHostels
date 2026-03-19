@@ -38,9 +38,17 @@ public class EfTenancyRepository : ITenancyRepository
                         t.TotalAmountPaid > 0)
             .Include(t => t.Property)
             .Include(t => t.Unit)
-            .Include(t=>t.User)
+            .Include(t => t.User)
             .OrderByDescending(t => t.ContractStartDate)
             .ToListAsync();
+    }
+    public async Task<List<TenancyAgreement>> GetActiveTenanciesByUnitAsync(int unitId)
+    {
+        return await _db.TenancyAgreements
+          .AsNoTracking()
+          .Include(t => t.Unit)
+          .Where(t => t.UnitId == unitId)
+          .ToListAsync();
     }
     public async Task SaveChangesAsync()
     {

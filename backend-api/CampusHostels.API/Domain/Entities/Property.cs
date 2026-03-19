@@ -13,6 +13,6 @@ public class Property
     public decimal? StartingPrice { get; set; } = 120;  // Default starting price per month
     public bool Availability { get; set; } = true;
 
-    public ICollection<Unit> Units { get; set; } = new List<Unit>();
-    public ICollection<Image> Images { get; set; } = new List<Image>();
+    public ICollection<Unit> Units { get; set; } = [];
+    public ICollection<Image> Images { get; set; } = [];
 }

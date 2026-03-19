@@ -47,7 +47,7 @@ namespace CampusHostels.API.Application.Services
 
                 var mail = new MailMessage()
                 {
-                    From = new MailAddress(_config["Smtp:From"] ?? "noreply@campushostels.com", display),
+                    From = new MailAddress(_config["Smtp:From"] ?? "noreply@campushostels.com", display=_config["Smtp:Display"]),
                     Subject = subject,
                     Body = htmlMessage,
                     IsBodyHtml = true

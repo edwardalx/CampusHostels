@@ -17,8 +17,9 @@ public class Unit
     public string? ImageUrl { get; set; }
     public decimal? Cost { get; set; }
     public int? MaxNoOfPeople { get; set; }
+    public int? BedsLeft { get; set; }
     public bool Availability { get; set; } = true;
     public UnitType UnitType { get; set; } = UnitType.Single;
 
-    public ICollection<Image> Images { get; set; } = new List<Image>();
+    public ICollection<Image> Images { get; set; } = [];
 }

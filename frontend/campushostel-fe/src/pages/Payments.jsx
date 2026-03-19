@@ -80,6 +80,7 @@ export default function Payments() {
       return tenancyId;
     } catch (error) {
       console.error("Error creating tenancy:", error);
+      setErrorMsg(error.details||error.messsage )
     } finally {
       setPaymentLoading(false);
     }
@@ -89,6 +90,7 @@ export default function Payments() {
     let tenancyId;
     try {
       setPaymentLoading(true);
+      setErrorMsg("");
       if (!localStorage.getItem("tenancy")) {
         tenancyId = await handleCreateTenancy();
       } else {
@@ -100,6 +102,9 @@ export default function Payments() {
       //   tenancyId: tenancyId,
       // };
       payload.tenancyId = tenancyId;
+      if (!tenancyId) {
+        return;
+      }
       const response = await initailizePayments(payload);
       console.log("Payment initialized successfully:", response);
       window.location.href = response.authorizationUrl; // Redirect to the payment gateway

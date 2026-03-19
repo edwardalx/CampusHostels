@@ -90,6 +90,7 @@ public class ApplicationDbContext : DbContext
             entity.HasOne(e => e.User).WithMany().HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.Cascade);
             entity.HasIndex(e => e.TokenHash).IsUnique(false);
             entity.Property(e => e.Used).HasDefaultValue(false);
+            entity.ToTable("PasswordResetTokens");
         });
     }
 }
