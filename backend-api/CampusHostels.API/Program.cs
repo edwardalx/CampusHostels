@@ -3,6 +3,7 @@ using CampusHostels.API.API.Extensions;
 using CampusHostels.API.API.Middleware;
 using CampusHostels.API.Application.Mapping;
 using CampusHostels.API.Application.Services;
+using CampusHostels.API.Application.BackgroundServices;
 using CampusHostels.API.Application.Interfaces;
 using CampusHostels.API.Application.Validators;
 using CampusHostels.API.Infrastructure.Data;
@@ -12,6 +13,8 @@ using FluentValidation.AspNetCore;
 using Microsoft.EntityFrameworkCore;
 using DotNetEnv;
 using Serilog;
+using Hangfire;
+using Hangfire.PostgreSql;
 
 var builder = WebApplication.CreateBuilder(args);
 // Load .env and add to configuration
@@ -84,6 +87,16 @@ builder.Services.AddScoped<IWhatsAppService, WhatsAppService>();
 builder.Services.AddScoped<EmailService>(); // Not interface-based since it's only used internally by other services
 builder.Services.AddScoped<IEmailSender, SmtpEmailSender>(); // Register IEmailSender to resolve to EmailService
 builder.Services.AddScoped<IPasswordResetService, PasswordResetService>();
+#endregion
+
+#region Background Service
+// builder.Services.AddHostedService<MyWorker>();
+builder.Services.AddHangfire(config =>
+    config.UsePostgreSqlStorage(options =>
+        options.UseNpgsqlConnection(
+            builder.Configuration.GetConnectionString("DefaultConnection"))));
+
+builder.Services.AddHangfireServer();
 #endregion
 
 #region WhatsApp Service (Whapi.Cloud)
@@ -234,12 +247,30 @@ builder.Host.UseSerilog((context, configuration) =>
 
 var app = builder.Build();
 
+#region Run hangfire backgrond job
+using (var scope = app.Services.CreateScope())
+{
+    var recurringJobManager = scope.ServiceProvider
+        .GetRequiredService<IRecurringJobManager>();
+
+    recurringJobManager.AddOrUpdate<TenancyJob>(
+        "tenancy-check-job",
+        job => job.CheckTenancies(),
+        app.Environment.IsDevelopment() ? Cron.Minutely : Cron.Daily, // use Daily later
+        new RecurringJobOptions
+        {
+            TimeZone = TimeZoneInfo.Utc
+        });
+}
+#endregion
+
 #region Middleware Pipeline
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
     app.UseDeveloperExceptionPage();
+
 
     using var scope = app.Services.CreateScope();
     var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
@@ -276,6 +307,7 @@ app.UseCors("AllowReactApp");
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+app.UseHangfireDashboard();
 
 foreach (var url in app.Urls)
 {

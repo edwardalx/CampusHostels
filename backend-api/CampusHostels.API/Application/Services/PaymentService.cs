@@ -3,6 +3,7 @@ using CampusHostels.API.Application.Interfaces;
 using CampusHostels.API.Domain.Entities;
 using CampusHostels.API.Domain.Enums;
 using CampusHostels.API.Infrastructure.Data;
+using CampusHostels.API.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 
@@ -17,12 +18,14 @@ public class PaymentService : IPaymentService
 {
     private readonly ApplicationDbContext _db;
     private readonly IPaystackService _paystack;
+    private readonly ITenancyRepository _repo;
     private readonly string _baseUrl;
 
 
-    public PaymentService(ApplicationDbContext db, IPaystackService paystack, IConfiguration config)
+    public PaymentService(ApplicationDbContext db, IPaystackService paystack, IConfiguration config, ITenancyRepository repo)
     {
         _db = db;
+        _repo = repo;
         _paystack = paystack;
 
         _baseUrl = config["App:BaseUrl"]
@@ -190,7 +193,14 @@ public class PaymentService : IPaymentService
         payment.PaidAt = DateTime.UtcNow;
 
         var tenancy = await _db.TenancyAgreements.Include(t => t.Unit).FirstAsync(t => t.Id == payment.TenancyAgreementId);
+        var tenancies = await _repo.GetActiveTenanciesByUnitAsync(tenancy.UnitId);
         tenancy.TotalAmountPaid = (tenancy.TotalAmountPaid ?? 0m) + payment.Amount;
+        tenancy.IsActive = true;
+        var activeTenants = tenancies.Count(t => t.ContractEndDate >= DateTime.UtcNow && t.TotalAmountPaid != null);
+        if (tenancy.Unit != null)
+        {
+            tenancy.Unit.BedsLeft = tenancy.Unit.MaxNoOfPeople - activeTenants;
+        }
         var totalRent = tenancy.Unit?.Cost ?? 0m;
 
         var summary = await _db.PaymentSummaries.FirstOrDefaultAsync(s => s.TenancyAgreementId == tenancy.Id);

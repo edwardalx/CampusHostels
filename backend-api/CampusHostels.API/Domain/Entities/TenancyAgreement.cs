@@ -16,6 +16,7 @@ public class TenancyAgreement
     public Property? Property { get; set; }
     public int UnitId { get; set; }
     public Unit? Unit { get; set; }
+    public bool IsActive{get;set;} = false;
 
     public decimal? TotalAmountPaid { get; set; }
     public List<Payment> Payments { get; set; } = [];

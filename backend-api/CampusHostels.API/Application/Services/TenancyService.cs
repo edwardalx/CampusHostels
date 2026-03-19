@@ -26,7 +26,7 @@ public class TenancyService : ITenancyService
     {
         var entity = _mapper.Map<TenancyAgreement>(dto);
         var tenancies = await _repo.GetActiveTenanciesByUnitAsync(dto.UnitId);
-        var activeTenants = tenancies.Count(t => t.ContractEndDate >= DateTime.UtcNow);
+        var activeTenants = tenancies.Count(t => t.ContractEndDate >= DateTime.UtcNow && t.TotalAmountPaid!=null );
         var maxNoOfTenants = tenancies.FirstOrDefault()?.Unit?.MaxNoOfPeople ?? 0;
         if (activeTenants >= maxNoOfTenants)
         {
@@ -98,8 +98,8 @@ public class TenancyService : ITenancyService
             LastName = tenancy.User!.LastName,
             PhoneNumber = tenancy.User!.PhoneNumber,
             Email = tenancy.User!.Email,
-            TotalAmountPaid = tenancy.TotalAmountPaid ?? 0m
-
+            TotalAmountPaid = tenancy.TotalAmountPaid ?? 0m,
+            DaysLeft = Math.Round((tenancy.ContractEndDate - DateTime.UtcNow.Date)?.TotalDays ?? 0)
         }).ToList();
 
         return dtos;
