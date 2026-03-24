@@ -8,6 +8,8 @@ public interface IUnitRepository
 {
     Task<IEnumerable<Unit>> GetByPropertyIdAsync(int propertyId);
     Task<Unit?> GetByIdAsync(int id);
+    Task<IEnumerable<Unit>>GetAllUnitsAsync();
     Task AddAsync(Unit unit);
     Task SaveChangesAsync();
+
 }

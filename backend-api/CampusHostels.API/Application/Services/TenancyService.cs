@@ -13,24 +13,32 @@ public class TenancyService : ITenancyService
 {
     private readonly ApplicationDbContext _db;
     private readonly ITenancyRepository _repo;
+    private readonly IUnitRepository _unitRepo;
+    private readonly ILogger<TenancyService> _logger;
     private readonly IMapper _mapper;
 
-    public TenancyService(ITenancyRepository repo, IMapper mapper, ApplicationDbContext db)
+    public TenancyService(ITenancyRepository repo, IMapper mapper, ApplicationDbContext db, IUnitRepository unitRepo, ILogger<TenancyService> logger)
     {
         _repo = repo;
         _mapper = mapper;
+        _unitRepo = unitRepo;
+        _logger = logger;
         _db = db;
     }
 
     public async Task<TenancyAgreement> CreateAsync(TenancyCreateDto dto, Guid tenantId)
     {
         var entity = _mapper.Map<TenancyAgreement>(dto);
-        var tenancies = await _repo.GetActiveTenanciesByUnitAsync(dto.UnitId);
-        var activeTenants = tenancies.Count(t => t.ContractEndDate >= DateTime.UtcNow && t.TotalAmountPaid!=null );
-        var maxNoOfTenants = tenancies.FirstOrDefault()?.Unit?.MaxNoOfPeople ?? 0;
+        // Assuming you have a repository/service to get unit details
+        var unit = await _unitRepo.GetByIdAsync(dto.UnitId);
+        var maxNoOfTenants = unit?.MaxNoOfPeople ?? 0;
+
+        var tenancies = await _repo.GetActiveTenanciesByUnitAsync(dto.PropertyId,dto.UnitId);
+        var activeTenants = tenancies.Count(t => t.ContractEndDate >= DateTime.UtcNow && t.TotalAmountPaid != null);
+        _logger.LogInformation($"active tenants:{activeTenants} max no tenants:{maxNoOfTenants}");
         if (activeTenants >= maxNoOfTenants)
         {
-            throw new ArgumentException("Unit is full");
+            throw new ArgumentException($"Room is full");
         }
 
         entity.TenantId = tenantId;

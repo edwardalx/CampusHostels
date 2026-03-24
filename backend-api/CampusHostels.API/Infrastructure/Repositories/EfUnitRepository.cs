@@ -31,6 +31,11 @@ public class EfUnitRepository : IUnitRepository
         return await _db.Units.Where(u => u.PropertyId == propertyId).AsNoTracking().ToListAsync();
     }
 
+    public async Task <IEnumerable<Unit>> GetAllUnitsAsync()
+    {
+        return await _db.Units.ToListAsync();
+    }
+
     public async Task SaveChangesAsync()
     {
         await _db.SaveChangesAsync();

@@ -193,7 +193,7 @@ public class PaymentService : IPaymentService
         payment.PaidAt = DateTime.UtcNow;
 
         var tenancy = await _db.TenancyAgreements.Include(t => t.Unit).FirstAsync(t => t.Id == payment.TenancyAgreementId);
-        var tenancies = await _repo.GetActiveTenanciesByUnitAsync(tenancy.UnitId);
+        var tenancies = await _repo.GetActiveTenanciesByUnitAsync(tenancy.Unit!.PropertyId,tenancy.UnitId);
         tenancy.TotalAmountPaid = (tenancy.TotalAmountPaid ?? 0m) + payment.Amount;
         tenancy.IsActive = true;
         var activeTenants = tenancies.Count(t => t.ContractEndDate >= DateTime.UtcNow && t.TotalAmountPaid != null);
