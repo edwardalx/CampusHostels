@@ -32,7 +32,7 @@ export function Tile({ hostel = {}, unit = {} }) {
           />
         </div>
         <div className="p-.5 flex flex-col gap-.5">
-          <p className="text-xs text-gray-600 font-bold">Room{unit.id}</p>
+          <p className="text-xs text-gray-600 font-bold">Room{unit.roomNumber}</p>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 px-2 py-1 rounded bg-[rgba(1,1,1,.06)] border border-blue-200 text-sm">
               <span>💷</span>
