@@ -75,7 +75,7 @@ public class ExceptionHandlingMiddleware
         var response = new
         {
             error = message,
-            details = _env.IsDevelopment() ? details : null, // ✅ now works
+            details = _env.IsProduction() && details == "New password should not be the same as the old password." ? null : details, // ✅ now works
             timestamp = DateTime.UtcNow
         };
 

@@ -80,7 +80,7 @@ export default function Payments() {
       return tenancyId;
     } catch (error) {
       console.error("Error creating tenancy:", error);
-      setErrorMsg(error.details||error.messsage )
+      setErrorMsg({general:error.details||error.messsage })
     } finally {
       setPaymentLoading(false);
     }

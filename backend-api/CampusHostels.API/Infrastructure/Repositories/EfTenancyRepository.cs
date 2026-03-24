@@ -42,12 +42,12 @@ public class EfTenancyRepository : ITenancyRepository
             .OrderByDescending(t => t.ContractStartDate)
             .ToListAsync();
     }
-    public async Task<List<TenancyAgreement>> GetActiveTenanciesByUnitAsync(int unitId)
+    public async Task<List<TenancyAgreement>> GetActiveTenanciesByUnitAsync(int propertyId, int unitId)
     {
         return await _db.TenancyAgreements
           .AsNoTracking()
           .Include(t => t.Unit)
-          .Where(t => t.UnitId == unitId)
+          .Where(t => t.UnitId == unitId && t.Unit!.PropertyId == propertyId)
           .ToListAsync();
     }
     public async Task SaveChangesAsync()
