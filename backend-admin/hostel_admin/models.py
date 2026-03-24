@@ -88,7 +88,8 @@ class UnitType(models.IntegerChoices):
 class Tenant(models.Model):
     """Mirror of the .NET User entity."""
     id = models.AutoField(primary_key=True, db_column='Id')
-    username = models.CharField(max_length=150, db_column='Username')
+    tenant_id = models.UUIDField(db_column='TenantId', default=uuid.uuid4)
+    phone_number = models.CharField(max_length=50, db_column='PhoneNumber')
     first_name = models.CharField(max_length=150, db_column='FirstName')
     last_name = models.CharField(max_length=150, db_column='LastName')
     email = models.EmailField(db_column='Email')
@@ -101,13 +102,13 @@ class Tenant(models.Model):
     is_active = models.BooleanField(default=True, db_column='IsActive')
 
     class Meta:
-        db_table = 'Users'  # Exact EF Core table name
-        managed = False
+        db_table = 'Users'  # Exact table name
+        managed = False  # Django won't manage this table
         verbose_name = 'Tenant'
         verbose_name_plural = 'Tenants'
 
     def __str__(self):
-        return f"{self.username} <{self.email}>"
+        return f"{self.first_name} {self.last_name} <{self.email}>"
 
 
 class Property(models.Model):
@@ -137,6 +138,7 @@ class Unit(models.Model):
     image_url = models.CharField(max_length=500, null=True, blank=True, db_column='ImageUrl')
     floor = models.IntegerField(null=True, blank=True, db_column='Floor')
     max_no_of_people = models.IntegerField(null=True, blank=True, db_column='MaxNoOfPeople')
+    beds_left = models.IntegerField(null=True, blank=True, db_column='BedsLeft')
     room_number = models.CharField(max_length=50, null=True, blank=True, db_column='RoomNumber')
     unit_type = models.IntegerField(choices=UnitType.choices, null=True, blank=True, db_column='UnitType')
 

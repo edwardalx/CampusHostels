@@ -4,23 +4,27 @@ from .models import Tenant, Property, Unit, Tenancy, Payment
 
 @admin.register(Tenant)
 class TenantAdmin(admin.ModelAdmin):
-	list_display = ('id', 'username', 'email', 'role', 'is_active', 'created_at')
-	search_fields = ('username', 'email', 'first_name', 'last_name')
-	list_filter = ('role', 'is_active')
-	readonly_fields = ('id', 'created_at')
-	ordering = ('-created_at',)
-
-	fieldsets = (
-		(None, {
-			'fields': ('username', 'email', 'password_hash', 'role', 'is_active')
-		}),
-		('Tokens', {
-			'fields': ('refresh_token', 'refresh_token_expiry_time')
-		}),
-		('Timestamps', {
-			'fields': ('created_at', 'updated_at')
-		}),
-	)
+    list_display = ['id', 'first_name', 'last_name', 'email', 'phone_number', 'role', 'is_active']
+    list_filter = ['role', 'is_active']
+    search_fields = ['first_name', 'last_name', 'email', 'phone_number']
+    readonly_fields = ['created_at', 'updated_at']
+    
+    fieldsets = (
+        ('Personal Information', {
+            'fields': ('first_name', 'last_name', 'email', 'phone_number')
+        }),
+        ('Account Information', {
+            'fields': ('role', 'is_active')
+        }),
+        ('Security', {
+            'fields': ('password_hash', 'refresh_token', 'refresh_token_expiry_time'),
+            'classes': ('collapse',)
+        }),
+        ('Timestamps', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
 
 
 @admin.register(Property)
@@ -42,7 +46,7 @@ class PropertyAdmin(admin.ModelAdmin):
 
 @admin.register(Unit)
 class UnitAdmin(admin.ModelAdmin):
-    list_display = ('id', 'room_number', 'property_id', 'formatted_cost', 'availability', 'unit_type')
+    list_display = ('id', 'room_number', 'property_id', 'formatted_cost', 'availability', 'unit_type','beds_left')
     search_fields = ('room_number',)
     list_filter = ('availability', 'property_id', 'unit_type')
     readonly_fields = ('id',)
@@ -82,21 +86,27 @@ class TenancyAdmin(admin.ModelAdmin):
 
 @admin.register(Payment)
 class PaymentAdmin(admin.ModelAdmin):
-	list_display = ('id', 'tenant_id', 'tenancy_agreement_id', 'amount', 'created_at', 'status')
-	search_fields = ('tenant_id', 'reference')
-	list_filter = ('created_at', 'channel', 'status')
-	readonly_fields = ('id', 'created_at')
-	ordering = ('-created_at',)
-
-	fieldsets = (
-		(None, {
-			'fields': ('tenant_id', 'tenancy_agreement_id', 'unit_id', 'amount', 'status')
-		}),
-		('Payment Info', {
-			'fields': ('channel', 'provider', 'reference', 'email', 'phone')
-		}),
-		('Timestamp', {
-			'fields': ('created_at', 'currency')
-		}),
-	)
+    list_display = ('id', 'tenant_id', 'tenancy_agreement_id', 'amount', 'created_at', 'status')
+    search_fields = ('tenant_id', 'reference')
+    list_filter = ('created_at', 'channel', 'status')
+    readonly_fields = ('id', 'created_at')
+    ordering = ('-created_at',)
+    
+    # Customize pagination
+    list_per_page = 25  # Show 25 items per page (default is 100)
+     # Disable adding new payments
+    def has_add_permission(self, request):
+        return False
+    
+    fieldsets = (
+        (None, {
+            'fields': ('tenant_id', 'tenancy_agreement_id', 'unit_id', 'amount', 'status')
+        }),
+        ('Payment Info', {
+            'fields': ('channel', 'provider', 'reference', 'email', 'phone')
+        }),
+        ('Timestamp', {
+            'fields': ('created_at', 'currency')
+        }),
+    )
 
