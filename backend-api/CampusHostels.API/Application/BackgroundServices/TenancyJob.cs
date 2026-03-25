@@ -63,7 +63,7 @@ public class TenancyJob
             }
             if (activeTenants >= maxNoOfTenants && tenancy.Unit != null)
             {
-                tenancy.Unit.Availability = true;
+                tenancy.Unit.Availability = false;
             }
         }
         var allUnits = await _unitRepo.GetAllUnitsAsync();
