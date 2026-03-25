@@ -90,7 +90,7 @@ builder.Services.AddScoped<IPasswordResetService, PasswordResetService>();
 #endregion
 
 #region Background Service
-// builder.Services.AddHostedService<MyWorker>();
+// builder.Services.AddHostedService<MyWorker>();   //uncomment this to get the MyWorker background service running
 builder.Services.AddHangfire(config =>
     config.UsePostgreSqlStorage(options =>
         options.UseNpgsqlConnection(

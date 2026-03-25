@@ -61,6 +61,10 @@ public class TenancyJob
 
                 _logger.LogInformation($"Tenancy ended for {tenancy.User?.Email}");
             }
+            if (activeTenants >= maxNoOfTenants && tenancy.Unit != null)
+            {
+                tenancy.Unit.Availability = true;
+            }
         }
         var allUnits = await _unitRepo.GetAllUnitsAsync();
         foreach (var unit in allUnits)
