@@ -25,5 +25,7 @@ public class User
     public DateTime? RefreshTokenExpiryTime { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? UpdatedAt { get; set; }
+    public DateTime? LastLoginAt { get; set; }
+    public DateTime? LastPasswordChangeAt { get; set; }
     public bool IsActive { get; set; } = false;
 }

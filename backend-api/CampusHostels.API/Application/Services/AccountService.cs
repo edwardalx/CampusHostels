@@ -129,6 +129,8 @@ public class AccountService : IAccountService
 
         // Generate token
         var token = _tokenService.CreateToken(user, out var expires);
+        user.LastLoginAt = DateTime.UtcNow;
+        await _db.SaveChangesAsync();
 
         return new AuthResponseDto
         {

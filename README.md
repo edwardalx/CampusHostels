@@ -18,3 +18,5 @@ Data migration tool & seeders
 Small console tool to import SQLite → Postgres preserving FKs/IDs; provide dry-run and instructions.
 Tests, CI/CD, Docker & deploy
 Full test coverage, GH Actions pipeline, test Postgres service in CI, docker-compose for local Postgres + API.
+
+$env:ASPNETCORE_ENVIRONMENT='Production'

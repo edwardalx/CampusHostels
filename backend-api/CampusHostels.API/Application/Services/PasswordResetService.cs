@@ -161,6 +161,7 @@ namespace CampusHostels.API.Application.Services
             }
             user.PasswordHash = AccountService.HashPassword(dto.NewPassword);
             prt.Used = true;
+            user.LastPasswordChangeAt = DateTime.UtcNow;
 
             await _db.SaveChangesAsync();
 
