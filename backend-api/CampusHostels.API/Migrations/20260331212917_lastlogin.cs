@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace CampusHostels.API.Migrations
 {
     /// <inheritdoc />
-    public partial class lastlogin : Migration
+    public partial class LastLogin : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)

@@ -358,6 +358,9 @@ namespace CampusHostels.API.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<int>("FailedLoginAttempts")
+                        .HasColumnType("integer");
+
                     b.Property<string>("FirstName")
                         .IsRequired()
                         .HasColumnType("text");

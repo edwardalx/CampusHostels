@@ -39,3 +39,8 @@ public class UserExistsDto
     public bool EmailExists { get; set; } = false;
     public bool PhoneExists { get; set; } = false;
 }
+
+public class GoogleAuthDto
+{
+    public string IdToken { get; set; } = string.Empty;
+}

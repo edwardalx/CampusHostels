@@ -27,5 +27,6 @@ public class User
     public DateTime? UpdatedAt { get; set; }
     public DateTime? LastLoginAt { get; set; }
     public DateTime? LastPasswordChangeAt { get; set; }
+    public int FailedLoginAttempts { get; set; } = 0;
     public bool IsActive { get; set; } = false;
 }

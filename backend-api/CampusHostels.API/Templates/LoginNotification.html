@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Notification</title>
+</head>
+<body style="margin:0; padding:0; font-family: Arial, Helvetica, sans-serif; background-color:#f4f6f8;">
+
+    <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f6f8; padding:40px 0;">
+        <tr>
+            <td align="center">
+
+                <!-- Main Card -->
+                <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff; border-radius:12px; overflow:hidden; box-shadow:0 4px 12px rgba(0,0,0,0.08);">
+
+                    <!-- Header / Logo -->
+                    <tr>
+                        <td align="center" style="background:#1e3a8a; padding:30px;">
+                            <img src="https://campushostels.duckdns.org/favicon-v2.svg" alt="RentIn Logo" width="120" style="display:block; margin-bottom:10px;">
+                            <h1 style="color:#ffffff; margin:0; font-size:24px;">RentIn</h1>
+                        </td>
+                    </tr>
+
+                    <!-- Body -->
+                    <tr>
+                        <td style="padding:40px 30px; color:#333333; line-height:1.6;">
+
+                            <h2 style="margin-top:0; color:#1e3a8a;">Login Notification</h2>
+
+                            <p>Hello <strong>{{FirstName}}</strong>,</p>
+
+                            <p>
+                                This is to let you know that your account was successfully accessed on:
+                            </p>
+
+                            <p style="font-size:16px; font-weight:bold; color:#111827;">
+                                {{LoginTime}} UTC
+                            </p>
+
+                            <p>
+                                If this was you, no further action is needed.
+                            </p>
+
+                            <p>
+                                If you did <strong>not</strong> log in, please reset your password immediately and contact support.
+                            </p>
+
+                            <!-- Button -->
+                            <p style="margin:30px 0;">
+                                <a href="{{ResetPasswordUrl}}"
+                                   style="background:#1e3a8a; color:#ffffff; text-decoration:none; padding:12px 24px; border-radius:6px; display:inline-block;">
+                                    Reset Password
+                                </a>
+                            </p>
+
+                            <p style="font-size:14px; color:#6b7280;">
+                                Thank you,<br>
+                                The RentIn Team
+                            </p>
+
+                        </td>
+                    </tr>
+
+                    <!-- Footer -->
+                    <tr>
+                        <td align="center" style="background:#f9fafb; padding:20px; font-size:12px; color:#6b7280;">
+                            © 2026 RentIn. All rights reserved.
+                        </td>
+                    </tr>
+
+                </table>
+
+            </td>
+        </tr>
+    </table>
+
+</body>
+</html>

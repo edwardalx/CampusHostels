@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace CampusHostels.API.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260331212917_LastLogin")]
-    partial class LastLogin
+    [Migration("20260402202839_FailedLoginAttempts")]
+    partial class FailedLoginAttempts
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -360,6 +360,9 @@ namespace CampusHostels.API.Migrations
                     b.Property<string>("Email")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<int>("FailedLoginAttempts")
+                        .HasColumnType("integer");
 
                     b.Property<string>("FirstName")
                         .IsRequired()

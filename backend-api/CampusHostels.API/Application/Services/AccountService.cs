@@ -8,6 +8,7 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
+using Google.Apis.Auth;
 
 namespace CampusHostels.API.Application.Services;
 
@@ -121,15 +122,23 @@ public class AccountService : IAccountService
         {
             throw new UnauthorizedAccessException("User account is inactive. Contact support to activate your account.");
         }
+        if (user.FailedLoginAttempts >= 5)
+        {
+            throw new UnauthorizedAccessException("Your account has been locked due to multiple failed login attempts. Contact support to unlock your account.");
+        }
 
         if (!VerifyPassword(dto.Password, user.PasswordHash))
         {
+            user.FailedLoginAttempts++;
+            await _db.SaveChangesAsync();
+
             throw new UnauthorizedAccessException("Invalid password.");
         }
 
         // Generate token
         var token = _tokenService.CreateToken(user, out var expires);
         user.LastLoginAt = DateTime.UtcNow;
+        user.FailedLoginAttempts = 0; // reset on successful login
         await _db.SaveChangesAsync();
 
         return new AuthResponseDto
@@ -139,6 +148,58 @@ public class AccountService : IAccountService
             FirstName = user.FirstName,
             PhoneNumber = user.PhoneNumber,
             Email = user.Email,
+            Role = user.Role,
+            Expires = expires
+        };
+    }
+    public async Task<AuthResponseDto> GoogleLoginAsync(string idToken)
+    {
+        var payload = await GoogleJsonWebSignature.ValidateAsync(
+            idToken,
+            new GoogleJsonWebSignature.ValidationSettings
+            {
+                Audience = new[]
+                {
+                "YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com"
+                }
+            });
+
+        var email = payload.Email.Trim().ToLowerInvariant();
+
+        var user = await _db.Users.FirstOrDefaultAsync(u => u.Email == email);
+
+        if (user == null)
+        {
+            user = new User
+            {
+                FirstName = payload.GivenName ?? payload.Name ?? "Google",
+                LastName = payload.FamilyName ?? "",
+                Email = email,
+                TenantId = Guid.NewGuid(),
+                Role = "Student",
+                IsActive = true,
+                PasswordHash = string.Empty,
+                LastLoginAt = DateTime.UtcNow
+            };
+
+            _db.Users.Add(user);
+            await _db.SaveChangesAsync();
+        }
+        else
+        {
+            user.LastLoginAt = DateTime.UtcNow;
+            await _db.SaveChangesAsync();
+        }
+
+        var token = _tokenService.CreateToken(user, out var expires);
+
+        return new AuthResponseDto
+        {
+            Token = token,
+            TenantId = user.TenantId,
+            FirstName = user.FirstName,
+            Email = user.Email,
+            PhoneNumber = user.PhoneNumber,
             Role = user.Role,
             Expires = expires
         };
@@ -176,7 +237,7 @@ public class AccountService : IAccountService
         };
     }
 
-     public async Task<bool> UpdateUserAsync(UpdateUserDto dto)
+    public async Task<bool> UpdateUserAsync(UpdateUserDto dto)
     {
         var normalizedEmail = dto.Email?.Trim().ToLowerInvariant() ?? string.Empty;
         var user = await _db.Users.FirstOrDefaultAsync(u => u.Email.ToLower() == normalizedEmail);

@@ -71,7 +71,10 @@ public class TenancyJob
         {
             unit.BedsLeft ??= unit.MaxNoOfPeople;
         }
-
+        foreach (var user in _db.Users)
+        {
+            user.FailedLoginAttempts = 0; // reset on successful login
+        }
         await _db.SaveChangesAsync();
     }
 }
