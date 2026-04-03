@@ -24,20 +24,29 @@ export default function RegSuccessModal({ response }) {
       <div className="fixed inset-0 bg-black/50 z-40" />
 
       {/* Modal */}
-      <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
-        <div className="bg-white rounded-2xl shadow-2xl max-w-2xl min-h-[500px]  w-full p-6 text-center space-y-4 animate-fadeIn">
-          <h1 className="text-2xl font-semibold text-teal-700">
-            🎉 Registration Successful!
-          </h1>
+      <div className="fixed inset-0 z-50 flex items-center justify-center px-4 ">
+        <div className="flex flex-col justify-between bg-white rounded-2xl shadow-2xl max-w-2xl min-h-[500px]  w-full p-6 text-center space-y-4 animate-fadeIn">
+          <div className="flex flex-col  gap-12 my-4">
+            <h1 className="text-2xl font-semibold text-teal-700">
+              🎉 Registration Successful!
+            </h1>
 
-          <p className="text-gray-600">
-            Your account has been created successfully.
-          </p>
+            <p className="text-gray-600">
+              Your account has been created successfully.
+            </p>
 
-          <p className="text-sm text-gray-500">
-            Click <strong>Continue</strong> to log in or <strong>Cancel</strong>{" "}
-            to return to the homepage.
-          </p>
+            <p className="text-sm text-gray-500">
+              Click{" "}
+              <strong onClick={handleContinue} className=" cursor-pointer">
+                Continue
+              </strong>{" "}
+              to log in or{" "}
+              <strong onClick={handleCancel} className="cursor-pointer">
+                Cancel
+              </strong>{" "}
+              to return to the homepage.
+            </p>
+          </div>
 
           <div className="flex gap-4 pt-4">
             <button

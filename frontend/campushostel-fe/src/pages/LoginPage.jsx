@@ -7,6 +7,11 @@ import { FaFacebook } from "react-icons/fa";
 import { LoadingSpinner } from "../components/SkeletonCard";
 import { LoginApi, LogoutApi } from "../services/AuthServices";
 import {
+  useGoogleAuth,
+  GoogleAuthWithToken,
+} from "../services/GoogleAuthService";
+import { useGoogleLogin } from "@react-oauth/google";
+import {
   setTokenExpiryTimeout,
   showSessionExpiredAlert,
   useIdleTimeout,
@@ -40,7 +45,7 @@ export default function LoginPage() {
       setLoading(true);
       setErrorMsg({ email: "", password: "", general: "" });
       response = await LoginApi({ loginData });
-     
+
       console.log("Response:", response);
     } catch (error) {
       console.error("Login error:", error);
@@ -72,18 +77,47 @@ export default function LoginPage() {
     // TODO: Handle login logic
   };
 
-  const handleGoogleLogin = () => {
-    console.log("Continue with Google");
-  };
+  // const handleGoogleLogin = useGoogleAuth(
+  //   (data) => {
+  //     console.log("Logged in successfully:", data);
+  //     // Save JWT to localStorage or context
+  //   },
+  //   (err) => {
+  //     console.error("Login failed:", err);
+  //   }
+  // );
+  const handleGoogleLogin = useGoogleLogin({
+    flow: "implicit",
+    scope: "openid email profile",
 
+    onSuccess: async (response) => {
+      const accessToken = response.access_token;
+
+      console.log("Google Access Token:", accessToken);
+      console.log("response", response);
+      try {
+        const data = await GoogleAuthWithToken(accessToken);
+        data.token
+          ? navigate("/")
+          : setErrorMsg({ general: "Google login failed. Please try again." });
+      } catch (err) {
+        console.error("Google login error:", err);
+      }
+    },
+  });
   const handleFacebookLogin = () => {
+    setErrorMsg({ general: "Facebook login failed. Please try a different method." });
     console.log("Continue with Facebook");
   };
   // const handleForgotPass = ()=>{
   //   navigate("/password-reset")
   // }
   if (loading) {
-    return <div><LoadingSpinner /></div>;
+    return (
+      <div>
+        <LoadingSpinner />
+      </div>
+    );
   }
 
   return (
@@ -202,7 +236,10 @@ export default function LoginPage() {
                 </div>
               </div>
               <div className="text-right mt-3">
-                <Link to="/request/password-reset" className="text-cyan-400 text-sm hover:underline">
+                <Link
+                  to="/request/password-reset"
+                  className="text-cyan-400 text-sm hover:underline"
+                >
                   Forgot Password?
                 </Link>
               </div>
@@ -228,7 +265,7 @@ export default function LoginPage() {
           <div className="flex flex-col gap-5">
             <button
               type="button"
-              onClick={handleGoogleLogin}
+              onClick={() => handleGoogleLogin()}
               className="w-full py-4 gap-2 bg-gray-800 text-gray-700 rounded-lg font-medium hover:bg-gray-100 transition-colors duration-200 flex items-center justify-center space-x-3 shadow-md"
             >
               <FcGoogle className="w-5 h-5" />

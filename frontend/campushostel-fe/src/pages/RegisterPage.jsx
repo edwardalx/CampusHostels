@@ -1,8 +1,10 @@
 import React, { use, useEffect, useState } from "react";
 import { Eye, EyeOff, Briefcase } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { RegisterApi, RegisterAjax } from "../services/AuthServices";
 import RegSuccessModel from "../components/RegSuccessModel";
+import { useGoogleLogin } from "@react-oauth/google";
+import { GoogleAuthWithToken } from "../services/GoogleAuthService";
 
 // Layout constants
 const LAYOUT = {
@@ -115,6 +117,7 @@ export default function RegisterPage() {
   const [resData, setResData] = useState(null);
   const [storedToken, setStoredToken] = useState(null);
   let response;
+  const navigate = useNavigate();
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData((prev) => ({
@@ -208,21 +211,52 @@ export default function RegisterPage() {
     console.log("Response:", resData?.email);
     // TODO: Handle registration logic
   };
+  const handleGoogleRegister = useGoogleLogin({
+    flow: "implicit",
+    scope: "openid email profile",
+
+    onSuccess: async (response) => {
+      const accessToken = response.access_token;
+
+      console.log("Google Access Token:", accessToken);
+      console.log("response", response);
+      try {
+        const data = await GoogleAuthWithToken(accessToken);
+        data.token
+          ? setStoredToken(data.token)
+          : setErrorMsg({ general: "Google login failed. Please try again." });
+      } catch (err) {
+        console.error("Google login error:", err);
+      }
+    },
+  });
+  const handleFacebookLogin = () => {
+    setErrorMessage({
+      general: "Facebook login failed. Please try a different method.",
+    });
+    console.log("Continue with Facebook");
+  };
   const handleBlur = async (e) => {
     const ajaxData = {
       email: formData.email,
       phoneNumber: formData.phoneNumber,
     };
+    if (!formData.email && !formData.phoneNumber) {
+      return setErrorMessage({ general: "" });
+    }
     const checkUnique = await RegisterAjax(ajaxData);
     if (checkUnique.emailExists) {
       setErrorMessage({ email: "Email already exists" });
+    } else {
+      setErrorMessage({ email: "" });
     }
-    else {setErrorMessage({ email: "" });}
     // setErrorMessage({email:""});
     if (checkUnique.phoneExists) {
       setErrorMessage({ phoneNumber: "Phone number already exists" });
+    } else {
+      setErrorMessage({ phoneNumber: "" });
     }
-    else {setErrorMessage({ phoneNumber: "" });}
+    setErrorMessage({ general: "" });
     // setErrorMessage({ phoneNumber: "" });
   };
 
@@ -444,35 +478,42 @@ export default function RegisterPage() {
                 <div
                   className={`flex items-center gap-3 ${SPACING.FORM_PADDING_TOP}`}
                 >
-                  <input
-                    id="terms"
-                    type="checkbox"
-                    name="agreeToTerms"
-                    checked={formData.agreeToTerms}
-                    required
-                    onChange={handleChange}
-                    className="h-5 w-5 rounded border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-cyan-500 focus:ring-cyan-500/50 cursor-pointer"
-                  />
-                  <label
-                    htmlFor="terms"
-                    className={`${TYPOGRAPHY.CAPTION} text-gray-400`}
-                  >
-                    I agree to the{" "}
-                    <a href="#" className="text-cyan-500 hover:underline">
-                      Terms of Service
-                    </a>{" "}
-                    and{" "}
-                    <a href="#" className="text-cyan-500 hover:underline">
-                      Privacy Policy
-                    </a>
-                    .
-                  </label>
                   <div>
-                    {errorMessage.general && (
-                      <span className={`text-red-400 ${TYPOGRAPHY.SUBHEADING}`}>
-                        {errorMessage.general}
-                      </span>
-                    )}
+                    <div>
+                      <input
+                        id="terms"
+                        type="checkbox"
+                        name="agreeToTerms"
+                        checked={formData.agreeToTerms}
+                        required
+                        onChange={handleChange}
+                        className="h-5 w-5 rounded border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-cyan-500 focus:ring-cyan-500/50 cursor-pointer"
+                      />
+
+                      <label
+                        htmlFor="terms"
+                        className={`${TYPOGRAPHY.CAPTION} text-gray-400`}
+                      >
+                        I agree to the{" "}
+                        <a href="#" className="text-cyan-500 hover:underline">
+                          Terms of Service
+                        </a>{" "}
+                        and{" "}
+                        <a href="#" className="text-cyan-500 hover:underline">
+                          Privacy Policy
+                        </a>
+                        .
+                      </label>
+                    </div>
+                    <div>
+                      {errorMessage.general && (
+                        <span
+                          className={`text-red-400 ${TYPOGRAPHY.SUBHEADING}`}
+                        >
+                          {errorMessage.general}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
 
@@ -500,6 +541,7 @@ export default function RegisterPage() {
                 <button
                   type="button"
                   className={`flex ${BUTTON.SECONDARY.HEIGHT} flex-1 items-center justify-center gap-3 rounded-lg border border-gray-700 bg-gray-800 text-white transition-colors hover:bg-gray-700`}
+                  onClick={handleGoogleRegister}
                 >
                   <svg
                     className={ICON.SOCIAL_ICON_SIZE}
@@ -531,6 +573,7 @@ export default function RegisterPage() {
                 <button
                   type="button"
                   className={`flex ${BUTTON.SECONDARY.HEIGHT} flex-1 items-center justify-center gap-3 rounded-lg border border-gray-700 bg-gray-800 text-white transition-colors hover:bg-gray-700`}
+                  onClick={handleFacebookLogin}
                 >
                   <svg
                     className={ICON.SOCIAL_ICON_SIZE}
