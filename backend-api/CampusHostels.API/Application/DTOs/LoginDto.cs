@@ -40,7 +40,22 @@ public class UserExistsDto
     public bool PhoneExists { get; set; } = false;
 }
 
+// public class GoogleAuthDto
+// {
+//     public string IdToken { get; set; } = string.Empty;
+// }
+
 public class GoogleAuthDto
 {
-    public string IdToken { get; set; } = string.Empty;
+    public string AccessToken { get; set; }= string.Empty;// Changed from IdToken
+}
+
+public class GoogleUserInfo
+{
+    public string? Email { get; set; }
+    public string? Name { get; set; }
+    public string? GivenName { get; set; }
+    public string? FamilyName { get; set; }
+    public string? Picture { get; set; }
+    public string? Sub { get; set; }
 }

@@ -82,7 +82,7 @@ public class AccountsController : ControllerBase
     [HttpPost("google-login")]
     public async Task<IActionResult> GoogleLogin([FromBody] GoogleAuthDto dto)
     {
-        var result = await _accountService.GoogleLoginAsync(dto.IdToken);
+        var result = await _accountService.GoogleLoginAsync(dto.AccessToken);
         return Ok(result);
     }
 

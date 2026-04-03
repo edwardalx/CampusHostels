@@ -9,6 +9,8 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 using Google.Apis.Auth;
+using System.Net.Http.Headers;
+using System.Text.Json;
 
 namespace CampusHostels.API.Application.Services;
 
@@ -16,11 +18,13 @@ public class AccountService : IAccountService
 {
     private readonly ApplicationDbContext _db;
     private readonly ITokenService _tokenService;
+    IConfiguration _config;
 
-    public AccountService(ApplicationDbContext db, ITokenService tokenService)
+    public AccountService(ApplicationDbContext db, ITokenService tokenService, IConfiguration config)
     {
         _db = db;
         _tokenService = tokenService;
+        _config = config;
     }
 
     public async Task<AuthResponseDto> RegisterAsync(RegisterDto dto)
@@ -152,58 +156,78 @@ public class AccountService : IAccountService
             Expires = expires
         };
     }
-    public async Task<AuthResponseDto> GoogleLoginAsync(string idToken)
+    public async Task<AuthResponseDto> GoogleLoginAsync(string accessToken)
+{
+    if (string.IsNullOrWhiteSpace(accessToken))
+        throw new ArgumentException("accessToken is null or empty");
+
+    using var client = new HttpClient();
+
+    client.DefaultRequestHeaders.Authorization =
+        new AuthenticationHeaderValue("Bearer", accessToken);
+
+    var response = await client.GetAsync(
+        "https://www.googleapis.com/oauth2/v3/userinfo"
+    );
+
+    if (!response.IsSuccessStatusCode)
     {
-        var payload = await GoogleJsonWebSignature.ValidateAsync(
-            idToken,
-            new GoogleJsonWebSignature.ValidationSettings
-            {
-                Audience = new[]
-                {
-                "YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com"
-                }
-            });
-
-        var email = payload.Email.Trim().ToLowerInvariant();
-
-        var user = await _db.Users.FirstOrDefaultAsync(u => u.Email == email);
-
-        if (user == null)
-        {
-            user = new User
-            {
-                FirstName = payload.GivenName ?? payload.Name ?? "Google",
-                LastName = payload.FamilyName ?? "",
-                Email = email,
-                TenantId = Guid.NewGuid(),
-                Role = "Student",
-                IsActive = true,
-                PasswordHash = string.Empty,
-                LastLoginAt = DateTime.UtcNow
-            };
-
-            _db.Users.Add(user);
-            await _db.SaveChangesAsync();
-        }
-        else
-        {
-            user.LastLoginAt = DateTime.UtcNow;
-            await _db.SaveChangesAsync();
-        }
-
-        var token = _tokenService.CreateToken(user, out var expires);
-
-        return new AuthResponseDto
-        {
-            Token = token,
-            TenantId = user.TenantId,
-            FirstName = user.FirstName,
-            Email = user.Email,
-            PhoneNumber = user.PhoneNumber,
-            Role = user.Role,
-            Expires = expires
-        };
+        var error = await response.Content.ReadAsStringAsync();
+        throw new Exception($"Google token validation failed: {error}");
     }
+
+    var json = await response.Content.ReadAsStringAsync();
+
+    var googleUser = JsonSerializer.Deserialize<GoogleUserInfo>(
+        json,
+        new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true
+        });
+
+    if (googleUser == null || string.IsNullOrWhiteSpace(googleUser.Email))
+        throw new Exception("Unable to retrieve Google user information");
+
+    var email = googleUser.Email.Trim().ToLowerInvariant();
+
+    var user = await _db.Users.FirstOrDefaultAsync(u => u.Email == email);
+
+    if (user == null)
+    {
+        user = new User
+        {
+            FirstName = googleUser.GivenName ?? googleUser.Name ?? "Google",
+            LastName = googleUser.FamilyName ?? "",
+            Email = email,
+            TenantId = Guid.NewGuid(),
+            Role = "Student",
+            IsActive = true,
+            PasswordHash = string.Empty,
+            LastLoginAt = DateTime.UtcNow
+        };
+
+        _db.Users.Add(user);
+        await _db.SaveChangesAsync();
+    }
+    else
+    {
+        user.LastLoginAt = DateTime.UtcNow;
+        await _db.SaveChangesAsync();
+    }
+
+    var token = _tokenService.CreateToken(user, out var expires);
+
+    return new AuthResponseDto
+    {
+        Token = token,
+        TenantId = user.TenantId,
+        FirstName = user.FirstName,
+        Email = user.Email,
+        PhoneNumber = user.PhoneNumber,
+        Role = user.Role,
+        Expires = expires
+    };
+}
 
     /// <summary>Hash a password using SHA256 (dev-only; replace with Identity later).</summary>
     public static string HashPassword(string password)
