@@ -37,6 +37,9 @@ services:
     build:
       context: ./frontend/campushostel-fe
       dockerfile: Dockerfile
+      container_name: campushostels_frontend
+      env_file:
+      - .env
     # ports:
     #   - "80:80"
     volumes:
