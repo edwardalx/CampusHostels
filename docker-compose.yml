@@ -40,6 +40,8 @@ services:
       args:
         VITE_API_URL: http://backend-api:8000
     container_name: campushostels_frontend
+    args:
+      VITE_GOOGLE_CLIENT_ID: ${VITE_GOOGLE_CLIENT_ID}
     env_file:
       - .env
     volumes:

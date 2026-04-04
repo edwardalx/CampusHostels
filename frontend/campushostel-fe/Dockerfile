@@ -6,6 +6,8 @@
 FROM node:20-alpine AS build
 
 WORKDIR /app
+ARG VITE_GOOGLE_CLIENT_ID
+ENV VITE_GOOGLE_CLIENT_ID=$VITE_GOOGLE_CLIENT_ID
 
 # Copy package files first for caching
 COPY package.json package-lock.json ./
