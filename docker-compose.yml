@@ -37,19 +37,16 @@ services:
     build:
       context: ./frontend/campushostel-fe
       dockerfile: Dockerfile
-      container_name: campushostels_frontend
-      env_file:
+      args:
+        VITE_API_URL: http://backend-api:8000
+    container_name: campushostels_frontend
+    env_file:
       - .env
-    # ports:
-    #   - "80:80"
     volumes:
-      - frontend-static:/usr/share/nginx/html:ro  # Read-only for frontend
+      - frontend-static:/usr/share/nginx/html:ro
     restart: unless-stopped
     depends_on:
       - web
-    environment:
-      - VITE_API_URL=http://backend-api:8000
-
   
   web:
     build:
