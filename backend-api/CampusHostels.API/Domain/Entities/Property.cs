@@ -12,7 +12,21 @@ public class Property
     public int? NoOfFloors { get; set; }
     public decimal? StartingPrice { get; set; } = 120;  // Default starting price per month
     public bool Availability { get; set; } = true;
-
+    public List<User> LikedByUsers { get; set; } = [];
+    public ICollection<Rating> Ratings { get; set; } = [];
+    // public ICollection<Review> Reviews { get; set; } = [];
+    public double AverageRating { get; set; } = 0;
     public ICollection<Unit> Units { get; set; } = [];
     public ICollection<Image> Images { get; set; } = [];
-}
+    public void UpdateAverageRating()
+    {
+        if (!Ratings.Any())
+        {
+            AverageRating = 0;
+            return;
+        }
+
+        AverageRating = Ratings.Average(r => r.Score);
+    }
+
+};

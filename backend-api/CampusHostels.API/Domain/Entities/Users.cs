@@ -29,4 +29,6 @@ public class User
     public DateTime? LastPasswordChangeAt { get; set; }
     public int FailedLoginAttempts { get; set; } = 0;
     public bool IsActive { get; set; } = false;
+    public List<Property> LikedHostels { get; set; } = [];
+    public List<Rating?> Rating { get; set; } = [];
 }

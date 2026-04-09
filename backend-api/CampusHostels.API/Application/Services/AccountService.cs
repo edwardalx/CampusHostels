@@ -157,77 +157,77 @@ public class AccountService : IAccountService
         };
     }
     public async Task<AuthResponseDto> GoogleLoginAsync(string accessToken)
-{
-    if (string.IsNullOrWhiteSpace(accessToken))
-        throw new ArgumentException("accessToken is null or empty");
-
-    using var client = new HttpClient();
-
-    client.DefaultRequestHeaders.Authorization =
-        new AuthenticationHeaderValue("Bearer", accessToken);
-
-    var response = await client.GetAsync(
-        "https://www.googleapis.com/oauth2/v3/userinfo"
-    );
-
-    if (!response.IsSuccessStatusCode)
     {
-        var error = await response.Content.ReadAsStringAsync();
-        throw new Exception($"Google token validation failed: {error}");
-    }
+        if (string.IsNullOrWhiteSpace(accessToken))
+            throw new ArgumentException("accessToken is null or empty");
 
-    var json = await response.Content.ReadAsStringAsync();
+        using var client = new HttpClient();
 
-    var googleUser = JsonSerializer.Deserialize<GoogleUserInfo>(
-        json,
-        new JsonSerializerOptions
+        client.DefaultRequestHeaders.Authorization =
+            new AuthenticationHeaderValue("Bearer", accessToken);
+
+        var response = await client.GetAsync(
+            "https://www.googleapis.com/oauth2/v3/userinfo"
+        );
+
+        if (!response.IsSuccessStatusCode)
         {
-            PropertyNameCaseInsensitive = true
-        });
+            var error = await response.Content.ReadAsStringAsync();
+            throw new Exception($"Google token validation failed: {error}");
+        }
 
-    if (googleUser == null || string.IsNullOrWhiteSpace(googleUser.Email))
-        throw new Exception("Unable to retrieve Google user information");
+        var json = await response.Content.ReadAsStringAsync();
 
-    var email = googleUser.Email.Trim().ToLowerInvariant();
+        var googleUser = JsonSerializer.Deserialize<GoogleUserInfo>(
+            json,
+            new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            });
 
-    var user = await _db.Users.FirstOrDefaultAsync(u => u.Email == email);
+        if (googleUser == null || string.IsNullOrWhiteSpace(googleUser.Email))
+            throw new Exception("Unable to retrieve Google user information");
 
-    if (user == null)
-    {
-        user = new User
+        var email = googleUser.Email.Trim().ToLowerInvariant();
+
+        var user = await _db.Users.FirstOrDefaultAsync(u => u.Email == email);
+
+        if (user == null)
         {
-            FirstName = googleUser.GivenName ?? googleUser.Name ?? "Google",
-            LastName = googleUser.FamilyName ?? "",
-            Email = email,
-            TenantId = Guid.NewGuid(),
-            Role = "Student",
-            IsActive = true,
-            PasswordHash = string.Empty,
-            LastLoginAt = DateTime.UtcNow
+            user = new User
+            {
+                FirstName = googleUser.GivenName ?? googleUser.Name ?? "Google",
+                LastName = googleUser.FamilyName ?? "",
+                Email = email,
+                TenantId = Guid.NewGuid(),
+                Role = "Student",
+                IsActive = true,
+                PasswordHash = string.Empty,
+                LastLoginAt = DateTime.UtcNow
+            };
+
+            _db.Users.Add(user);
+            await _db.SaveChangesAsync();
+        }
+        else
+        {
+            user.LastLoginAt = DateTime.UtcNow;
+            await _db.SaveChangesAsync();
+        }
+
+        var token = _tokenService.CreateToken(user, out var expires);
+
+        return new AuthResponseDto
+        {
+            Token = token,
+            TenantId = user.TenantId,
+            FirstName = user.FirstName,
+            Email = user.Email,
+            PhoneNumber = user.PhoneNumber,
+            Role = user.Role,
+            Expires = expires
         };
-
-        _db.Users.Add(user);
-        await _db.SaveChangesAsync();
     }
-    else
-    {
-        user.LastLoginAt = DateTime.UtcNow;
-        await _db.SaveChangesAsync();
-    }
-
-    var token = _tokenService.CreateToken(user, out var expires);
-
-    return new AuthResponseDto
-    {
-        Token = token,
-        TenantId = user.TenantId,
-        FirstName = user.FirstName,
-        Email = user.Email,
-        PhoneNumber = user.PhoneNumber,
-        Role = user.Role,
-        Expires = expires
-    };
-}
 
     /// <summary>Hash a password using SHA256 (dev-only; replace with Identity later).</summary>
     public static string HashPassword(string password)
@@ -278,5 +278,73 @@ public class AccountService : IAccountService
 
         await _db.SaveChangesAsync();
         return true;
+    }
+
+    public async Task<UserLikedHostelsDto> GetUserLikedHostelsAsync(Guid tenantId)
+    {
+        var user = await _db.Users
+            .Include(u => u.LikedHostels)
+            .FirstOrDefaultAsync(u => u.TenantId == tenantId);
+
+        if (user == null)
+        {
+            throw new InvalidOperationException("User not found.");
+        }
+        return new UserLikedHostelsDto
+        {
+            LikedHostelIds = user.LikedHostels.Select(h => h.Id).ToList()
+        };
+    }
+    public async Task<UserLikedHostelsDto> AddLikedHostelAsync(Guid tenantId, int hostelId)
+    {
+        var user = await _db.Users
+            .Include(u => u.LikedHostels)
+            .FirstOrDefaultAsync(u => u.TenantId == tenantId);
+
+        if (user == null)
+        {
+            throw new InvalidOperationException("User not found.");
+        }
+
+        var hostel = await _db.Properties.FindAsync(hostelId);
+        if (hostel == null)
+        {
+            throw new InvalidOperationException("Hostel not found.");
+        }
+
+        if (!user.LikedHostels.Any(h => h.Id == hostel.Id))
+        {
+            user.LikedHostels.Add(hostel);
+            await _db.SaveChangesAsync();
+        }
+
+        return new UserLikedHostelsDto
+        {
+            LikedHostelIds = user.LikedHostels.Select(h => h.Id).ToList()
+        };
+    }
+
+    public async Task<UserLikedHostelsDto> RemoveLikedHostelAsync(Guid tenantId, int hostelId)
+    {
+        var user = await _db.Users
+            .Include(u => u.LikedHostels)
+            .FirstOrDefaultAsync(u => u.TenantId == tenantId);
+
+        if (user == null)
+        {
+            throw new InvalidOperationException("User not found.");
+        }
+
+        var hostel = user.LikedHostels.FirstOrDefault(h => h.Id == hostelId);
+        if (hostel != null)
+        {
+            user.LikedHostels.Remove(hostel);
+            await _db.SaveChangesAsync();
+        }
+
+        return new UserLikedHostelsDto
+        {
+            LikedHostelIds = user.LikedHostels.Select(h => h.Id).ToList()
+        };
     }
 }

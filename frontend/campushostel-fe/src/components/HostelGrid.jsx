@@ -32,7 +32,7 @@ export default function HostelGrid({
   isEmpty = false,
   onCardAction = {
     onLike: () => {},
-    onViewDetails: () => {}
+    onViewDetails: () => {},
   }
 }) {
   //  const handleViewDetails = () => {

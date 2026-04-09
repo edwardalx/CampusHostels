@@ -17,13 +17,15 @@ import React, { useState, useCallback, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { getHostels } from "../services/HostelServices";
 import { HeroSection, SearchBar, HostelGrid, Footer } from "../components";
-import {SkeletonCard} from "../components/SkeletonCard";
+import { SkeletonCard } from "../components/SkeletonCard";
 
 export default function HomePage() {
   const [hostels, setHostels] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isEmpty, setIsEmpty] = useState(false);
   const [filteredHostels, setFilteredHostels] = useState([]);
+  const [selectedRating, setSelectedRating] = useState(0);
+  // const [rating, setRating] = useState(0);
   const storeUser = JSON.parse(localStorage.getItem("user"));
   let links = ["Home", "About", "Contact"];
   const navigate = useNavigate();
@@ -179,11 +181,7 @@ export default function HomePage() {
                 {storeUser ? (
                   <>
                     Welcome,{" "}
-                    {
-                      <span className="font-bold">
-                        {storeUser.fname}
-                      </span>
-                    }{" "}
+                    {<span className="font-bold">{storeUser.fname}</span>}{" "}
                     !{" "}
                   </>
                 ) : (

@@ -76,6 +76,7 @@ builder.Services.AddScoped<IPropertyRepository, EfPropertyRepository>();
 builder.Services.AddScoped<IUnitRepository, EfUnitRepository>();
 builder.Services.AddScoped<ITenancyRepository, EfTenancyRepository>();
 builder.Services.AddScoped<IMessageRepository, EfMessageRepository>();
+builder.Services.AddScoped<IReviewRatingRepository, EfReviewRatingRepository>();
 #endregion
 
 #region Services
@@ -87,6 +88,7 @@ builder.Services.AddScoped<IWhatsAppService, WhatsAppService>();
 builder.Services.AddScoped<EmailService>(); // Not interface-based since it's only used internally by other services
 builder.Services.AddScoped<IEmailSender, SmtpEmailSender>(); // Register IEmailSender to resolve to EmailService
 builder.Services.AddScoped<IPasswordResetService, PasswordResetService>();
+builder.Services.AddScoped<IReviewRating, ReviewRatingService>();
 #endregion
 
 #region Background Service

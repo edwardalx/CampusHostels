@@ -37,11 +37,16 @@ export default function HostelCard({
   onLike = () => {},
 }) {
   const [isFavorite, setIsFavorite] = useState(hostel.isFavorite);
+  const [selectedRating, setSelectedRating] = useState(0);
 
   const handleLike = (e) => {
     e.stopPropagation();
     setIsFavorite(!isFavorite);
     onLike(hostel.id, !isFavorite);
+  };
+  const handleRatingClick = (rating) => {
+    setSelectedRating(rating);
+    console.log("Selected rating:", rating);
   };
   const navigate = useNavigate();
   const handleViewDetails = () => {
@@ -73,7 +78,7 @@ export default function HostelCard({
           />
         </Link>
         {/* Tag Badge */}
-        {hostel.tag && (
+        {/* {hostel.tag && (
           <div
             className={`absolute top-3 left-3 ${getTagColor(
               hostel.tag,
@@ -81,7 +86,7 @@ export default function HostelCard({
           >
             {hostel.tag}
           </div>
-        )}
+        )} */}
 
         {/* Like Button */}
         <button
@@ -118,14 +123,18 @@ export default function HostelCard({
               <Star
                 key={i}
                 size={16}
-                className={`${
-                  i < Math.floor(hostel.rating)
-                    ? "fill-accent-gold text-accent-gold"
+                onClick={() => handleRatingClick(i + 1)}
+                className={`cursor-pointer ${
+                  i < selectedRating
+                    ? "fill-yellow-400 text-yellow-400"
                     : "text-gray-300"
                 }`}
               />
             ))}
             <span className="text-xs text-gray-600 ml-1">{hostel.rating}</span>
+          </div>
+          <div className="text-xs font-bold bg-gradient-to-r from-teal-400 to-yellow-600 bg-clip-text text-transparent">
+            <p>Overall Rating: {hostel.rating}</p>
           </div>
         </div>
 

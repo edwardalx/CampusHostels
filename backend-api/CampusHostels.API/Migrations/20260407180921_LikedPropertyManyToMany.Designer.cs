@@ -3,6 +3,7 @@ using System;
 using CampusHostels.API.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace CampusHostels.API.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260407180921_LikedPropertyManyToMany")]
+    partial class LikedPropertyManyToMany
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -227,9 +230,6 @@ namespace CampusHostels.API.Migrations
                         .HasColumnType("boolean")
                         .HasDefaultValue(true);
 
-                    b.Property<double>("AverageRating")
-                        .HasColumnType("double precision");
-
                     b.Property<string>("ImageUrl")
                         .HasColumnType("text");
 
@@ -256,36 +256,6 @@ namespace CampusHostels.API.Migrations
                         .IsUnique();
 
                     b.ToTable("Properties");
-                });
-
-            modelBuilder.Entity("CampusHostels.API.Domain.Entities.Rating", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Comment")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<int>("PropertyId")
-                        .HasColumnType("integer");
-
-                    b.Property<double>("Score")
-                        .HasColumnType("double precision");
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("PropertyId");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("Ratings");
                 });
 
             modelBuilder.Entity("CampusHostels.API.Domain.Entities.TenancyAgreement", b =>
@@ -520,21 +490,6 @@ namespace CampusHostels.API.Migrations
                     b.Navigation("TenancyAgreement");
                 });
 
-            modelBuilder.Entity("CampusHostels.API.Domain.Entities.Rating", b =>
-                {
-                    b.HasOne("CampusHostels.API.Domain.Entities.Property", null)
-                        .WithMany("Ratings")
-                        .HasForeignKey("PropertyId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("CampusHostels.API.Domain.Entities.User", null)
-                        .WithMany("Rating")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
             modelBuilder.Entity("CampusHostels.API.Domain.Entities.TenancyAgreement", b =>
                 {
                     b.HasOne("CampusHostels.API.Domain.Entities.Property", "Property")
@@ -593,8 +548,6 @@ namespace CampusHostels.API.Migrations
                 {
                     b.Navigation("Images");
 
-                    b.Navigation("Ratings");
-
                     b.Navigation("Units");
                 });
 
@@ -606,11 +559,6 @@ namespace CampusHostels.API.Migrations
             modelBuilder.Entity("CampusHostels.API.Domain.Entities.Unit", b =>
                 {
                     b.Navigation("Images");
-                });
-
-            modelBuilder.Entity("CampusHostels.API.Domain.Entities.User", b =>
-                {
-                    b.Navigation("Rating");
                 });
 #pragma warning restore 612, 618
         }

@@ -1,5 +1,6 @@
 using CampusHostels.API.Application.DTOs;
 using CampusHostels.API.Application.Interfaces;
+using CampusHostels.API.Application.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -147,4 +148,23 @@ public class AccountsController : ControllerBase
         if (!success) return BadRequest(new { message = "User not found" });
         return Ok(new { message = "User updated successfully" });
     }
+    [HttpGet("liked-hostels")]
+    public async Task<IActionResult> GetLikedHostels([FromQuery] Guid tenantId)
+    {
+        var result = await _accountService.GetUserLikedHostelsAsync(tenantId);
+        return Ok(result);
+    }
+    [HttpPost("liked-hostels/add")]
+    public async Task<IActionResult> AddLikedHostel([FromQuery] Guid tenantId, [FromQuery] int hostelId)
+    {
+        var result = await _accountService.AddLikedHostelAsync(tenantId, hostelId);
+        return Ok(result);
+    }
+    [HttpPost("liked-hostels/remove")]
+    public async Task<IActionResult> RemoveLikedHostel([FromQuery] Guid tenantId, [FromQuery] int hostelId)
+    {
+        var result = await _accountService.RemoveLikedHostelAsync(tenantId, hostelId);
+        return Ok(result);
+    }
+
 }

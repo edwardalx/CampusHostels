@@ -59,3 +59,8 @@ public class GoogleUserInfo
     public string? Picture { get; set; }
     public string? Sub { get; set; }
 }
+
+public class UserLikedHostelsDto
+{
+    public List<int> LikedHostelIds { get; set; } = [];
+}

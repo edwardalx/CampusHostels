@@ -4,7 +4,7 @@ using CampusHostels.API.Application.DTOs;
 using CampusHostels.API.Domain.Entities;
 using CampusHostels.API.Domain.Enums;
 using CampusHostels.API.Infrastructure.Repositories;
-
+namespace CampusHostels.API.Application.Services;
 public class EmailService
 {
     private readonly string _apiKey;

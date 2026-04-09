@@ -16,6 +16,8 @@ public class ApplicationDbContext : DbContext
     public DbSet<PaymentSummary> PaymentSummaries { get; set; }
     public DbSet<Message> Messages { get; set; }
     public DbSet<PasswordResetToken> PasswordResetTokens { get; set; }
+    public DbSet<Rating> Ratings { get; set; }
+    // public DbSet<Review> Reviews { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
