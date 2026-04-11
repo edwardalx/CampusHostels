@@ -132,7 +132,7 @@ export function ReviewHostelPage({ hostel, onClose = () => {} }) {
           <textarea
             name="Comment"
             rows="4"
-            className="w-full mt-2 p-3 border rounded-lg focus:ring-2 focus:ring-teal-500 outline-none bg-gray-50"
+            className="w-full mt-2 p-3 border rounded-lg focus:ring-2 focus:ring-teal-500 outline-none bg-gray-50 text-gray-700"
             placeholder="Share your experience..."
           />
         </div>
@@ -148,7 +148,7 @@ export function ReviewHostelPage({ hostel, onClose = () => {} }) {
       </form>
       <button
         onClick={onClose}
-        className="absolute top-4 right-4 text-2xl font-bold bg-gray-200 rounded-full w-10 h-10 flex items-center justify-center hover:bg-gray-300 transition-colors"
+        className="absolute top-2 right-4 text-2xl font-bold bg-gray-200 rounded-full w-10 h-10 flex items-center justify-center hover:bg-gray-300 transition-colors"
       >
         ×
       </button>

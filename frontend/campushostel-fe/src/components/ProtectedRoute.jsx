@@ -15,7 +15,7 @@ export  function PrivateRoute({ children }) {
   if (!token) {
     return (
       <div>
-        <div className="flex flex-col justify-center items-center p-10 gap-5 my-10 font-medium italic">
+        <div className="flex flex-col justify-center items-center p-10 gap-5 my-10 font-medium italic text-gray-700">
           <h1>To access this page, you have to login</h1>
           <p>Click the button below to login</p>
           <button
