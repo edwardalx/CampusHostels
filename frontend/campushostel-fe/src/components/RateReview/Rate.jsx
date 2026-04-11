@@ -16,26 +16,26 @@ export function ShowRate({ hostel, isReviews }) {
               size={16}
               //   onClick={() => handleRatingClick(i + 1)}
               className={`cursor-pointer ${
-                i < rating
-                  ? "fill-yellow-400 text-yellow-400"
-                  : "text-gray-300"
+                i < rating ? "fill-yellow-400 text-yellow-400" : "text-gray-300"
               }`}
             />
           ))}
         </div>
         <div className="text-xs font-bold bg-gradient-to-r from-teal-400 to-yellow-600 bg-clip-text text-transparent">
-          {!isReviews ? (<p>Overall Rating: {hostel.averageRating}</p>) : (<p>Rating: {hostel.score}</p>)}
+          {!isReviews ? (
+            <p>Overall Rating: {hostel.averageRating}</p>
+          ) : (
+            <p>Rating: {hostel.score}</p>
+          )}
         </div>
       </div>
     </div>
   );
 }
 
-export function SetRate({ hostel }) {
-  const [selectedRating, setSelectedRating] = React.useState(0);
-
+export function SetRate({ hostel, onSetRating = () => {}, selectedRating }) {
   const handleRatingClick = (rating) => {
-    setSelectedRating(rating);
+    onSetRating(rating);
     console.log("Selected rating:", rating);
     sessionStorage.setItem("selectedRating", rating);
   };

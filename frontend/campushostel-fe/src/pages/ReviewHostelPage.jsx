@@ -8,15 +8,21 @@ import { getHostelById } from "../services/HostelServices";
 import { X } from "lucide-react";
 
 export function ReviewHostelPage({ hostel, onClose = () => {} }) {
-  const [reviews, setReviews] = React.useState(hostel?.reviews || []);
+  const [reviews, setReviews] = React.useState([]);
   const [message, setMessage] = React.useState("");
+  const [selectedRating, setSelectedRating] = React.useState(0);
+  const [storedHostel, setStoredHostel] = React.useState(
+    sessionStorage.getItem("storedHostelId")
+      ? JSON.parse(sessionStorage.getItem("storedHostelId"))
+      : hostel,
+  );
 
   React.useEffect(() => {
-    if (!hostel?.id) return;
+    if (!storedHostel?.id || !hostel?.id) return;
 
     async function fetchReviews() {
       try {
-        const data = await GetPropertyRatings(hostel.id);
+        const data = await GetPropertyRatings(storedHostel.id || hostel.id);
         setReviews(data);
       } catch (error) {
         console.error("Error fetching reviews:", error);
@@ -24,12 +30,12 @@ export function ReviewHostelPage({ hostel, onClose = () => {} }) {
     }
 
     fetchReviews();
-  }, [hostel?.id]);
+  }, [storedHostel?.id, hostel?.id]);
 
   React.useEffect(() => {
     async function fetchHostel() {
       try {
-        const data = await getHostelById(hostel.id);
+        const data = await getHostelById(storedHostel.id || hostel.id);
         // Update hostel's average rating if needed
         if (data) {
           hostel = data;
@@ -38,10 +44,7 @@ export function ReviewHostelPage({ hostel, onClose = () => {} }) {
         console.error("Error fetching hostel details:", error);
       }
     }
-
-    if (hostel?.id) {
-      fetchHostel();
-    }
+    fetchHostel();
   }, [reviews]);
 
   const handleSubmitReview = async (e) => {
@@ -122,7 +125,11 @@ export function ReviewHostelPage({ hostel, onClose = () => {} }) {
             Your Rating
           </label>
           <div className="mt-2">
-            <SetRate hostel={hostel} />
+            <SetRate
+              hostel={hostel}
+              onSetRating={setSelectedRating}
+              selectedRating={selectedRating}
+            />
           </div>
         </div>
 
@@ -142,7 +149,7 @@ export function ReviewHostelPage({ hostel, onClose = () => {} }) {
         {/* Button */}
         <button
           type="submit"
-          className="w-full bg-gradient-to-r from-teal-500 to-cyan-500 text-white font-semibold py-3 rounded-lg shadow-md hover:opacity-90 transition"
+          className={`w-full ${selectedRating > 0 ? 'bg-gradient-to-r from-teal-500 to-cyan-500' : 'bg-gray-400'} text-white font-semibold py-3 rounded-lg shadow-md hover:opacity-90 transition`}
         >
           Submit Review
         </button>

@@ -26,7 +26,9 @@ export default function HomePage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isEmpty, setIsEmpty] = useState(false);
   const [filteredHostels, setFilteredHostels] = useState([]);
-  const [selectedHostel, setSelectedHostel] = useState(null);
+  const [selectedHostel, setSelectedHostel] = useState(
+    JSON.parse(sessionStorage.getItem("storedHostelId")) || null,
+  );
   // const [rating, setRating] = useState(0);
   const storeUser = JSON.parse(localStorage.getItem("user"));
   let links = ["Home", "About", "Contact"];
@@ -66,10 +68,6 @@ export default function HomePage() {
   };
   useEffect(() => {
     const storedValue = sessionStorage.getItem("showReviewForm");
-    const storedHostel = JSON.parse(localStorage.getItem("selectedHostel"));
-    if (storedHostel) {
-      setSelectedHostel(storedHostel);
-    }
     if (storedValue !== null) {
       updateReviewForm(storedValue === "true");
     }
@@ -228,11 +226,9 @@ export default function HomePage() {
               onCardAction={{
                 onLike: handleHostelLike,
                 onViewDetails: handleViewDetails,
-                onToggleReviewForm: (value) => {
+                onToggleReviewForm: (value, hostel) => {
                   setShowReviewForm(value);
-                  setSelectedHostel(
-                    JSON.parse(localStorage.getItem("selectedHostel")) || null,
-                  );
+                  setSelectedHostel(hostel);
                 },
               }}
             />
@@ -250,6 +246,7 @@ export default function HomePage() {
             onClick={() => {
               setShowReviewForm(false);
               setSelectedHostel(null);
+              sessionStorage.clear();
             }}
           >
             <div
@@ -271,6 +268,7 @@ export default function HomePage() {
                   onClose={() => {
                     setShowReviewForm(false);
                     setSelectedHostel(null);
+                    sessionStorage.clear();
                   }}
                 />
               </PrivateRoute>

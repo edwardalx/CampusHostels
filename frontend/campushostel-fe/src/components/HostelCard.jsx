@@ -40,17 +40,10 @@ export default function HostelCard({
   onToggleReviewForm = () => {},
 }) {
   const [isFavorite, setIsFavorite] = useState(hostel.isFavorite);
-  const [selectedRating, setSelectedRating] = useState(0);
-  const [showReviewForm, setShowReviewForm] = useState(false);
-
   const handleLike = (e) => {
     e.stopPropagation();
     setIsFavorite(!isFavorite);
     onLike(hostel.id, !isFavorite);
-  };
-  const handleRatingClick = (rating) => {
-    setSelectedRating(rating);
-    console.log("Selected rating:", rating);
   };
   const navigate = useNavigate();
   const handleViewDetails = () => {
@@ -68,17 +61,9 @@ export default function HostelCard({
     if (rating >= 4) return "text-yellow-400";
     return "text-yellow-300";
   };
-  const handleRateToggle = (e) => {
+  const handleRateClick = (e) => {
     e.stopPropagation();
-
-    const newValue = true; // Toggle the review form visibility
-
-    setShowReviewForm(newValue);
-    onToggleReviewForm(newValue);
-
-    localStorage.setItem("selectedHostel", JSON.stringify(hostel));
-
-    sessionStorage.setItem("showReviewForm", JSON.stringify(newValue));
+    onToggleReviewForm(true, hostel);
   };
 
   return (
@@ -133,7 +118,10 @@ export default function HostelCard({
             <span className="line-clamp-1 ">{hostel.location}</span>
           </div>
           <div className="cursor-pointer text-xs mb-3 font-bold bg-gradient-to-r from-yellow-400 to-teal-600 bg-clip-text text-transparent">
-            <span className="line-clamp-1" onClick={handleRateToggle}>
+            <span
+              className="line-clamp-1"
+              onClick={handleRateClick}
+            >
               Rate Us
             </span>
           </div>
