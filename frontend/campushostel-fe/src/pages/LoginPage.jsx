@@ -35,10 +35,12 @@ export default function LoginPage() {
 
   let response;
   const handleLogin = async (e) => {
+    const email = email_phoneNumber.includes("@") ? email_phoneNumber : "";
+    const phoneNumber = !email_phoneNumber.includes("@") ? email_phoneNumber : "";
     e.preventDefault();
     const loginData = {
-      email: email_phoneNumber,
-      phoneNumber: email_phoneNumber,
+      email: email,
+      phoneNumber: phoneNumber,
       password: password,
     };
     try {

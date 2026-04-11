@@ -22,7 +22,7 @@ public class EfPropertyRepository : IPropertyRepository
 
     public async Task<IEnumerable<Property>> GetAllAsync()
     {
-        return await _db.Properties.AsNoTracking().ToListAsync();
+        return await _db.Properties.AsNoTracking().OrderBy(p => p.Id).ToListAsync();
     }
 
     public async Task<Property?> GetByIdAsync(int id)

@@ -18,12 +18,14 @@ public class AccountService : IAccountService
 {
     private readonly ApplicationDbContext _db;
     private readonly ITokenService _tokenService;
+    private readonly ILogger<AccountService> _logger;
     IConfiguration _config;
 
-    public AccountService(ApplicationDbContext db, ITokenService tokenService, IConfiguration config)
+    public AccountService(ApplicationDbContext db, ITokenService tokenService, ILogger<AccountService> logger, IConfiguration config)
     {
         _db = db;
         _tokenService = tokenService;
+        _logger = logger;
         _config = config;
     }
 
@@ -128,6 +130,8 @@ public class AccountService : IAccountService
         }
         if (user.FailedLoginAttempts >= 5)
         {
+            _logger.LogWarning($"Locked out user {user.Email} after {user.FailedLoginAttempts} failed attempts.");
+
             throw new UnauthorizedAccessException("Your account has been locked due to multiple failed login attempts. Contact support to unlock your account.");
         }
 
@@ -212,6 +216,7 @@ public class AccountService : IAccountService
         else
         {
             user.LastLoginAt = DateTime.UtcNow;
+            user.FailedLoginAttempts = 0; // reset on successful login
             await _db.SaveChangesAsync();
         }
 
