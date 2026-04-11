@@ -27,3 +27,35 @@ export const getPaidTenancies = async (tenantId) => {
   }
   return data;
 };
+const baseUrl2 = "/api/RatingReview";
+export const GetPropertyRatings = async (propertyId) => {
+  const response = await fetch(`${baseUrl2}/ratings/${propertyId}`);
+  const data = await response.json();
+  if (!response.ok) {
+    throw data;
+  }
+  return data;
+};
+
+export const submitRatingReview = async (payload, propertyId) => {
+  if (!propertyId) {
+    throw new Error("propertyId is required");
+  }
+
+  const token = localStorage.getItem("token");
+
+  const response = await fetch(`${baseUrl2}/add-rating/${propertyId}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(payload),
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) throw data;
+
+  return data;
+};

@@ -21,6 +21,8 @@
 import React, { useState } from "react";
 import { Heart, MapPin, Star } from "lucide-react";
 import { redirect, useNavigate, useParams, Link } from "react-router-dom";
+import { ShowRate } from "./RateReview/Rate";
+import { ReviewHostelPage } from "../pages/ReviewHostelPage";
 
 export default function HostelCard({
   hostel = {
@@ -35,9 +37,11 @@ export default function HostelCard({
     isFavorite: false,
   },
   onLike = () => {},
+  onToggleReviewForm = () => {},
 }) {
   const [isFavorite, setIsFavorite] = useState(hostel.isFavorite);
   const [selectedRating, setSelectedRating] = useState(0);
+  const [showReviewForm, setShowReviewForm] = useState(false);
 
   const handleLike = (e) => {
     e.stopPropagation();
@@ -63,6 +67,18 @@ export default function HostelCard({
     if (rating >= 4.5) return "text-yellow-400";
     if (rating >= 4) return "text-yellow-400";
     return "text-yellow-300";
+  };
+  const handleRateToggle = (e) => {
+    e.stopPropagation();
+
+    const newValue = true; // Toggle the review form visibility
+
+    setShowReviewForm(newValue);
+    onToggleReviewForm(newValue);
+
+    localStorage.setItem("selectedHostel", JSON.stringify(hostel));
+
+    sessionStorage.setItem("showReviewForm", JSON.stringify(newValue));
   };
 
   return (
@@ -111,13 +127,21 @@ export default function HostelCard({
         </h3>
 
         {/* Location */}
-        <div className="flex items-center gap-1 !text-gray-600 text-sm mb-3">
-          <MapPin size={16} className="flex-shrink-0" />
-          <span className="line-clamp-1">{hostel.location}</span>
+        <div className="flex justify-between">
+          <div className="flex items-center gap-1 !text-gray-600 text-sm mb-3">
+            <MapPin size={16} className="flex-shrink-0" />
+            <span className="line-clamp-1 ">{hostel.location}</span>
+          </div>
+          <div className="cursor-pointer text-xs mb-3 font-bold bg-gradient-to-r from-yellow-400 to-teal-600 bg-clip-text text-transparent">
+            <span className="line-clamp-1" onClick={handleRateToggle}>
+              Rate Us
+            </span>
+          </div>
         </div>
 
         {/* Rating and Price Row */}
-        <div className="flex items-center justify-between mb-4 gap-2">
+        <ShowRate hostel={hostel} isReviews={false} />
+        {/* <div className="flex items-center justify-between mb-4 gap-2">
           <div className="flex items-center gap-1">
             {[...Array(5)].map((_, i) => (
               <Star
@@ -136,7 +160,7 @@ export default function HostelCard({
           <div className="text-xs font-bold bg-gradient-to-r from-teal-400 to-yellow-600 bg-clip-text text-transparent">
             <p>Overall Rating: {hostel.rating}</p>
           </div>
-        </div>
+        </div> */}
 
         {/* Price and Button Row */}
         <div className="flex items-center justify-between gap-3 mt-auto pt-4 border-t border-gray-400">

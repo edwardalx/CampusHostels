@@ -18,15 +18,11 @@ public class Property
     public double AverageRating { get; set; } = 0;
     public ICollection<Unit> Units { get; set; } = [];
     public ICollection<Image> Images { get; set; } = [];
-    public void UpdateAverageRating()
+    public void UpdateAverageRating(IEnumerable<Rating> ratings)
     {
-        if (!Ratings.Any())
-        {
-            AverageRating = 0;
-            return;
-        }
-
-        AverageRating = Ratings.Average(r => r.Score);
+        AverageRating = ratings.Any()
+            ? ratings.Average(r => r.Score)
+            : 0;
     }
 
 };

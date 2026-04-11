@@ -18,13 +18,15 @@ import { useNavigate, useParams } from "react-router-dom";
 import { getHostels } from "../services/HostelServices";
 import { HeroSection, SearchBar, HostelGrid, Footer } from "../components";
 import { SkeletonCard } from "../components/SkeletonCard";
+import { ReviewHostelPage } from "./ReviewHostelPage";
+import { PrivateRoute } from "../components/ProtectedRoute";
 
 export default function HomePage() {
   const [hostels, setHostels] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isEmpty, setIsEmpty] = useState(false);
   const [filteredHostels, setFilteredHostels] = useState([]);
-  const [selectedRating, setSelectedRating] = useState(0);
+  const [selectedHostel, setSelectedHostel] = useState(null);
   // const [rating, setRating] = useState(0);
   const storeUser = JSON.parse(localStorage.getItem("user"));
   let links = ["Home", "About", "Contact"];
@@ -56,6 +58,31 @@ export default function HomePage() {
     //   }, 600);
     // }
   }, []);
+  const [showReviewForm, setShowReviewForm] = React.useState(false);
+
+  const updateReviewForm = (value) => {
+    setShowReviewForm(value);
+    sessionStorage.setItem("showReviewForm", value);
+  };
+  useEffect(() => {
+    const storedValue = sessionStorage.getItem("showReviewForm");
+    const storedHostel = JSON.parse(localStorage.getItem("selectedHostel"));
+    if (storedHostel) {
+      setSelectedHostel(storedHostel);
+    }
+    if (storedValue !== null) {
+      updateReviewForm(storedValue === "true");
+    }
+  }, []);
+
+  useEffect(() => {
+    sessionStorage.setItem("showReviewForm", showReviewForm);
+  }, [showReviewForm]);
+
+  useEffect(() => {
+    console.log("selectedHostel:", selectedHostel);
+    console.log("showReviewForm:", showReviewForm);
+  }, [selectedHostel, showReviewForm]);
 
   // Handle search filters
   const handleSearch = useCallback((filters) => {
@@ -175,7 +202,7 @@ export default function HomePage() {
             </h2>
             <div className="flex flex-row items-center justify-between">
               <p className="text-secondary-gray text-sm sm:text-base">
-                {!isLoading ? hostels.length : ""} properties available
+                {!isLoading ? hostels.length : ""} Properties available
               </p>
               <h4 className="text-secondary-gray text-sm sm:text-base ml-auto">
                 {storeUser ? (
@@ -201,6 +228,12 @@ export default function HomePage() {
               onCardAction={{
                 onLike: handleHostelLike,
                 onViewDetails: handleViewDetails,
+                onToggleReviewForm: (value) => {
+                  setShowReviewForm(value);
+                  setSelectedHostel(
+                    JSON.parse(localStorage.getItem("selectedHostel")) || null,
+                  );
+                },
               }}
             />
           ) : (
@@ -211,6 +244,39 @@ export default function HomePage() {
             </div>
           )}
         </section>
+        {showReviewForm && selectedHostel && (
+          <div
+            className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+            onClick={() => {
+              setShowReviewForm(false);
+              setSelectedHostel(null);
+            }}
+          >
+            <div
+              className="bg-white rounded-2xl shadow-xl w-full max-w-4xl p-6 relative max-h-[90vh] overflow-y-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* <button
+                onClick={() => {
+                  setShowReviewForm(false);
+                  setSelectedHostel(null);
+                }}
+                className="absolute top-4 right-4 text-2xl font-bold bg-gray-200 rounded-full w-10 h-10 flex items-center justify-center hover:bg-gray-300 transition-colors"
+              >
+                ×
+              </button> */}
+              <PrivateRoute>
+                <ReviewHostelPage
+                  hostel={selectedHostel}
+                  onClose={() => {
+                    setShowReviewForm(false);
+                    setSelectedHostel(null);
+                  }}
+                />
+              </PrivateRoute>
+            </div>
+          </div>
+        )}
       </main>
 
       {/* Footer */}

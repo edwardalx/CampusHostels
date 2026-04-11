@@ -10,11 +10,13 @@ public class ReviewRatingService : IReviewRating
 {
     private readonly IReviewRatingRepository _repo;
     private readonly ApplicationDbContext _db;
+    private readonly ILogger<ReviewRatingService> _logger;
 
-    public ReviewRatingService(IReviewRatingRepository repo, ApplicationDbContext db)
+    public ReviewRatingService(IReviewRatingRepository repo, ApplicationDbContext db, ILogger<ReviewRatingService> logger)
     {
         _repo = repo;
         _db = db;
+        _logger = logger;
     }
 
     //   public async Task AddReviewAsync(ReviewCreateDto dto)
@@ -44,6 +46,23 @@ public class ReviewRatingService : IReviewRating
             Comment = dto.Comment
         };
         await _repo.AddRatingAsync(rating);
+        await _repo.SaveChangesAsync();
+        // Update property's average rating
+        var property = await _db.Properties.FirstOrDefaultAsync(p => p.Id == propertyId);
+
+        var ratings = await _db.Ratings.Where(r => r.PropertyId == propertyId).ToListAsync();
+        if (property != null)
+        {
+            property.UpdateAverageRating(ratings);
+
+            _logger.LogInformation(
+                "Calculated AverageRating for property {PropertyId}: {Average}",
+                propertyId,
+                property.AverageRating
+            );
+
+            await _db.SaveChangesAsync();
+        }
     }
 
     // public async Task<IEnumerable<Review>> GetReviewsByPropertyIdAsync(int propertyId)

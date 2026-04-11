@@ -1,9 +1,9 @@
 /**
  * HostelGrid Component
- * 
+ *
  * Responsive grid layout for displaying multiple hostel cards.
  * Includes loading states and empty states.
- * 
+ *
  * Props:
  * - hostels: HostelCard[] - Array of hostel data objects
  * - isLoading: boolean - Show loading skeleton cards
@@ -11,9 +11,10 @@
  * - onCardAction: { onLike, onViewDetails } - Callback handlers
  */
 
-import React from 'react';
-import HostelCard from './HostelCard';
-import {SkeletonCard}  from './SkeletonCard';
+import React, { use, useEffect } from "react";
+import HostelCard from "./HostelCard";
+import { SkeletonCard } from "./SkeletonCard";
+import { ReviewHostelPage } from "../pages/ReviewHostelPage";
 
 // const SkeletonCard = () => (
 //   <div className="bg-white rounded-2xl overflow-hidden shadow-md animate-pulse flex flex-col h-full">
@@ -26,14 +27,15 @@ import {SkeletonCard}  from './SkeletonCard';
 //   </div>
 // );
 
-export default function HostelGrid({ 
+export default function HostelGrid({
   hostels = [],
   isLoading = false,
   isEmpty = false,
   onCardAction = {
     onLike: () => {},
     onViewDetails: () => {},
-  }
+    onToggleReviewForm: () => {},
+  },
 }) {
   //  const handleViewDetails = () => {
   //   localStorage.setItem("selectedHostel", hostel);
@@ -71,6 +73,7 @@ export default function HostelGrid({
           hostel={hostel}
           onLike={onCardAction.onLike}
           onViewDetails={onCardAction.onViewDetails}
+          onToggleReviewForm={onCardAction.onToggleReviewForm}
         />
       ))}
     </div>
