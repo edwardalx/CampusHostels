@@ -5,6 +5,7 @@ import {
   submitRatingReview,
 } from "../services/OtherServices";
 import { getHostelById } from "../services/HostelServices";
+import { X } from "lucide-react";
 
 export function ReviewHostelPage({ hostel, onClose = () => {} }) {
   const [reviews, setReviews] = React.useState(hostel?.reviews || []);
@@ -148,9 +149,9 @@ export function ReviewHostelPage({ hostel, onClose = () => {} }) {
       </form>
       <button
         onClick={onClose}
-        className="absolute top-2 right-4 text-2xl font-bold bg-gray-200 rounded-full w-10 h-10 flex items-center justify-center hover:bg-gray-300 transition-colors"
+        className="absolute top-3 right-4 p-2 rounded-full bg-white/80 backdrop-blur-md border border-gray-200 shadow-lg hover:shadow-xl transition-all"
       >
-        ×
+        <X size={18} className="text-gray-700" />
       </button>
     </div>
   );
