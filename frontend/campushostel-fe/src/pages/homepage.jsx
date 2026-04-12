@@ -30,6 +30,8 @@ export default function HomePage() {
     JSON.parse(sessionStorage.getItem("storedHostelId")) || null,
   );
   // const [rating, setRating] = useState(0);
+  const [showReviewForm, setShowReviewForm] = React.useState(false);
+
   const storeUser = JSON.parse(localStorage.getItem("user"));
   let links = ["Home", "About", "Contact"];
   const navigate = useNavigate();
@@ -59,9 +61,7 @@ export default function HomePage() {
     //     setIsLoading(false);
     //   }, 600);
     // }
-  }, []);
-  const [showReviewForm, setShowReviewForm] = React.useState(false);
-
+  }, [showReviewForm]);
   const updateReviewForm = (value) => {
     setShowReviewForm(value);
     sessionStorage.setItem("showReviewForm", value);
@@ -172,6 +172,11 @@ export default function HomePage() {
       navigate("/contact");
     }
   };
+  const handleCloseReviewPage = () => {
+    setShowReviewForm(false);
+    setSelectedHostel(null);
+    sessionStorage.clear();
+  };
 
   return (
     <div className="flex flex-col min-h-screen bg-secondary-light-gray">
@@ -243,11 +248,7 @@ export default function HomePage() {
         {showReviewForm && selectedHostel && (
           <div
             className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
-            onClick={() => {
-              setShowReviewForm(false);
-              setSelectedHostel(null);
-              sessionStorage.clear();
-            }}
+            onClick={handleCloseReviewPage}
           >
             <div
               className="bg-white rounded-2xl shadow-xl w-full max-w-4xl p-6 relative max-h-[90vh] overflow-y-auto"
@@ -265,11 +266,7 @@ export default function HomePage() {
               <PrivateRoute>
                 <ReviewHostelPage
                   hostel={selectedHostel}
-                  onClose={() => {
-                    setShowReviewForm(false);
-                    setSelectedHostel(null);
-                    sessionStorage.clear();
-                  }}
+                  onClose={handleCloseReviewPage}
                 />
               </PrivateRoute>
             </div>
