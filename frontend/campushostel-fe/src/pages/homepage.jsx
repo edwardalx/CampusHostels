@@ -13,9 +13,14 @@
  * - Accessibility compliant
  */
 
-import React, { useState, useCallback, useEffect } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import React, { useState, useCallback, useEffect, use } from "react";
+import { Await, useNavigate, useParams } from "react-router-dom";
 import { getHostels } from "../services/HostelServices";
+import {
+  getLikedHostels,
+  likeProperty,
+  unlikeProperty,
+} from "../services/AuthServices";
 import { HeroSection, SearchBar, HostelGrid, Footer } from "../components";
 import { SkeletonCard } from "../components/SkeletonCard";
 import { ReviewHostelPage } from "./ReviewHostelPage";
@@ -31,7 +36,8 @@ export default function HomePage() {
   );
   // const [rating, setRating] = useState(0);
   const [showReviewForm, setShowReviewForm] = React.useState(false);
-
+  const [userLikedHostels, setUserLikedHostels] = useState([]);
+  const [likeStatus, setLikeStatus] = useState(false);
   const storeUser = JSON.parse(localStorage.getItem("user"));
   let links = ["Home", "About", "Contact"];
   const navigate = useNavigate();
@@ -81,6 +87,21 @@ export default function HomePage() {
     console.log("selectedHostel:", selectedHostel);
     console.log("showReviewForm:", showReviewForm);
   }, [selectedHostel, showReviewForm]);
+
+  useEffect(() => {
+    const fetchLikedHostels = async () => {
+      if (storeUser && storeUser.tenantId) {
+        try {
+          const likedHostels = await getLikedHostels(storeUser.tenantId);
+          setUserLikedHostels(likedHostels.likedHostelIds);
+        } catch (error) {
+          console.error("Error fetching liked hostels:", error);
+        }
+      }
+    };
+
+    fetchLikedHostels();
+  }, [likeStatus]);
 
   // Handle search filters
   const handleSearch = useCallback((filters) => {
@@ -177,6 +198,24 @@ export default function HomePage() {
     setSelectedHostel(null);
     sessionStorage.clear();
   };
+  const handleLike = async (hostel) => {
+    const payload = {
+      propertyId: hostel.id,
+      tenantId: storeUser.tenantId,
+    };
+
+    try {
+      if (userLikedHostels.includes(hostel.id)) {
+        await unlikeProperty(payload);
+      } else {
+        await likeProperty(payload);
+      }
+
+      setLikeStatus((prev) => !prev);
+    } catch (error) {
+      console.error("Error updating like:", error);
+    }
+  };
 
   return (
     <div className="flex flex-col min-h-screen bg-secondary-light-gray">
@@ -228,8 +267,11 @@ export default function HomePage() {
               hostels={hostels}
               isLoading={isLoading}
               isEmpty={isEmpty}
+              userLikedHostels={userLikedHostels}
               onCardAction={{
-                onLike: handleHostelLike,
+                onLike: (hostel) => {
+                  handleLike(hostel);
+                },
                 onViewDetails: handleViewDetails,
                 onToggleReviewForm: (value, hostel) => {
                   setShowReviewForm(value);

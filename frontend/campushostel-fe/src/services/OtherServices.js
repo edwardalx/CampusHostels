@@ -59,3 +59,5 @@ export const submitRatingReview = async (payload, propertyId) => {
 
   return data;
 };
+
+

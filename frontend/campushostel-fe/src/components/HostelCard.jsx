@@ -23,6 +23,7 @@ import { Heart, MapPin, Star } from "lucide-react";
 import { redirect, useNavigate, useParams, Link } from "react-router-dom";
 import { ShowRate } from "./RateReview/Rate";
 import { ReviewHostelPage } from "../pages/ReviewHostelPage";
+import { likeProperty, unlikeProperty } from "../services/AuthServices";
 
 export default function HostelCard({
   hostel = {
@@ -38,13 +39,32 @@ export default function HostelCard({
   },
   onLike = () => {},
   onToggleReviewForm = () => {},
+  userLikedHostels,
 }) {
-  const [isFavorite, setIsFavorite] = useState(hostel.isFavorite);
-  const handleLike = (e) => {
-    e.stopPropagation();
-    setIsFavorite(!isFavorite);
-    onLike(hostel.id, !isFavorite);
-  };
+  const [isFavorite, setIsFavorite] = useState(false);
+  // const handleLike = (e) => {
+  //   e.stopPropagation();
+  //   // setIsFavorite(!isFavorite);
+  //   // onLike(hostel.id, !isFavorite);
+  //   const payload = {
+  //     propertyId: hostel.id,
+  //     tenantId: JSON.parse(localStorage.getItem("user")).tenantId,
+  //   };
+  //   if (isFavorite || userLikedHostels.includes(hostel.id)) {
+  //     try {
+  //       unlikeProperty(payload);
+  //     } catch (error) {
+  //       console.error("Error unliking property:", error);
+  //     }
+  //   } else {
+  //     try {
+  //       likeProperty(payload);
+  //     } catch (error) {
+  //       console.error("Error liking property:", error);
+  //     }
+  //   }
+  // };
+
   const navigate = useNavigate();
   const handleViewDetails = () => {
     // localStorage.setItem("selectedHostel", JSON.stringify(hostel.id));
@@ -91,14 +111,16 @@ export default function HostelCard({
 
         {/* Like Button */}
         <button
-          onClick={handleLike}
+          onClick={() => onLike(hostel)}
           className="absolute top-3 right-3 bg-white rounded-full p-2 hover:bg-gray-100 transition-colors shadow-md"
           aria-label={isFavorite ? "Remove from favorites" : "Add to favorites"}
         >
           <Heart
             size={20}
             className={`transition-colors ${
-              isFavorite ? "fill-red-500 text-red-500" : "text-gray-400"
+              userLikedHostels.includes(hostel.id)
+                ? "fill-red-500 text-red-500"
+                : "text-gray-400"
             }`}
           />
         </button>
@@ -118,10 +140,7 @@ export default function HostelCard({
             <span className="line-clamp-1 ">{hostel.location}</span>
           </div>
           <div className="cursor-pointer text-xs mb-3 font-bold bg-gradient-to-r from-yellow-400 to-teal-600 bg-clip-text text-transparent">
-            <span
-              className="line-clamp-1"
-              onClick={handleRateClick}
-            >
+            <span className="line-clamp-1" onClick={handleRateClick}>
               Rate Us
             </span>
           </div>

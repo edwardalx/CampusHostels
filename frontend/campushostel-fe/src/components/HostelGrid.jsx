@@ -31,6 +31,7 @@ export default function HostelGrid({
   hostels = [],
   isLoading = false,
   isEmpty = false,
+  userLikedHostels = [],
   onCardAction = {
     onLike: () => {},
     onViewDetails: () => {},
@@ -74,6 +75,7 @@ export default function HostelGrid({
           onLike={onCardAction.onLike}
           onViewDetails={onCardAction.onViewDetails}
           onToggleReviewForm={onCardAction.onToggleReviewForm}
+          userLikedHostels={userLikedHostels}
         />
       ))}
     </div>
