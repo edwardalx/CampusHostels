@@ -25,6 +25,7 @@ import { HeroSection, SearchBar, HostelGrid, Footer } from "../components";
 import { SkeletonCard } from "../components/SkeletonCard";
 import { ReviewHostelPage } from "./ReviewHostelPage";
 import { PrivateRoute } from "../components/ProtectedRoute";
+import { Heart } from "lucide-react";
 
 export default function HomePage() {
   const [hostels, setHostels] = useState([]);
@@ -38,6 +39,7 @@ export default function HomePage() {
   const [showReviewForm, setShowReviewForm] = React.useState(false);
   const [userLikedHostels, setUserLikedHostels] = useState([]);
   const [likeStatus, setLikeStatus] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
   const storeUser = JSON.parse(localStorage.getItem("user"));
   let links = ["Home", "About", "Contact"];
   const navigate = useNavigate();
@@ -199,6 +201,19 @@ export default function HomePage() {
     sessionStorage.clear();
   };
   const handleLike = async (hostel) => {
+    if (!storeUser && likeStatus) {
+      setErrorMessage("");
+      console.log("Like status is true, resetting to false");
+      setLikeStatus(false);
+      return;
+    }
+    if (!storeUser && !likeStatus) {
+      setErrorMessage("Please login to like a property.");
+      console.warn("User not logged in. Cannot like hostel.");
+      setLikeStatus(!likeStatus);
+      return;
+    }
+
     const payload = {
       propertyId: hostel.id,
       tenantId: storeUser.tenantId,
@@ -212,6 +227,7 @@ export default function HomePage() {
       }
 
       setLikeStatus((prev) => !prev);
+      setErrorMessage("");
     } catch (error) {
       console.error("Error updating like:", error);
     }
@@ -244,8 +260,14 @@ export default function HomePage() {
             </h2>
             <div className="flex flex-row items-center justify-between">
               <p className="text-secondary-gray text-sm sm:text-base">
-                {!isLoading ? hostels.length : ""} Properties available
+                {!isLoading ? hostels.length : ""} Properties Available
               </p>
+              {!storeUser && errorMessage && (
+                <div className="text-teal-500  flex items-center gap-1">
+                  <Heart size={20} className="fill-green-500" />{" "}
+                  <p>{errorMessage}</p>
+                </div>
+              )}
               <h4 className="text-secondary-gray text-sm sm:text-base ml-auto">
                 {storeUser ? (
                   <>
