@@ -103,7 +103,7 @@ export default function HomePage() {
     };
 
     fetchLikedHostels();
-  }, [likeStatus]);
+  }, [likeStatus,storeUser]);
 
   // Handle search filters
   const handleSearch = useCallback((filters) => {
