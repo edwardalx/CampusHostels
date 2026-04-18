@@ -118,7 +118,7 @@ export default function HostelCard({
           <Heart
             size={20}
             className={`transition-colors ${
-              userLikedHostels.includes(hostel.id)
+              userLikedHostels?.includes(hostel.id)
                 ? "fill-red-500 text-red-500"
                 : "text-gray-400"
             }`}

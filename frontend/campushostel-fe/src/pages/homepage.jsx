@@ -26,6 +26,8 @@ import { SkeletonCard } from "../components/SkeletonCard";
 import { ReviewHostelPage } from "./ReviewHostelPage";
 import { PrivateRoute } from "../components/ProtectedRoute";
 import { Heart } from "lucide-react";
+import { AuthContext } from "../zu-store/AuthContext";
+import { useContext } from "react";
 
 export default function HomePage() {
   const [hostels, setHostels] = useState([]);
@@ -36,11 +38,11 @@ export default function HomePage() {
     JSON.parse(sessionStorage.getItem("storedHostelId")) || null,
   );
   // const [rating, setRating] = useState(0);
+  const { storeUser, setStoreUser } = useContext(AuthContext);
   const [showReviewForm, setShowReviewForm] = React.useState(false);
   const [userLikedHostels, setUserLikedHostels] = useState([]);
   const [likeStatus, setLikeStatus] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
-  const storeUser = JSON.parse(localStorage.getItem("user"));
   let links = ["Home", "About", "Contact"];
   const navigate = useNavigate();
   //fetch hostels
@@ -86,24 +88,18 @@ export default function HomePage() {
   }, [showReviewForm]);
 
   useEffect(() => {
-    console.log("selectedHostel:", selectedHostel);
-    console.log("showReviewForm:", showReviewForm);
-  }, [selectedHostel, showReviewForm]);
+    if (!storeUser?.tenantId) {
+      setUserLikedHostels([]);
+      return;
+    }
 
-  useEffect(() => {
     const fetchLikedHostels = async () => {
-      if (storeUser && storeUser.tenantId) {
-        try {
-          const likedHostels = await getLikedHostels(storeUser.tenantId);
-          setUserLikedHostels(likedHostels.likedHostelIds);
-        } catch (error) {
-          console.error("Error fetching liked hostels:", error);
-        }
-      }
+      const likedHostels = await getLikedHostels(storeUser.tenantId);
+      setUserLikedHostels(likedHostels.likedHostelIds);
     };
 
     fetchLikedHostels();
-  }, [likeStatus]);
+  }, [likeStatus, storeUser]);
 
   // Handle search filters
   const handleSearch = useCallback((filters) => {
@@ -232,6 +228,13 @@ export default function HomePage() {
       console.error("Error updating like:", error);
     }
   };
+  useEffect(() => {
+    setStoreUser(
+      localStorage.getItem("user")
+        ? JSON.parse(localStorage.getItem("user"))
+        : null,
+    );
+  }, [selectedHostel, showReviewForm]);
 
   return (
     <div className="flex flex-col min-h-screen bg-secondary-light-gray">

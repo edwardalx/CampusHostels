@@ -18,6 +18,8 @@ import {
   showSessionExpiredAlert,
 } from "../hooks/useIdleTimeout";
 import { LogoutApi } from "../services/AuthServices";
+import { AuthContext } from "../zu-store/AuthContext";
+import { useContext } from "react";
 
 export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -27,6 +29,7 @@ export default function Header() {
   token
     ? (navLinks = ["HOME", "HISTORY", "TENANCY"])
     : (navLinks = ["HOME", "ABOUT", "CONTACT"]);
+  const { setStoreUser } = useContext(AuthContext);
   const navigate = useNavigate();
   useEffect(() => {
     setToken(localStorage.getItem("token"));
@@ -80,6 +83,7 @@ export default function Header() {
     console.log("Logging out");
     LogoutApi();
     setToken(null);
+    setStoreUser(null);
     showSessionExpiredAlert(
       "You have  logged out successfully, please log back in.",
       () => navigate("/"),
