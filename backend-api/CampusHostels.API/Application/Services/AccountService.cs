@@ -117,7 +117,7 @@ public class AccountService : IAccountService
         }
 
         // Single DB call to find matching user
-        var user = await _db.Users.FirstOrDefaultAsync(u => u.Email == normalizedEmail || u.PhoneNumber == normalizedPhone);
+        var user = await _db.Users.FirstOrDefaultAsync(u => u.Email == normalizedEmail) ?? await _db.Users.FirstOrDefaultAsync(u => u.PhoneNumber == normalizedPhone);
 
         if (user is null)
         {

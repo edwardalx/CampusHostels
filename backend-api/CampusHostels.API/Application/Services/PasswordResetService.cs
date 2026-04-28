@@ -54,12 +54,12 @@ namespace CampusHostels.API.Application.Services
         {
             var normalizedEmail = dto.Email?.Trim().ToLowerInvariant() ?? string.Empty;
             var normalizedPhone = NormalizePhone(dto.PhoneNumber ?? string.Empty);
-            var user = _db.Users.FirstOrDefault(u => u.Email.ToLower() == normalizedEmail || u.PhoneNumber == normalizedPhone);
+            var user = _db.Users.FirstOrDefault(u => u.Email.ToLower() == normalizedEmail) ?? _db.Users.FirstOrDefault(u => u.PhoneNumber == normalizedPhone);
 
             // Always return success to avoid account enumeration
             if (user == null)
             {
-                _logger.LogInformation("Password reset requested for non-existing email: {Email}", dto.Email);
+                _logger.LogInformation($"Password reset requested for non-existing email: {dto.Email}");
                 return;
             }
 
@@ -89,7 +89,7 @@ namespace CampusHostels.API.Application.Services
 
             if (!string.IsNullOrWhiteSpace(dto.Email))
             {
-                _logger.LogInformation("[DEV] Password reset link for {Email}: {Link}", user.Email, resetLink);
+                _logger.LogInformation($"[DEV] Password reset link for {user.Email}: {resetLink}");
 
                 var html = $"<p>You requested a password reset. Click the link below to reset your password:</p>" +
                            $"<p><a href=\"{resetLink}\">Reset password</a></p>" +
@@ -98,7 +98,7 @@ namespace CampusHostels.API.Application.Services
                 try
                 {
                     await _emailSender.SendEmailAsync(user.Email, "Reset your password", html);
-                    _logger.LogInformation("Password reset email sent to {Email}", user.Email);
+                    _logger.LogInformation($"Password reset email sent to {user.Email}");
                 }
                 catch (Exception ex)
                 {
@@ -120,7 +120,7 @@ namespace CampusHostels.API.Application.Services
         {
             var normalizedEmail = dto.Email?.Trim().ToLowerInvariant() ?? string.Empty;
             var normalizedPhone = NormalizePhone(dto.PhoneNumber ?? string.Empty);
-            var user = _db.Users.FirstOrDefault(u => u.Email.ToLower() == normalizedEmail || u.PhoneNumber == normalizedPhone);
+            var user = _db.Users.FirstOrDefault(u => u.Email.ToLower() == normalizedEmail) ?? _db.Users.FirstOrDefault(u => u.PhoneNumber == normalizedPhone);
             if (user == null) return Task.FromResult(false);
             var result = AccountService.VerifyPassword(dto.NewPassword!, user.PasswordHash);
             if (result)
