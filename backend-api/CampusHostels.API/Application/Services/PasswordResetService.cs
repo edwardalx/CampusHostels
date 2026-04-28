@@ -102,7 +102,7 @@ namespace CampusHostels.API.Application.Services
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogWarning(ex, "Failed to send password reset email to {Email}; continuing with WhatsApp", user.Email);
+                    _logger.LogWarning(ex, $"Failed to send password reset email to {user.Email}; continuing with WhatsApp");
                 }
             }
             else
@@ -112,7 +112,7 @@ namespace CampusHostels.API.Application.Services
                                       "Link expires in 1 hour. If you didn't request this, ignore this message.";
 
                 await _whatsAppService.SendTextMessageAsync(user.PhoneNumber, whatsAppMessage);
-                _logger.LogInformation("Password reset WhatsApp message sent to {PhoneNumber}", user.PhoneNumber);
+                _logger.LogInformation($"Password reset WhatsApp message sent to {user.PhoneNumber}");
             }
         }
 
@@ -174,7 +174,7 @@ namespace CampusHostels.API.Application.Services
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "Failed to send password reset confirmation email to {Email}", dto.Email);
+                _logger.LogWarning(ex, $"Failed to send password reset confirmation email to {dto.Email}");
             }
             return true;
         }
