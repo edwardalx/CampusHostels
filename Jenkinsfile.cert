@@ -1,0 +1,36 @@
+pipeline {
+    agent any
+
+    stages {
+
+        stage('SSL Renew') {
+            steps {
+                sh '''
+                echo "🔐 Renewing SSL certificates..."
+
+                docker run --rm \
+                  -v /etc/letsencrypt:/etc/letsencrypt \
+                  -v /var/www/certbot:/var/www/certbot \
+                  certbot/certbot renew --webroot -w /var/www/certbot
+                '''
+            }
+        }
+
+        stage('Reload Nginx') {
+            steps {
+                sh '''
+                docker exec campushostels_nginx nginx -s reload
+                '''
+            }
+        }
+
+        stage('Verify') {
+            steps {
+                sh '''
+                docker ps
+                docker logs campushostels_nginx --tail 20
+                '''
+            }
+        }
+    }
+}
