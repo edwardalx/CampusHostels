@@ -255,37 +255,44 @@ export default function HomePage() {
 
         {/* Hostel Grid Section */}
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 lg:py-20">
-          {/* Section Title */}
+          {/* Section Subtitle with Property Count */}
           <div className="mb-8 sm:mb-10 lg:mb-12">
-            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-secondary-dark-gray mb-2">
-              <span className="text-primary-teal">EXPLORE</span>{" "}
-              <span className="text-primary-coral">HOSTELS & CO-LIVING</span>
-            </h2>
-            <div className="flex flex-row items-center justify-between">
-              <p className="text-secondary-gray text-sm sm:text-base">
-                {!isLoading ? hostels.length : ""} Properties Available
-              </p>
-              {!storeUser && errorMessage && (
-                <div className="text-teal-500  flex items-center gap-1">
-                  <Heart size={20} className="fill-green-500" />{" "}
-                  <p>{errorMessage}</p>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              {/* Left Section */}
+              <div className="flex items-center justify-between gap-3 w-full">
+                {/* Spans */}
+                <div className="flex justify-between w-full">
+                  <span className="inline-flex items-center bg-secondary-light-gray px-3 py-1.5 rounded-full text-sm font-bold text-secondary-dark-gray">
+                    {!isLoading && "Available properties"}
+                  </span>
+                  {/* Error Message */}
+                  {!storeUser && errorMessage && (
+                    <div className="flex items-center gap-1 text-sm text-teal-600">
+                      <Heart
+                        size={16}
+                        className="fill-green-500 text-green-500"
+                      />
+                      <p>{errorMessage}</p>
+                    </div>
+                  )}
+                  <span className="inline-flex items-center bg-gray-200 px-3 py-1.5 rounded-full text-sm font-semibold text-secondary-dark-gray">
+                    {!isLoading && `${hostels.length} Listings`}
+                  </span>
                 </div>
+              </div>
+
+              {/* Right Section */}
+              {storeUser && (
+                <p className="text-secondary-gray text-sm">
+                  Welcome,{" "}
+                  <span className="font-bold text-gray-900">
+                    {storeUser.fname}
+                  </span>
+                  !
+                </p>
               )}
-              <h4 className="text-secondary-gray text-sm sm:text-base ml-auto">
-                {storeUser ? (
-                  <>
-                    Welcome,{" "}
-                    {<span className="font-bold">{storeUser.fname}</span>}{" "}
-                    !{" "}
-                  </>
-                ) : (
-                  ""
-                )}
-                {/* Welcome,{" "}{storeUser ? storeUser.fname : "Guest"}! */}
-              </h4>
             </div>
           </div>
-
           {/* Grid */}
           {!isLoading ? (
             <HostelGrid

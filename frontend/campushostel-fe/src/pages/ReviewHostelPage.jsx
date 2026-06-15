@@ -7,8 +7,8 @@ import {
 import { getHostelById } from "../services/HostelServices";
 import { X } from "lucide-react";
 
-export function ReviewHostelPage({ hostel, onClose = () => {} }) {
-  const [reviews, setReviews] = React.useState([]);
+export function ReviewHostelPage({ hostel, reviews, onClose = () => {} }) {
+  // const [reviews, setReviews] = React.useState([]);
   const [message, setMessage] = React.useState("");
   const [selectedRating, setSelectedRating] = React.useState(0);
   const [storedHostel, setStoredHostel] = React.useState(
@@ -17,35 +17,35 @@ export function ReviewHostelPage({ hostel, onClose = () => {} }) {
       : hostel,
   );
 
-  React.useEffect(() => {
-    if (!storedHostel?.id || !hostel?.id) return;
+  // React.useEffect(() => {
+  //   if (!storedHostel?.id || !hostel?.id) return;
 
-    async function fetchReviews() {
-      try {
-        const data = await GetPropertyRatings(storedHostel.id || hostel.id);
-        setReviews(data);
-      } catch (error) {
-        console.error("Error fetching reviews:", error);
-      }
-    }
+  //   async function fetchReviews() {
+  //     try {
+  //       const data = await GetPropertyRatings(storedHostel.id || hostel.id);
+  //       setReviews(data);
+  //     } catch (error) {
+  //       console.error("Error fetching reviews:", error);
+  //     }
+  //   }
 
-    fetchReviews();
-  }, [storedHostel?.id, hostel?.id]);
+  //   fetchReviews();
+  // }, [storedHostel?.id, hostel?.id]);
 
-  React.useEffect(() => {
-    async function fetchHostel() {
-      try {
-        const data = await getHostelById(storedHostel.id || hostel.id);
-        // Update hostel's average rating if needed
-        if (data) {
-          hostel = data;
-        }
-      } catch (error) {
-        console.error("Error fetching hostel details:", error);
-      }
-    }
-    fetchHostel();
-  }, [reviews]);
+  // React.useEffect(() => {
+  //   async function fetchHostel() {
+  //     try {
+  //       const data = await getHostelById(storedHostel.id || hostel.id);
+  //       // Update hostel's average rating if needed
+  //       if (data) {
+  //         hostel = data;
+  //       }
+  //     } catch (error) {
+  //       console.error("Error fetching hostel details:", error);
+  //     }
+  //   }
+  //   fetchHostel();
+  // }, [reviews]);
 
   const handleSubmitReview = async (e) => {
     e.preventDefault();
@@ -149,14 +149,14 @@ export function ReviewHostelPage({ hostel, onClose = () => {} }) {
         {/* Button */}
         <button
           type="submit"
-          className={`w-full ${selectedRating > 0 ? 'bg-gradient-to-r from-teal-500 to-cyan-500' : 'bg-gray-400'} text-white font-semibold py-3 rounded-lg shadow-md hover:opacity-90 transition`}
+          className={`w-full ${selectedRating > 0 ? "bg-gradient-to-r from-teal-500 to-cyan-500" : "bg-gray-400"} text-white font-semibold py-3 rounded-lg shadow-md hover:opacity-90 transition`}
         >
           Submit Review
         </button>
       </form>
       <button
         onClick={onClose}
-        className="absolute top-3 right-4 p-2 rounded-full bg-white/80 backdrop-blur-md border border-gray-200 shadow-lg hover:shadow-xl transition-all"
+        className="absolute top-4 right-4 z-10 p-2 rounded-full bg-white border border-gray-200 shadow-md hover:bg-gray-50 transition-all"
       >
         <X size={18} className="text-gray-700" />
       </button>

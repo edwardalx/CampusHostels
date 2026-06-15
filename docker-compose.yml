@@ -40,14 +40,13 @@ services:
     # ports:
     #   - "80:80"
     volumes:
-      - frontend-static:/usr/share/nginx/html:ro  # Read-only for frontend
+      - frontend-static:/usr/share/nginx/html:ro # Read-only for frontend
     restart: unless-stopped
     depends_on:
       - web
     environment:
       - VITE_API_URL=http://backend-api:8000
 
-  
   web:
     build:
       context: ./backend-admin
@@ -138,12 +137,12 @@ services:
       - ./backend-admin/media:/app/media:ro
       - /etc/letsencrypt:/etc/letsencrypt:ro
       - /var/www/book-shelf-fe:/var/www/book-shelf-fe:ro
-      - frontend-static:/var/www/campushostels-fe:ro  # ← CHANGE THIS LINE
+      - frontend-static:/var/www/campushostels-fe:ro # ← CHANGE THIS LINE
     depends_on:
       - web
       - app1
-      - frontend  # ← ADD THIS
-      - portainer  # ← ADD PORTAINER HERE
+      - frontend # ← ADD THIS
+      - portainer # ← ADD PORTAINER HERE
     networks:
       - campushostels_net
     restart: always
