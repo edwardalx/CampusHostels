@@ -275,7 +275,7 @@ export default function HomePage() {
                       <p>{errorMessage}</p>
                     </div>
                   )}
-                  <span className="inline-flex items-center bg-gray-200 px-3 py-1.5 rounded-full text-sm font-semibold text-secondary-dark-gray">
+                  <span className="inline-flex items-center bg-gray-300 px-3 py-1.5 rounded-full text-sm font-semibold text-secondary-dark-gray">
                     {!isLoading && `${hostels.length} Listings`}
                   </span>
                 </div>
