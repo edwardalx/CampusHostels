@@ -105,7 +105,7 @@ export function Tile({ hostel = {}, unit = {} }) {
               disabled={!unit.availability}
               className={`px-6 py-3 rounded-xl text-sm font-semibold border transition-all duration-200 ${
                 unit.availability
-                  ? "border-gray-300 bg-white text-gray-900 hover:border-teal-500 hover:text-teal-600 hover:shadow-sm"
+                  ? "border-gray-300 bg-gray-300 text-gray-900 hover:border-teal-500 hover:text-teal-600 hover:shadow-sm"
                   : "border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed"
               }`}
             >

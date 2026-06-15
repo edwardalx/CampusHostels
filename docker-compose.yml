@@ -155,12 +155,3 @@ volumes:
 networks:
   campushostels_net:
     driver: bridge
-
-certbot:
-  image: certbot/certbot
-  container_name: certbot
-  volumes:
-    - /etc/letsencrypt:/etc/letsencrypt
-    - ./nginx/conf.d:/etc/nginx/conf.d
-    - /var/www/certbot:/var/www/certbot
-  entrypoint: "/bin/sh -c"

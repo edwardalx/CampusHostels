@@ -19,6 +19,7 @@ import {
   MessageSquare,
 } from "lucide-react";
 import { ReviewHostelPage } from "./ReviewHostelPage";
+import { GetPropertyRatings } from "../services/OtherServices";
 
 export default function HostelDetails() {
   const [selectedHostel, setSelectedHostel] = useState([]);
@@ -68,6 +69,21 @@ export default function HostelDetails() {
   }, [hostelId]);
   console.log("units", units);
   console.log("selectedHostel", selectedHostel);
+  React.useEffect(() => {
+    if (!selectedHostel?.id) return;
+
+    async function fetchReviews() {
+      try {
+        const data = await GetPropertyRatings(selectedHostel.id || hostel.id);
+        setReviews(data);
+      } catch (error) {
+        console.error("Error fetching reviews:", error);
+      }
+    }
+
+    fetchReviews();
+  }, [selectedHostel?.id]);
+
   if (loading) {
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 lg:gap-6">
@@ -146,7 +162,7 @@ export default function HostelDetails() {
                         </div>
                         <span className="text-sm font-semibold text-gray-700">
                           {selectedHostel.averageRating?.toFixed(1) || "4.5"} ·{" "}
-                          {selectedHostel.reviewCount || "12"} reviews
+                          {reviews.length || "12"} reviews
                         </span>
                       </>
                     ) : (
@@ -162,11 +178,12 @@ export default function HostelDetails() {
                 </div>
 
                 {/* Amenities */}
-                {selectedHostel.amenities && selectedHostel.amenities.length > 0 && (
-                  <div className="flex flex-wrap gap-3">
-                    {selectedHostel.amenities.includes("wifi") && (
-                      <div className="flex items-center gap-2 px-4 py-2 bg-gray-100 rounded-full text-sm">
-                        <Wifi size={16} />
+                {selectedHostel.amenities &&
+                  selectedHostel.amenities.length > 0 && (
+                    <div className="flex flex-wrap gap-3">
+                      {selectedHostel.amenities.includes("wifi") && (
+                        <div className="flex items-center gap-2 px-4 py-2 bg-gray-100 rounded-full text-sm">
+                          <Wifi size={16} />
                           <span>Free WiFi</span>
                         </div>
                       )}
@@ -242,7 +259,7 @@ export default function HostelDetails() {
                           ))}
                         </div>
                         <p className="text-sm text-gray-600">
-                          Based on {selectedHostel.reviewCount || "12"} reviews
+                          Based on {reviews.length || "12"} reviews
                         </p>
                       </div>
                     </>
@@ -255,7 +272,7 @@ export default function HostelDetails() {
               </div>
               <button
                 onClick={() => setShowReviewForm(true)}
-                className="flex items-center gap-2 px-6 py-2.5 border-2 border-primary-teal text-primary-teal font-semibold rounded-full hover:bg-teal-50 transition-colors text-sm"
+                className="flex items-center bg-gray-300 gap-2 px-6 py-2.5 border-2 border-primary-teal text-primary-teal font-semibold rounded-full hover:bg-teal-50 transition-colors text-sm"
               >
                 <MessageSquare size={18} />
                 Leave a review
@@ -263,9 +280,9 @@ export default function HostelDetails() {
             </div>
 
             {/* Reviews List */}
-            {selectedHostel.reviews && selectedHostel.reviews.length > 0 ? (
+            {reviews && reviews.length > 0 ? (
               <div className="space-y-6">
-                {selectedHostel.reviews.map((review, idx) => (
+                {reviews.map((review, idx) => (
                   <div
                     key={idx}
                     className="pb-6 border-b border-gray-200 last:border-b-0"
@@ -332,6 +349,7 @@ export default function HostelDetails() {
           >
             <ReviewHostelPage
               hostel={selectedHostel}
+              reviews={reviews}
               onClose={() => setShowReviewForm(false)}
             />
           </div>
