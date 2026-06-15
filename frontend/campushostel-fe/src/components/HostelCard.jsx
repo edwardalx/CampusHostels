@@ -155,7 +155,7 @@ export default function HostelCard({
           </div>
           <button
             onClick={handleViewDetails}
-            className="!border !border-black px-5 py-2 m-2 bg-primary-teal text-white text-sm font-semibold rounded-full hover:bg-teal-500 transition-colors duration-200 whitespace-nowrap shadow-sm hover:shadow-md flex-shrink-0"
+            className="!border !border-black px-5 py-2 m-2 bg-gray-300 text-white text-sm font-semibold rounded-full hover:bg-teal-500 transition-colors duration-200 whitespace-nowrap shadow-sm hover:shadow-md flex-shrink-0"
           >
             View
           </button>
