@@ -149,14 +149,14 @@ export function ReviewHostelPage({ hostel, onClose = () => {} }) {
         {/* Button */}
         <button
           type="submit"
-          className={`w-full ${selectedRating > 0 ? 'bg-gradient-to-r from-teal-500 to-cyan-500' : 'bg-gray-400'} text-white font-semibold py-3 rounded-lg shadow-md hover:opacity-90 transition`}
+          className={`w-full ${selectedRating > 0 ? "bg-gradient-to-r from-teal-500 to-cyan-500" : "bg-gray-400"} text-white font-semibold py-3 rounded-lg shadow-md hover:opacity-90 transition`}
         >
           Submit Review
         </button>
       </form>
       <button
         onClick={onClose}
-        className="absolute top-3 right-4 p-2 rounded-full bg-white/80 backdrop-blur-md border border-gray-200 shadow-lg hover:shadow-xl transition-all"
+        className="absolute top-4 right-4 z-10 p-2 rounded-full bg-white border border-gray-200 shadow-md hover:bg-gray-50 transition-all"
       >
         <X size={18} className="text-gray-700" />
       </button>

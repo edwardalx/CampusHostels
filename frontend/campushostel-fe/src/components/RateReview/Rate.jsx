@@ -8,7 +8,7 @@ export function ShowRate({ hostel, isReviews }) {
     <div>
       {" "}
       {/* Rating and Price Row */}
-      <div className="flex items-center justify-between mb-4 gap-2">
+      <div className="flex items-center justify-left  gap-2">
         <div className="flex items-center gap-1">
           {[...Array(5)].map((_, i) => (
             <Star
@@ -23,7 +23,7 @@ export function ShowRate({ hostel, isReviews }) {
         </div>
         <div className="text-xs font-bold bg-gradient-to-r from-teal-400 to-yellow-600 bg-clip-text text-transparent">
           {!isReviews ? (
-            <p>Overall Rating: {hostel.averageRating}</p>
+            <p> {hostel.averageRating}</p>
           ) : (
             <p>Rating: {hostel.score}</p>
           )}

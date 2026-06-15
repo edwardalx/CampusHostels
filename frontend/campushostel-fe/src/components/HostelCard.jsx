@@ -81,10 +81,6 @@ export default function HostelCard({
     if (rating >= 4) return "text-yellow-400";
     return "text-yellow-300";
   };
-  const handleRateClick = (e) => {
-    e.stopPropagation();
-    onToggleReviewForm(true, hostel);
-  };
 
   return (
     <div className="bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 flex flex-col h-full">
@@ -127,67 +123,41 @@ export default function HostelCard({
       </div>
 
       {/* Content Container */}
-      <div className="p-4 sm:p-5 flex flex-col flex-grow">
+      <div className="p-5 sm:p-6 flex flex-col flex-grow">
         {/* Name */}
-        <h3 className="text-base sm:text-lg font-bold !text-gray-600 mb-1 line-clamp-1">
+        <h3 className="text-lg sm:text-xl font-bold text-gray-800 mb-2 line-clamp-2">
           {hostel.name}
         </h3>
 
         {/* Location */}
-        <div className="flex justify-between">
-          <div className="flex items-center gap-1 !text-gray-600 text-sm mb-3">
-            <MapPin size={16} className="flex-shrink-0" />
-            <span className="line-clamp-1 ">{hostel.location}</span>
-          </div>
-          <div className="cursor-pointer text-xs mb-3 font-bold bg-gradient-to-r from-yellow-400 to-teal-600 bg-clip-text text-transparent">
-            <span className="line-clamp-1" onClick={handleRateClick}>
-              Rate Us
-            </span>
-          </div>
+        <div className="flex items-center gap-1 text-gray-600 text-sm mb-4">
+          <MapPin size={16} className="flex-shrink-0 text-teal-500" />
+          <span className="line-clamp-1">{hostel.location}</span>
         </div>
 
-        {/* Rating and Price Row */}
-        <ShowRate hostel={hostel} isReviews={false} />
-        {/* <div className="flex items-center justify-between mb-4 gap-2">
-          <div className="flex items-center gap-1">
-            {[...Array(5)].map((_, i) => (
-              <Star
-                key={i}
-                size={16}
-                onClick={() => handleRatingClick(i + 1)}
-                className={`cursor-pointer ${
-                  i < selectedRating
-                    ? "fill-yellow-400 text-yellow-400"
-                    : "text-gray-300"
-                }`}
-              />
-            ))}
-            <span className="text-xs text-gray-600 ml-1">{hostel.rating}</span>
-          </div>
-          <div className="text-xs font-bold bg-gradient-to-r from-teal-400 to-yellow-600 bg-clip-text text-transparent">
-            <p>Overall Rating: {hostel.rating}</p>
-          </div>
-        </div> */}
-
         {/* Price and Button Row */}
-        <div className="flex items-center justify-between gap-3 mt-auto pt-4 border-t border-gray-400">
-          <div className="flex text-teal-400">
-            <p className="text-xs text-gray-600">From: </p>
-            GH₵{hostel.startingPrice}
-            <p className="text-base sm:text-lg font-bold text-gray-600">
-              <span className="text-xs font-normal">/Month</span>
-            </p>
+        <div className="flex items-center justify-between  mt-auto pt-5 border-t border-gray-200">
+          <div className="flex flex-col">
+            {/* Rating Section */}
+            {hostel.averageRating > 0 ? (
+              <ShowRate hostel={hostel} isReviews={false} />
+            ) : (
+              <p className="italic text-gray-600 text-sm">
+                No ratings available
+              </p>
+            )}
+            <div className="flex items-baseline gap-1">
+              <span className="text-xl sm:text-l font-bold text-gray-900">
+                GH₵{hostel.startingPrice}
+              </span>
+              <span className="text-sm text-gray-600 font-medium">/month</span>
+            </div>
           </div>
           <button
-            // onClick={() => onViewDetails(hostel.id)}
             onClick={handleViewDetails}
-            style={{
-              backgroundColor: "#06B6D4",
-              color: "white",
-            }}
-            className="px-6 py-2.5 text-white text-xs sm:text-sm font-bold rounded-full hover:opacity-90 transition-all duration-200 whitespace-nowrap shadow-md hover:shadow-lg"
+            className="!border !border-black px-5 py-2 m-2 bg-primary-teal text-white text-sm font-semibold rounded-full hover:bg-teal-500 transition-colors duration-200 whitespace-nowrap shadow-sm hover:shadow-md flex-shrink-0"
           >
-            View Details
+            View
           </button>
         </div>
       </div>
