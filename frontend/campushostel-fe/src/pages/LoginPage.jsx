@@ -1,21 +1,12 @@
 import React, { useEffect, useState } from "react";
-import { Eye, EyeOff, Home } from "lucide-react";
-import { Chrome, Facebook } from "lucide-react";
+import { Eye, EyeOff, Home, Facebook } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { FcGoogle } from "react-icons/fc";
-import { FaFacebook } from "react-icons/fa";
 import { LoadingSpinner } from "../components/SkeletonCard";
-import { LoginApi, LogoutApi } from "../services/AuthServices";
-import {
-  useGoogleAuth,
-  GoogleAuthWithToken,
-} from "../services/GoogleAuthService";
-import { useGoogleLogin } from "@react-oauth/google";
-import {
-  setTokenExpiryTimeout,
-  showSessionExpiredAlert,
-  useIdleTimeout,
-} from "../hooks/useIdleTimeout";
+import { LoginApi } from "../services/AuthServices";
+import { GoogleAuthWithToken } from "../services/GoogleAuthService";
+import ErrorBoundary from "../components/ErrorBoundary";
+import GoogleLoginButton from "../components/GoogleLoginButton";
 
 export default function LoginPage() {
   const [loading, setLoading] = useState(false);
@@ -79,34 +70,18 @@ export default function LoginPage() {
     // TODO: Handle login logic
   };
 
-  // const handleGoogleLogin = useGoogleAuth(
-  //   (data) => {
-  //     console.log("Logged in successfully:", data);
-  //     // Save JWT to localStorage or context
-  //   },
-  //   (err) => {
-  //     console.error("Login failed:", err);
-  //   }
-  // );
-  const handleGoogleLogin = useGoogleLogin({
-    flow: "implicit",
-    scope: "openid email profile",
+  const handleGoogleSuccess = async (response) => {
+    const accessToken = response.access_token;
 
-    onSuccess: async (response) => {
-      const accessToken = response.access_token;
-
-      console.log("Google Access Token:", accessToken);
-      console.log("response", response);
-      try {
-        const data = await GoogleAuthWithToken(accessToken);
-        data.token
-          ? navigate("/")
-          : setErrorMsg({ general: "Google login failed. Please try again." });
-      } catch (err) {
-        console.error("Google login error:", err);
-      }
-    },
-  });
+    try {
+      const data = await GoogleAuthWithToken(accessToken);
+      data.token
+        ? navigate("/")
+        : setErrorMsg({ general: "Google login failed. Please try again." });
+    } catch (err) {
+      console.error("Google login error:", err);
+    }
+  };
   const handleFacebookLogin = () => {
     setErrorMsg({ general: "Facebook login failed. Please try a different method." });
     console.log("Continue with Facebook");
@@ -265,14 +240,25 @@ export default function LoginPage() {
 
           {/* Social Login Buttons */}
           <div className="flex flex-col gap-5">
-            <button
-              type="button"
-              onClick={() => handleGoogleLogin()}
-              className="w-full py-4 gap-2 bg-gray-800 text-gray-700 rounded-lg font-medium hover:bg-gray-100 transition-colors duration-200 flex items-center justify-center space-x-3 shadow-md"
+            <ErrorBoundary
+              fallback={
+                <div
+                  title="Google sign-in is unavailable right now"
+                  className="w-full py-4 gap-2 bg-gray-800/50 text-gray-500 rounded-lg font-medium flex items-center justify-center space-x-3 shadow-md cursor-not-allowed"
+                >
+                  <FcGoogle className="w-5 h-5 opacity-50" />
+                  <span>Google sign-in unavailable</span>
+                </div>
+              }
             >
-              <FcGoogle className="w-5 h-5" />
-              <span>Continue with Google</span>
-            </button>
+              <GoogleLoginButton
+                onSuccess={handleGoogleSuccess}
+                className="w-full py-4 gap-2 bg-gray-800 text-gray-700 rounded-lg font-medium hover:bg-gray-100 transition-colors duration-200 flex items-center justify-center space-x-3 shadow-md"
+              >
+                <FcGoogle className="w-5 h-5" />
+                <span>Continue with Google</span>
+              </GoogleLoginButton>
+            </ErrorBoundary>
 
             <button
               type="button"

@@ -1,5 +1,4 @@
-import React, { use, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import React, { useEffect } from "react";
 import { Briefcase } from "lucide-react";
 import { useState } from "react";
 import { useParams } from "react-router-dom";
@@ -8,7 +7,6 @@ import { createTenancy } from "../services/OtherServices";
 import { initailizePayments } from "../services/PaymentService";
 import { LoadingSpinner } from "../components/SkeletonCard";
 import Divider from "../components/Divider";
-import DurationSelect from "../components/SelectDuration";
 
 export default function Payments() {
   const [pageloading, setPageLoading] = useState(false);
@@ -32,8 +30,9 @@ export default function Payments() {
     general: "",
   });
   const cost = (duration / 12) * (selectedHostel ? selectedHostel.cost : 0);
-  const payload = {
-    tenancyId: 0, // Placeholder, will be set after tenancy creation
+
+  const buildPaymentPayload = (tenancyId) => ({
+    tenancyId,
     amount: amount || cost,
     email: email,
     callbackUrl: "",
@@ -42,7 +41,7 @@ export default function Payments() {
     property: property,
     unitId: roomId,
     currency: "GHS",
-  };
+  });
 
   const tenancyPayload = {
     contractStartDate: new Date().toISOString(),
@@ -52,22 +51,20 @@ export default function Payments() {
   };
 
   useEffect(() => {
-    try {
+    async function fetchSelectedHostel() {
       setPageLoading(true);
-      const fetchSelectedHostel = async () => {
+      try {
         const hostel = await getUnitByIdPropertyById(hostelId, roomId);
         setSelectedHostel(hostel || {}); // Default to an empty object if no hostel is found
-      };
-      fetchSelectedHostel();
-    } catch (error) {
-      setErrorMsg({
-        general: "Please select hostel and room to proceed with payment.",
-      });
-    } finally {
-      setTimeout(() => {
+      } catch {
+        setErrorMsg({
+          general: "Please select hostel and room to proceed with payment.",
+        });
+      } finally {
         setPageLoading(false);
-      }, 1000);
+      }
     }
+    fetchSelectedHostel();
   }, []);
 
   const handleCreateTenancy = async () => {
@@ -80,7 +77,7 @@ export default function Payments() {
       return tenancyId;
     } catch (error) {
       console.error("Error creating tenancy:", error);
-      setErrorMsg({general:error.details||error.messsage })
+      setErrorMsg({ general: error.details || error.message });
     } finally {
       setPaymentLoading(false);
     }
@@ -90,24 +87,19 @@ export default function Payments() {
     let tenancyId;
     try {
       setPaymentLoading(true);
-      setErrorMsg("");
+      resetErrorMsg();
       if (!localStorage.getItem("tenancy")) {
         tenancyId = await handleCreateTenancy();
       } else {
         tenancyId = localStorage.getItem("tenancy");
       }
 
-      // const paymentPayload = {
-      //   ...payload,
-      //   tenancyId: tenancyId,
-      // };
-      payload.tenancyId = tenancyId;
       if (!tenancyId) {
         return;
       }
-      const response = await initailizePayments(payload);
+      const response = await initailizePayments(buildPaymentPayload(tenancyId));
       console.log("Payment initialized successfully:", response);
-      window.location.href = response.authorizationUrl; // Redirect to the payment gateway
+      window.location.assign(response.authorizationUrl); // Redirect to the payment gateway
       localStorage.removeItem("tenancy");
       localStorage.setItem("Reference", JSON.stringify(response.reference));
       setAmount("");
@@ -121,7 +113,6 @@ export default function Payments() {
       const backendErrors = error?.errors;
       backendErrors
         ? setErrorMsg({
-            // general: error.details || "An error occurred while initializing payment. Please try again.",
             email: backendErrors?.Email?.[0] || "",
             phone: backendErrors?.Phone?.[0] || "",
             amount: backendErrors?.Amount?.[0] || "",
@@ -145,9 +136,6 @@ export default function Payments() {
       return;
     }
     await handleInitializePayment();
-    setTimeout(() => {
-      setPaymentLoading(false);
-    }, 1000);
   };
 
   const resetErrorMsg = () => {
@@ -188,14 +176,12 @@ export default function Payments() {
               </div>
             </div>
 
-            <p className="text-5xl font-bold text-white mb-8">Make Payment</p>
-            <div className="text-gray-300 mb-4 text-center">
-              {
-                <Divider
-                  text={"Please enter your payment details to proceed."}
-                />
-              }
-            </div>
+            <p className="text-4xl sm:text-5xl font-bold text-white mb-3 text-center">
+              Make Payment
+            </p>
+            <p className="text-teal-100 text-center text-sm sm:text-base">
+              Please enter your payment details to proceed.
+            </p>
           </div>
 
           {/* Login Form */}
@@ -210,7 +196,7 @@ export default function Payments() {
                 htmlFor="Property"
                 className="block text-white font-medium mb-1"
               >
-                {<Divider text={"Property"} />}
+                Property
               </label>
               <div>
                 {errorMsg.property && (
@@ -225,16 +211,16 @@ export default function Payments() {
                 value={selectedHostel ? selectedHostel.propertyName : property}
                 onChange={(e) => setProperty(e.target.value)}
                 placeholder="select property"
-                className="w-90 mx-2 md:w-full md:mx-0 h-10 px-4 py-5 bg-teal-700/50 border border-teal-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-transparent text-center"
+                className="w-full h-10 px-4 py-5 bg-teal-700/50 border border-teal-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-transparent text-center"
               />
             </div>
             {/* Unit Input */}
             <div>
               <label
-                htmlFor="email"
+                htmlFor="unit"
                 className="block text-white font-medium mb-1"
               >
-                {<Divider text={"Room Number"} />}
+                Room Number
               </label>
               <div>
                 {errorMsg.unit && (
@@ -249,7 +235,7 @@ export default function Payments() {
                 value={selectedHostel ? selectedHostel.roomNumber : unit}
                 onChange={(e) => setUnit(e.target.value)}
                 placeholder="Select unit"
-                className="w-90 mx-2 md:w-full md:mx-0 h-10 px-4 py-5 bg-teal-700/50 border border-teal-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-transparent text-center"
+                className="w-full h-10 px-4 py-5 bg-teal-700/50 border border-teal-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-transparent text-center"
               />
             </div>
             {/* Email Input */}
@@ -258,7 +244,7 @@ export default function Payments() {
                 htmlFor="email"
                 className="block text-white font-medium mb-1"
               >
-                {<Divider text={"Email"} />}
+                Email
               </label>
               <div>
                 {errorMsg.email && (
@@ -273,7 +259,7 @@ export default function Payments() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="youname@email.com "
-                className="w-90 mx-2 md:w-full md:mx-0 h-10 px-4 py-5 bg-teal-700/50 border border-teal-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-transparent text-center"
+                className="w-full h-10 px-4 py-5 bg-teal-700/50 border border-teal-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-transparent text-center"
               />
             </div>
 
@@ -281,9 +267,9 @@ export default function Payments() {
             <div>
               <label
                 htmlFor="phone"
-                className="block text-white font-medium mb-3"
+                className="block text-white font-medium mb-1"
               >
-                {<Divider text={"Phone Number"} />}
+                Phone Number
               </label>
               <div>
                 {errorMsg.phone && (
@@ -299,95 +285,94 @@ export default function Payments() {
                   value={phonenumber}
                   onChange={(e) => setPhonenumber(e.target.value)}
                   placeholder="+233 123 456 7890"
-                  className="w-90 mx-2 md:w-full md:mx-0 h-10 px-4 py-5 bg-teal-700/50 border border-teal-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-transparent pr-12 text-center"
+                  className="w-full h-10 px-4 py-5 bg-teal-700/50 border border-teal-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-transparent pr-12 text-center"
                 />
               </div>
-              {/* Duration Input */}
+            </div>
+
+            {/* Duration Input */}
+            <div>
+              <label
+                htmlFor="duration"
+                className="block text-white font-medium mb-1"
+              >
+                Duration
+              </label>
               <div>
-                <label
-                  htmlFor="amount"
-                  className="block text-white font-medium mb-1"
-                >
-                  {<Divider text={"Duration"} />}
-                </label>
-                <div>
-                  {errorMsg.duration && (
-                    <p className="w-full text-red-400 text-base text-center font-normal mt-2">
-                      {errorMsg.duration}
-                    </p>
-                  )}
-                </div>
-                <div className="relative mx-2">
-                  <select
-                    value={duration}
-                    onChange={(e) => setDuration(e.target.value)}
-                    className="w-full h-10 px-4 pr-10 
-               bg-teal-700/50 border border-teal-600 
-               rounded-lg text-white text-center 
-               appearance-none 
+                {errorMsg.duration && (
+                  <p className="w-full text-red-400 text-base text-center font-normal mt-2">
+                    {errorMsg.duration}
+                  </p>
+                )}
+              </div>
+              <div className="relative">
+                <select
+                  id="duration"
+                  value={duration}
+                  onChange={(e) => setDuration(e.target.value)}
+                  className="w-full h-10 px-4 pr-10
+               bg-teal-700/50 border border-teal-600
+               rounded-lg text-white text-center
+               appearance-none
                [text-align-last:center]
-               focus:outline-none focus:ring-2 
+               focus:outline-none focus:ring-2
                focus:ring-cyan-400 focus:border-transparent"
-                  >
-                    <option value="">Select Duration</option>
-                    <option value="6">6 Months</option>
-                    <option value="12">12 Months</option>
-                    <option value="24">24 Months</option>
-                  </select>
-
-                  {/* Custom Arrow */}
-                  <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-white">
-                    ▼
-                  </div>
-                </div>
-              </div>
-
-              {/* Amount Input */}
-              <div>
-                <label
-                  htmlFor="amount"
-                  className="block text-white font-medium mb-1"
                 >
-                  {<Divider text={"Amount"} />}
-                </label>
-                <div>
-                  {errorMsg.amount && (
-                    <p className="w-full text-red-400 text-base text-center font-normal mt-2">
-                      {errorMsg.amount}
-                    </p>
-                  )}
+                  <option value="">Select Duration</option>
+                  <option value="6">6 Months</option>
+                  <option value="12">12 Months</option>
+                  <option value="24">24 Months</option>
+                </select>
+
+                {/* Custom Arrow */}
+                <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-white">
+                  ▼
                 </div>
-                <input
-                  type="number"
-                  id="amount"
-                  value={selectedHostel ? cost : amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                  placeholder="Enter amount to pay in GH₵"
-                  className="w-90 mx-2 md:w-full md:mx-0 h-10 px-4 py-5 bg-teal-700/50 border border-teal-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-transparent text-center"
-                />
               </div>
+            </div>
+
+            {/* Amount Input */}
+            <div>
+              <label
+                htmlFor="amount"
+                className="block text-white font-medium mb-1"
+              >
+                Amount
+              </label>
+              <div>
+                {errorMsg.amount && (
+                  <p className="w-full text-red-400 text-base text-center font-normal mt-2">
+                    {errorMsg.amount}
+                  </p>
+                )}
+              </div>
+              <input
+                type="number"
+                id="amount"
+                value={selectedHostel ? cost : amount}
+                onChange={(e) => setAmount(e.target.value)}
+                placeholder="Enter amount to pay in GH₵"
+                className="w-full h-10 px-4 py-5 bg-teal-700/50 border border-teal-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-transparent text-center"
+              />
             </div>
 
             {/* Login Button */}
             <button
               type="submit"
-              className="w-90 mx-2 md:w-full md:mx-0 py-4 bg-white text-teal-900 rounded-lg font-semibold hover:bg-gray-100 transition-colors duration-200 shadow-lg mt-6"
+              className="w-full py-4 bg-white text-teal-900 rounded-lg font-semibold hover:bg-gray-100 transition-colors duration-200 shadow-lg mt-6 disabled:opacity-60 disabled:cursor-not-allowed"
               disabled={paymentloading}
             >
-              Pay Now
+              {paymentloading ? "Processing..." : "Pay Now"}
             </button>
           </form>
-          {<Divider text={""} />}
-          <div>
-            {errorMsg.general && (
-              <>
-                <p className="w-full text-red-400 text-base text-center font-normal mt-2">
-                  {errorMsg.general}
-                </p>
-                <Divider text={""} />
-              </>
-            )}
-          </div>
+          {errorMsg.general && (
+            <>
+              <Divider text="" />
+              <p className="w-full text-red-400 text-base text-center font-normal mt-2">
+                {errorMsg.general}
+              </p>
+            </>
+          )}
         </div>
       </div>
     </div>
