@@ -8,8 +8,11 @@ referenced an undefined variable (a guaranteed crash) or was provably unreachabl
 What remains below are items that need a **design/architecture decision** before
 touching them, so they're documented rather than changed silently.
 
-`npm run lint` went from **72 errors / 8 warnings** on `main` to **9 errors / 6
-warnings** on this branch. The remaining 15 are listed under "Still open" below.
+`npm run lint` went from **72 errors / 8 warnings** on `main` to **0 errors / 5
+warnings** on this branch. The remaining 5 warnings are listed under "Still
+open" below. A pre-commit hook (husky) now runs `npm run lint` on every commit
+and blocks it if there are any errors — see "Pre-commit lint hook" at the
+bottom.
 
 ---
 
@@ -61,8 +64,7 @@ decision required), so they were corrected directly rather than just documented:
   `password.length !== confirmPassword` compared a number to a string. Fixed to
   `password.length !== confirmPassword.length`.
 - **`Payments.jsx` — typo swallowed the tenancy-creation error message**:
-  `error.messsage` (triple "s") is never a real property; fixed alongside
-  removing an unused `catch` binding.
+  `error.messsage` (triple "s") is never a real property; fixed to `error.message`.
 - **`homepage.jsx` — dead code referencing an undefined setter.** `handleSearch`,
   `handleHostelLike`, `handleFilterClick`, `handleNavClick` (which called a
   non-existent `setActiveNavLink`), and the `filteredHostels`/`handleViewDetails`
@@ -70,6 +72,51 @@ decision required), so they were corrected directly rather than just documented:
   navigates on its own via `<Link>`, never calling the `onViewDetails` prop that
   was being threaded through. Removed; see "Still open" below re: re-enabling
   search properly.
+- **Async work started inside a `try` without `await`, across `Payments.jsx`,
+  `homepage.jsx`, `HostelDetails.jsx`, and `PaymentReceipt.jsx`.** The repeated
+  pattern was:
+  ```js
+  try {
+    setIsLoading(true);
+    const fetchThing = async () => { ... };
+    fetchThing(); // not awaited — its rejection lands outside this try
+  } catch (error) {
+    // never reached for errors thrown inside fetchThing
+  }
+  ```
+  so a failed fetch never actually hit the `catch`, and loading/empty states
+  could get stuck. Rewrote each as a single `async function` declared and
+  awaited inside the effect, with the loading flag set at the top of that
+  function and cleared in a `finally`. Side effects of doing this properly:
+  - `homepage.jsx`'s hostel-list effect no longer refetches on every
+    review-modal open/close (was `[showReviewForm]`, now fetches once on `[]`
+    — this was also "Still open" item 8 in a previous revision of this doc).
+  - `homepage.jsx`'s empty-results case now actually sets `isEmpty` (previously
+    only the error path did; a genuinely-empty response left the skeleton
+    loaders spinning forever).
+  - `HostelDetails.jsx` no longer has an artificial `setTimeout(…, 600)` before
+    clearing its loading state — it now clears exactly when the fetch settles.
+  - `PaymentReceipt.jsx`'s `.then/.catch/.finally` chain (which also called
+    `setLoading(false)` twice, once immediately and once after a fake 500ms
+    delay) became a plain `async/await` with one `finally`.
+  - `ResetPasswordPage.jsx`'s password-mismatch check was a `useEffect` whose
+    only job was calling `setError()` from a pure function of
+    `password`/`confirmPassword` — classic "you might not need an effect".
+    Replaced with a derived `passwordsMismatch` value computed at render time;
+    removed the effect entirely.
+  - `Payments.jsx` also had a `payload` object built once from render-scope
+    `const`s, then mutated in place later (`payload.tenancyId = tenancyId`).
+    Replaced with a `buildPaymentPayload(tenancyId)` function that constructs
+    a fresh object at call time. Also switched the payment-gateway redirect
+    from `window.location.href = url` to `window.location.assign(url)` — the
+    former reads as a mutation-after-render to static analysis; the latter is
+    the same behaviour without that ambiguity.
+  This is also what eliminated all 9 of the remaining `react-hooks/set-state-in-effect`
+  / "cannot modify"-style lint **errors**. Verified with a headless-browser pass
+  against the real backend after each file: homepage listing, hostel details
+  (rooms + reviews), and the reset-password mismatch hint (appears/disappears
+  correctly on matching vs. non-matching same-length input) all behave the same
+  as before, just without the lint errors or the underlying dead-catch bug.
 - **`PaymentHistory.jsx` — dead/confusing state initialiser**
   (`useState([])||response` where `response` wasn't even declared yet) cleaned
   up to a plain `useState([])`.
@@ -97,92 +144,62 @@ decision required), so they were corrected directly rather than just documented:
 
 ## Still open — needs a product/architecture decision
 
-1. **`Payments.jsx` / `homepage.jsx` / `HostelDetails.jsx` — async work started
-   inside a `try` without `await`.** Pattern repeats across all three:
-   ```js
-   try {
-     setIsLoading(true);
-     const fetchThing = async () => { ... };
-     fetchThing(); // not awaited — its rejection lands outside this try
-   } catch (error) {
-     // never reached for errors thrown inside fetchThing
-   }
-   ```
-   This is also what's driving 6 of the 9 remaining lint **errors**
-   (`react-hooks/set-state-in-effect`, from the new React Compiler-based rules in
-   `eslint-plugin-react-hooks` v7) in `homepage.jsx` (x3), `HostelDetails.jsx`,
-   `PaymentReceipt.jsx`, and `ResetPasswordPage.jsx`. A 7th
-   (`Payments.jsx`, "Cannot modify local variables after render completes") is
-   the same family of issue: the `payload`/`tenancyPayload` objects are plain
-   `const`s rebuilt every render, then mutated in place
-   (`payload.tenancyId = tenancyId`) from inside a handler. Fixing these
-   properly means restructuring each fetch effect (e.g. making the effect
-   callback itself `async`, or moving `setLoading(true)` so it isn't a bare
-   synchronous call at the top of the effect body) and moving `payload` into
-   state or rebuilding it fresh at call time instead of mutating the render-time
-   object — safe to do, but it's the same shape of change repeated ~6 times and
-   worth doing as one deliberate pass with a working dev server to verify
-   loading states still behave, rather than inside a UI-styling pass.
-
-2. **`SearchBar` is fully built but disabled**, and even if re-enabled today its
+1. **`SearchBar` is fully built but disabled**, and even if re-enabled today its
    filtering logic wouldn't line up: `HomePage`'s (now-removed) filter handler
    checked `filters.location` and `filters.price`, but `SearchBar` collects
    `location`, `dates`, and `guests` — there's no `price` field at all. Someone
    needs to decide the real filter fields before wiring this back up.
 
-3. **Two parallel sources of auth truth.** `Header.jsx` keeps its own `token`
+2. **Two parallel sources of auth truth.** `Header.jsx` keeps its own `token`
    state (read from `localStorage`, synced via a `storage` event listener) while
    `AuthContext` separately tracks `storeUser`. Login/logout update both by hand.
    Worth consolidating into `AuthContext` exposing `token`, `user`, `login()`,
    `logout()`.
 
-4. **`HostelDetails.jsx` — misleading fallback numbers.** `reviews.length || "12"`
+3. **`HostelDetails.jsx` — misleading fallback numbers.** `reviews.length || "12"`
    and `selectedHostel.averageRating?.toFixed(1) || "4.5"` show a hard-coded fake
    rating/review count when a property genuinely has none — reads as fabricated
    social proof. Should fall back to "No reviews yet" (the page already does this
    correctly in the empty-state branch further down; this one's just inconsistent
    with it).
 
-5. **`Payments.jsx` — "Room Number" field doesn't affect the payload.** The unit
+4. **`Payments.jsx` — "Room Number" field doesn't affect the payload.** The unit
    actually charged comes from the `roomId` route param (`unitId: roomId`), but
    the visible "Room Number" input is bound to separate `unit`/`setUnit` state
    that's never sent anywhere. The "Property" input has the same disconnect for
    free-text edits. Needs a decision: make these read-only (they're meant to
    reflect a pre-selected hostel/room), or actually wire them into the payload.
 
-6. **`LoginPage.jsx` — unguarded `error.error.includes(...)`.** If a request
+5. **`LoginPage.jsx` — unguarded `error.error.includes(...)`.** If a request
    fails with a shape that doesn't include an `error` string (network failure,
    unexpected 500 body), this throws inside the `catch` block itself. Worth
    normalising API error shapes or guarding with `error?.error?.includes(...)`.
 
-7. **`RegisterPage.jsx` — duplicate-check API called on every field blur.**
+6. **`RegisterPage.jsx` — duplicate-check API called on every field blur.**
    `onBlur={handleBlur}` is on the whole `<form>`, so it fires (and calls
    `RegisterAjax`) whenever *any* field loses focus, not just email/phone. Scope
    it to those two inputs.
 
-8. **`homepage.jsx` — hostel list refetched on every review-modal open/close**
-   because the fetch effect's dependency array is `[showReviewForm]`.
-
-9. **`RegSuccessModel` / registration-token flow looks fragile.** The "success"
+7. **`RegSuccessModel` / registration-token flow looks fragile.** The "success"
    screen shows based on `localStorage.getItem("token")`, but standard
    email/password registration doesn't appear to write a token to `localStorage`
    anywhere in `handleSubmit`. Worth tracing which flows actually populate
    `token` before relying on it to gate the success modal.
 
-10. **Repeated page scaffolding.** `LoginPage`, `RegisterPage`, `Payments`,
-    `RequestPasswordResetPage`, `ResetPasswordPage`, `ContactPage`, and
-    `AboutPage` each hand-roll the same "gradient background + white/teal card"
-    wrapper. A shared `AuthLayout`/`CardPage` component would cut duplication.
+8. **Repeated page scaffolding.** `LoginPage`, `RegisterPage`, `Payments`,
+   `RequestPasswordResetPage`, `ResetPasswordPage`, `ContactPage`, and
+   `AboutPage` each hand-roll the same "gradient background + white/teal card"
+   wrapper. A shared `AuthLayout`/`CardPage` component would cut duplication.
 
-11. **Manual validation duplicated per page** (email/phone regexes, password
-    rules) in `LoginPage`, `RegisterPage`, `RequestPasswordResetPage`, and
-    `ResetPasswordPage`. Consider a shared `validators.js` or a form library.
+9. **Manual validation duplicated per page** (email/phone regexes, password
+   rules) in `LoginPage`, `RegisterPage`, `RequestPasswordResetPage`, and
+   `ResetPasswordPage`. Consider a shared `validators.js` or a form library.
 
-12. **Hard-coded third-party image URLs.** `LoginPage.jsx` hotlinks an Unsplash
+10. **Hard-coded third-party image URLs.** `LoginPage.jsx` hotlinks an Unsplash
     photo; `RegisterPage.jsx` hotlinks a Google-hosted sample image. Neither is
     on your own CDN and neither reflects your actual brand.
 
-13. **Dev tooling: `npm run build`/`npm run dev` can fail with a native-binding
+11. **Dev tooling: `npm run build`/`npm run dev` can fail with a native-binding
     error on Windows.** The repo pins `"vite": "npm:rolldown-vite@7.2.5"`, which
     also requires Node `^20.19.0` or `>=22.12.0` (this machine has `20.15.0` —
     only a warning, not a hard blocker). The actual blocker was a one-off failed
@@ -197,17 +214,37 @@ decision required), so they were corrected directly rather than just documented:
 ## Remaining lint output (for reference)
 
 ```
-9 errors   — see item 1 above:
-             react-hooks/set-state-in-effect: homepage.jsx (x3), HostelDetails.jsx,
-             PaymentReceipt.jsx, ResetPasswordPage.jsx
-             "cannot modify local variables after render": Payments.jsx
-6 warnings — react-hooks/exhaustive-deps (useIdleTimeout.js, PaymentHistory.jsx, Payments.jsx, ResetPasswordPage.jsx, TenancyAgreement.jsx, homepage.jsx)
+0 errors
+5 warnings — react-hooks/exhaustive-deps (useIdleTimeout.js, PaymentHistory.jsx, Payments.jsx, TenancyAgreement.jsx, homepage.jsx)
 ```
 
-All six warnings are the same shape: an effect that intentionally runs once
+All five warnings are the same shape: an effect that intentionally runs once
 (`[]`) or on a specific trigger, calling a function that closes over a value not
 listed in the dependency array. In each case, adding the missing dependency
 as-is would change *when* the effect re-runs (e.g. `setStoreUser` in
 `homepage.jsx`, or `resetTimers` in `useIdleTimeout.js`), so they need a
 `useCallback`/`useRef` treatment rather than a blind dependency-array edit — left
 as warnings rather than risking a behaviour change.
+
+---
+
+## Pre-commit lint hook
+
+Added `husky` (devDependency of `frontend/campushostel-fe`) so `npm run lint`
+runs automatically before every commit and **blocks the commit if there are any
+errors** (warnings don't block, matching how `eslint`'s own exit code works).
+
+Because the git repository root is two directories above `frontend/campushostel-fe`,
+this isn't the default single-package husky setup — the hook lives at
+`frontend/campushostel-fe/.husky/pre-commit`, and `core.hooksPath` is configured
+to point at that folder specifically:
+
+- `package.json`'s `"prepare"` script (`cd ../.. && husky frontend/campushostel-fe/.husky`)
+  sets this up automatically for anyone who runs `npm install` inside
+  `frontend/campushostel-fe`.
+- The hook itself just does `cd frontend/campushostel-fe && npm run lint`, since
+  git always runs hooks with the repo root as the working directory.
+
+Verified both directions: a clean commit passes through, and a commit
+introducing a real lint error (`no-unused-vars`) is rejected with
+`husky - pre-commit script failed (code 1)` before it's created.
