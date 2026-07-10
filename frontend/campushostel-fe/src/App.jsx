@@ -12,6 +12,7 @@ import ContactPage from "./pages/ContactPage";
 import RequestPasswordResetPage from "./pages/RequestPasswordResetPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 import AboutPage from "./pages/AboutPage";
+import NotFoundPage from "./pages/NotFoundPage";
 import { LogoutApi } from "./services/AuthServices";
 import {
   useIdleTimeout,
@@ -98,14 +99,12 @@ function App() {
             element={<RequestPasswordResetPage />}
           />
           <Route path="/password-reset" element={<ResetPasswordPage />} />
+          {/* 404 */}
+          <Route path="*" element={<NotFoundPage />} />
         </Route>
 
         {/* Pages WITHOUT Header */}
         <Route path="/login" element={<LoginPage />} />
-        {/* <Route
-          path="/register"
-          element={!token ? <RegisterPage /> : <Navigate to="/" replace />}
-        /> */}
         <Route
           path="/register"
           element={
@@ -113,11 +112,6 @@ function App() {
               <RegisterPage />
             </ProtectedRegistrationRoute>
           }
-        />
-        {/* 404 */}
-        <Route
-          path="*"
-          element={<p className="text-red-600">⚠️ Page not found</p>}
         />
       </Routes>
     </>
