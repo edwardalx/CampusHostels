@@ -1,4 +1,8 @@
+import { useAuth } from '../context/AuthContext'
+
 export function Sidebar() {
+  const { manager, logout } = useAuth()
+
   return (
     <aside className="sidebar">
       <div className="brand-block">
@@ -22,6 +26,14 @@ export function Sidebar() {
         <p className="eyebrow">System health</p>
         <strong>96.4%</strong>
         <span>All services nominal</span>
+      </div>
+
+      <div className="sidebar-card">
+        <p className="eyebrow">Signed in as</p>
+        <strong>{manager?.firstName} {manager?.lastName}</strong>
+        <button className="nav-item" onClick={logout}>
+          Log out
+        </button>
       </div>
     </aside>
   )

@@ -1,4 +1,5 @@
 import './App.css'
+import { Routes, Route } from 'react-router-dom'
 import { Sidebar } from './components/Sidebar'
 import { DashboardHeader } from './components/DashboardHeader'
 import { StatsGrid } from './components/StatsGrid'
@@ -6,6 +7,9 @@ import { OccupancyChart } from './components/OccupancyChart'
 import { PropertyHealthPanel } from './components/PropertyHealthPanel'
 import { RecentReservationsTable } from './components/RecentReservationsTable'
 import { ActivityFeed } from './components/ActivityFeed'
+import { LoginPage } from './components/LoginPage'
+import { ChangePasswordPage } from './components/ChangePasswordPage'
+import { ProtectedRoute } from './components/ProtectedRoute'
 import {
   activityFeed,
   occupancyData,
@@ -14,7 +18,7 @@ import {
   summaryCards,
 } from './data/dashboardData'
 
-function App() {
+function Dashboard() {
   return (
     <div className="dashboard-shell">
       <Sidebar />
@@ -35,6 +39,23 @@ function App() {
         </section>
       </main>
     </div>
+  )
+}
+
+function App() {
+  return (
+    <Routes>
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/change-password" element={<ChangePasswordPage />} />
+      <Route
+        path="/"
+        element={
+          <ProtectedRoute>
+            <Dashboard />
+          </ProtectedRoute>
+        }
+      />
+    </Routes>
   )
 }
 

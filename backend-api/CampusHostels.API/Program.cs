@@ -82,6 +82,8 @@ builder.Services.AddScoped<IReviewRatingRepository, EfReviewRatingRepository>();
 #region Services
 builder.Services.AddScoped<IAccountService, AccountService>();
 builder.Services.AddScoped<ITokenService, TokenService>();
+builder.Services.AddScoped<IManagerService, ManagerService>();
+builder.Services.AddScoped<IManagerTokenService, ManagerTokenService>();
 builder.Services.AddScoped<IPaymentService, PaymentService>();
 builder.Services.AddScoped<ITenancyService, TenancyService>();
 builder.Services.AddScoped<IWhatsAppService, WhatsAppService>();
@@ -215,6 +217,12 @@ builder.Services.AddAuthentication(options =>
         }
     };
 });
+
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("RequireManager", policy => policy.RequireClaim("scope", "manager"));
+    options.AddPolicy("RequireSuperManager", policy => policy.RequireClaim("managerTier", "Super"));
+});
 #endregion
 
 
@@ -228,7 +236,8 @@ builder.Services.AddCors(options =>
                 "https://localhost:5000",
                 "http://your-frontend-domain.com",
                 "https://campushostels.duckdns.org/",
-                "http://localhost:5173",      // React dev server
+                "http://localhost:5173",      // React dev server (campushostel-fe)
+                "http://localhost:5174",      // React dev server (campushostel-admin)
                 "https://campushostels.duckdns.org") // Production fro
             .AllowAnyHeader()
             .AllowAnyMethod()
@@ -259,6 +268,15 @@ using (var scope = app.Services.CreateScope())
         "tenancy-check-job",
         job => job.CheckTenancies(),
         app.Environment.IsDevelopment() ? Cron.Minutely : Cron.Daily, // use Daily later
+        new RecurringJobOptions
+        {
+            TimeZone = TimeZoneInfo.Utc
+        });
+
+    recurringJobManager.AddOrUpdate<ManagerPasswordExpiryJob>(
+        "manager-password-expiry-job",
+        job => job.EnforcePasswordRotation(),
+        Cron.Daily,
         new RecurringJobOptions
         {
             TimeZone = TimeZoneInfo.Utc

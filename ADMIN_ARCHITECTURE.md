@@ -320,6 +320,32 @@ This is the most practical, scalable, and easy-to-integrate architecture for you
 
 ---
 
+## Recommended Improvements
+
+Before treating this architecture as final, the following gaps should be addressed:
+
+### 1. Resolve the Django admin database access conflict
+
+The system diagram shows Django admin writing directly to the shared database, which contradicts the Integration Strategy principle of avoiding direct database access outside the .NET API. If Django admin can edit customers, payments, or tenancies directly, validation, audit logging, and business rules get bypassed for those changes. Pick one:
+
+- Restrict Django admin to read-only/inspection use, or
+- Route Django admin actions through the same .NET API, or
+- Explicitly document which tables Django admin may touch directly and accept that those bypass business rules and audit logging.
+
+### 2. Specify secure token storage
+
+"Store tokens securely in the browser" is too vague for an app handling financial and customer PII. Use httpOnly, secure, SameSite cookies for the refresh token rather than localStorage or sessionStorage, to reduce exposure to XSS-based token theft.
+
+### 3. Clarify the relationship between admin and public authentication
+
+State explicitly whether admin users share the same identity system as public users with elevated claims, or are a separate user store. If shared, use policy-based authorization (claims/roles on the same JWT) to lock down `/api/admin/*` routes, and document that decision here.
+
+### 4. Turn the RBAC list into a permission matrix
+
+Roles and permissions are currently listed separately with no mapping between them. Before Phase 3 (Support/Settings), define an explicit role-to-permission matrix so access decisions (e.g. who can approve a tenancy) are enforced consistently in code rather than decided ad hoc.
+
+---
+
 ## Final Recommendation
 
 For CampusHostels, the best long-term architecture is a dedicated admin dashboard built on top of the existing .NET API and shared database, not a separate siloed application or a heavy microservice setup.
