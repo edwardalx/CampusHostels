@@ -136,6 +136,7 @@ services:
       - ./backend-admin/staticfiles:/app/staticfiles:ro
       - ./backend-admin/media:/app/media:ro
       - /etc/letsencrypt:/etc/letsencrypt:ro
+      - /var/www/certbot:/var/www/certbot:ro # ← ADD THIS LINE
       - /var/www/book-shelf-fe:/var/www/book-shelf-fe:ro
       - frontend-static:/var/www/campushostels-fe:ro # ← CHANGE THIS LINE
     depends_on:
