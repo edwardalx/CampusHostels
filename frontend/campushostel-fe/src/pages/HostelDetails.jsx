@@ -1,9 +1,9 @@
-import React, { use, useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import {
   getHostelById,
   getUnitsByPropertyId,
 } from "../services/HostelServices";
-import { useNavigate, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { SkeletonCard } from "../components/SkeletonCard";
 import { HeroSection } from "../components";
 import { Tile } from "../components/UnitTile";
@@ -29,52 +29,43 @@ export default function HostelDetails() {
   const [reviews, setReviews] = useState([]);
   const [showReviewForm, setShowReviewForm] = useState(false);
   const { id: routeId } = useParams();
-  // let storedHostel = JSON.parse(localStorage.getItem("selectedHostel"));
   const hostelId = Number(routeId);
-  const selectedHostelNameUpper = selectedHostel.name
-    ? selectedHostel.name.toUpperCase()
-    : "";
   useEffect(() => {
-    try {
+    async function fetchHostelDetails() {
       setLoading(true);
-
-      const fetchHostelDetails = async () => {
-        const response = await getHostelById(hostelId || storedHostel);
+      try {
+        const response = await getHostelById(hostelId);
         setSelectedHostel(response);
-      };
-      fetchHostelDetails();
-    } catch (error) {
-      console.warn("Error fetching hostel details:", error);
-      setError("Failed to load hostel details. Please try again later.");
-    } finally {
-      setTimeout(() => {
+      } catch (error) {
+        console.warn("Error fetching hostel details:", error);
+        setError("Failed to load hostel details. Please try again later.");
+      } finally {
         setLoading(false);
-      }, 600);
+      }
     }
+    fetchHostelDetails();
     localStorage.removeItem("tenancy");
   }, [hostelId]);
 
   useEffect(() => {
-    try {
-      // storedHostel = JSON.parse(storedHostel);
-      const fetchUnits = async () => {
-        const response = await getUnitsByPropertyId(hostelId || storedHostel);
+    async function fetchUnits() {
+      try {
+        const response = await getUnitsByPropertyId(hostelId);
         setUnits(response);
-      };
-      fetchUnits();
-    } catch (error) {
-      console.warn("Error fetching hostel details:", error);
-      setError("Failed to load hostel units. Please try again later.");
+      } catch (error) {
+        console.warn("Error fetching hostel units:", error);
+        setError("Failed to load hostel units. Please try again later.");
+      }
     }
+    fetchUnits();
   }, [hostelId]);
-  console.log("units", units);
-  console.log("selectedHostel", selectedHostel);
+
   React.useEffect(() => {
     if (!selectedHostel?.id) return;
 
     async function fetchReviews() {
       try {
-        const data = await GetPropertyRatings(selectedHostel.id || hostel.id);
+        const data = await GetPropertyRatings(selectedHostel.id);
         setReviews(data);
       } catch (error) {
         console.error("Error fetching reviews:", error);
@@ -86,7 +77,7 @@ export default function HostelDetails() {
 
   if (loading) {
     return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 lg:gap-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 lg:gap-6">
         {[...Array(8)].map((_, i) => (
           <SkeletonCard key={i} />
         ))}
@@ -199,7 +190,7 @@ export default function HostelDetails() {
                           <span>Security</span>
                         </div>
                       )}
-                      {!selectedHostel.amenities.includes("parking") && (
+                      {selectedHostel.amenities.includes("parking") && (
                         <div className="flex items-center gap-2 px-4 py-2 bg-gray-100 rounded-full text-sm">
                           <ParkingCircle size={16} />
                           <span>Parking</span>
@@ -272,7 +263,7 @@ export default function HostelDetails() {
               </div>
               <button
                 onClick={() => setShowReviewForm(true)}
-                className="flex items-center bg-gray-300 gap-2 px-6 py-2.5 border-2 border-primary-teal text-primary-teal font-semibold rounded-full hover:bg-teal-50 transition-colors text-sm"
+                className="flex items-center bg-white gap-2 px-6 py-2.5 border-2 border-primary-teal text-primary-teal font-semibold rounded-full hover:bg-teal-50 transition-colors text-sm"
               >
                 <MessageSquare size={18} />
                 Leave a review

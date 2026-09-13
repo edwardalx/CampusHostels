@@ -13,8 +13,8 @@
  * - Accessibility compliant
  */
 
-import React, { useState, useCallback, useEffect, use } from "react";
-import { Await, useNavigate, useParams } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { getHostels } from "../services/HostelServices";
 import {
   getLikedHostels,
@@ -25,62 +25,45 @@ import { HeroSection, SearchBar, HostelGrid, Footer } from "../components";
 import { SkeletonCard } from "../components/SkeletonCard";
 import { ReviewHostelPage } from "./ReviewHostelPage";
 import { PrivateRoute } from "../components/ProtectedRoute";
-import { Heart } from "lucide-react";
-import { AuthContext } from "../zu-store/AuthContext";
+import { Heart, Info } from "lucide-react";
+import { AuthContext } from "../zu-store/AuthContextInstance";
 import { useContext } from "react";
 
 export default function HomePage() {
   const [hostels, setHostels] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [isEmpty, setIsEmpty] = useState(false);
-  const [filteredHostels, setFilteredHostels] = useState([]);
   const [selectedHostel, setSelectedHostel] = useState(
     JSON.parse(sessionStorage.getItem("storedHostelId")) || null,
   );
-  // const [rating, setRating] = useState(0);
   const { storeUser, setStoreUser } = useContext(AuthContext);
-  const [showReviewForm, setShowReviewForm] = React.useState(false);
+  // Hydrate from sessionStorage at init time (not in a post-mount effect) so
+  // there's no extra render just to restore a previously-open review modal.
+  const [showReviewForm, setShowReviewForm] = React.useState(() => {
+    const storedValue = sessionStorage.getItem("showReviewForm");
+    return storedValue !== null ? storedValue === "true" : false;
+  });
   const [userLikedHostels, setUserLikedHostels] = useState([]);
   const [likeStatus, setLikeStatus] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   let links = ["Home", "About", "Contact"];
   const navigate = useNavigate();
-  //fetch hostels
+  //fetch hostels once on mount
   useEffect(() => {
-    try {
-      setIsLoading(true);
-      const fetchHostels = async () => {
+    async function fetchHostels() {
+      try {
         const response = await getHostels();
-        if (response.length > 0) {
-          setHostels(response);
-          setIsLoading(false);
-        }
-      };
-      fetchHostels();
-      // localStorage.clear();
-    } catch (error) {
-      console.warn("Error fetching hostels:", error);
-      setIsEmpty(true);
+        setHostels(response);
+        setIsEmpty(response.length === 0);
+      } catch (error) {
+        console.warn("Error fetching hostels:", error);
+        setIsEmpty(true);
+      } finally {
+        setIsLoading(false);
+      }
     }
+    fetchHostels();
     localStorage.removeItem("tenancy");
-    // finally {
-    //   if (hostels.length > 0) {
-    //     setIsLoading(false);
-    //   }
-    //   setTimeout(() => {
-    //     setIsLoading(false);
-    //   }, 600);
-    // }
-  }, [showReviewForm]);
-  const updateReviewForm = (value) => {
-    setShowReviewForm(value);
-    sessionStorage.setItem("showReviewForm", value);
-  };
-  useEffect(() => {
-    const storedValue = sessionStorage.getItem("showReviewForm");
-    if (storedValue !== null) {
-      updateReviewForm(storedValue === "true");
-    }
   }, []);
 
   useEffect(() => {
@@ -88,95 +71,21 @@ export default function HomePage() {
   }, [showReviewForm]);
 
   useEffect(() => {
-    if (!storeUser?.tenantId) {
-      setUserLikedHostels([]);
-      return;
+    async function fetchLikedHostels() {
+      if (!storeUser?.tenantId) {
+        setUserLikedHostels([]);
+        return;
+      }
+      try {
+        const likedHostels = await getLikedHostels(storeUser.tenantId);
+        setUserLikedHostels(likedHostels.likedHostelIds);
+      } catch (error) {
+        console.error("Error fetching liked hostels:", error);
+      }
     }
-
-    const fetchLikedHostels = async () => {
-      const likedHostels = await getLikedHostels(storeUser.tenantId);
-      setUserLikedHostels(likedHostels.likedHostelIds);
-    };
 
     fetchLikedHostels();
   }, [likeStatus, storeUser]);
-
-  // Handle search filters
-  const handleSearch = useCallback((filters) => {
-    setIsLoading(true);
-    // Simulate API call delay
-    setTimeout(() => {
-      let results = hostels;
-
-      // Filter by location
-      if (filters.location) {
-        results = results.filter(
-          (h) =>
-            h.location.toLowerCase().includes(filters.location.toLowerCase()) ||
-            h.name.toLowerCase().includes(filters.location.toLowerCase()),
-        );
-      }
-
-      // Filter by price (parse and compare)
-      if (filters.price) {
-        const maxPrice = parseInt(filters.price) || Infinity;
-        results = results.filter((h) => h.price <= maxPrice);
-      }
-
-      setFilteredHostels(results);
-      setIsLoading(false);
-    }, 600);
-  }, []);
-
-  // Handle hostel like/favorite
-  const handleHostelLike = useCallback((hostelId, isFavorite) => {
-    setFilteredHostels((prev) =>
-      prev.map((h) => (h.id === hostelId ? { ...h, isFavorite } : h)),
-    );
-  }, []);
-
-  // Handle view details
-  const handleViewDetails = useCallback(
-    (hostelId) => {
-      const hostel = filteredHostels.find((h) => h.id === hostelId);
-      console.log("View details for:", hostel);
-      // Navigate to detail page: navigate(`/hostel/${hostelId}`)
-    },
-    [filteredHostels],
-  );
-
-  // Handle filter button click
-  const handleFilterClick = () => {
-    console.log("Open filter modal");
-    // Implement filter modal here
-  };
-
-  // Handle navigation
-  const handleNavClick = (link) => {
-    setActiveNavLink(link);
-    console.log("Navigate to:", link);
-    if (link === "HOME") {
-      navigate(`/`);
-    }
-    if (link === "HISTORY") {
-      navigate(`/payment-history`);
-    }
-    if (link === "TENANCY") {
-      navigate(`/tenancy`);
-    }
-    // Implement routing: navigate(`/${link.toLowerCase()}`)
-  };
-
-  // Handle auth
-  // const handleLogin = () => {
-  //   console.log("Navigate to login");
-  //   navigate("/login");
-  // };
-
-  // const handleSignUp = () => {
-  //   console.log("Navigate to sign up");
-  //   navigate("/register");
-  // };
 
   // Handle footer links
   const handleFooterLink = (link) => {
@@ -267,15 +176,12 @@ export default function HomePage() {
                   </span>
                   {/* Error Message */}
                   {!storeUser && errorMessage && (
-                    <div className="flex items-center gap-1 text-sm text-teal-600">
-                      <Heart
-                        size={16}
-                        className="fill-green-500 text-green-500"
-                      />
+                    <div className="flex items-center gap-1.5 text-sm font-medium text-amber-600">
+                      <Info size={16} />
                       <p>{errorMessage}</p>
                     </div>
                   )}
-                  <span className="inline-flex items-center bg-gray-300 px-3 py-1.5 rounded-full text-sm font-semibold text-secondary-dark-gray">
+                  <span className="inline-flex items-center bg-teal-50 px-3 py-1.5 rounded-full text-sm font-semibold text-teal-700">
                     {!isLoading && `${hostels.length} Listings`}
                   </span>
                 </div>
@@ -304,7 +210,6 @@ export default function HomePage() {
                 onLike: (hostel) => {
                   handleLike(hostel);
                 },
-                onViewDetails: handleViewDetails,
                 onToggleReviewForm: (value, hostel) => {
                   setShowReviewForm(value);
                   setSelectedHostel(hostel);

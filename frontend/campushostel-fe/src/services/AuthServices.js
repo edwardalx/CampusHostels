@@ -1,4 +1,3 @@
-import { showSessionExpiredAlert } from "../hooks/useIdleTimeout";
 let baseUrl = "/api/Accounts";
 
 export const LoginApi = async ({ loginData }) => {

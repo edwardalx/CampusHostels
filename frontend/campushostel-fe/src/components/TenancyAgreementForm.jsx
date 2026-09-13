@@ -1,11 +1,9 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import html2pdf from "html2pdf.js";
 import "../Css/TenancyCss.css";
 
 export default function TenancyAgreementForm({ agreement }) {
-  const [user, setUser] = useState(
-    JSON.parse(localStorage.getItem("user")) || {},
-  );
+  const [user] = useState(JSON.parse(localStorage.getItem("user")) || {});
   //   const agreement = {
   //     tenantName: "John Doe",
   //     studentId: "ST1023",
