@@ -68,7 +68,7 @@ public class ManagerService : IManagerService
             LastName = manager.LastName,
             Email = manager.Email,
             Tier = manager.Tier.ToString(),
-            MustChangePassword = manager.MustChangePassword,
+            // MustChangePassword = manager.MustChangePassword,
             Expires = expires
         };
     }
