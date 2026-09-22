@@ -29,7 +29,9 @@ public class ManagerService : IManagerService
             throw new UnauthorizedAccessException("Username is required.");
         }
 
-        var manager = await _db.Managers.FirstOrDefaultAsync(m => m.Username == normalizedUsername);
+        var manager = await _db.Managers
+            .Include(m => m.Functions)
+            .FirstOrDefaultAsync(m => m.Username == normalizedUsername);
 
         if (manager is null)
         {
@@ -68,14 +70,20 @@ public class ManagerService : IManagerService
             LastName = manager.LastName,
             Email = manager.Email,
             Tier = manager.Tier.ToString(),
-            // MustChangePassword = manager.MustChangePassword,
+            MustChangePassword = manager.MustChangePassword,
+            Functions = manager.Functions
+                .Where(f => f.IsActive && f.Function != FunctionType.None)
+                .Select(f => f.Function)
+                .ToList(),
             Expires = expires
         };
     }
 
     public async Task<ManagerProfileDto?> GetCurrentManagerAsync(Guid managerId)
     {
-        var manager = await _db.Managers.FirstOrDefaultAsync(m => m.ManagerId == managerId);
+        var manager = await _db.Managers
+            .Include(m => m.Functions)
+            .FirstOrDefaultAsync(m => m.ManagerId == managerId);
         if (manager is null) return null;
 
         return new ManagerProfileDto
@@ -87,7 +95,11 @@ public class ManagerService : IManagerService
             Email = manager.Email,
             PhoneNumber = manager.PhoneNumber,
             Tier = manager.Tier.ToString(),
-            MustChangePassword = manager.MustChangePassword
+            MustChangePassword = manager.MustChangePassword,
+            Functions = manager.Functions
+                .Where(f => f.IsActive && f.Function != FunctionType.None)
+                .Select(f => f.Function)
+                .ToList()
         };
     }
 
@@ -107,6 +119,58 @@ public class ManagerService : IManagerService
         manager.PasswordHash = AccountService.HashPassword(dto.NewPassword);
         manager.MustChangePassword = false;
         manager.LastPasswordChangeAt = DateTime.UtcNow;
+        await _db.SaveChangesAsync();
+    }
+
+    public async Task<IReadOnlyList<FunctionType>> GetFunctionsAsync(Guid managerId)
+    {
+        var manager = await _db.Managers
+            .Include(m => m.Functions)
+            .FirstOrDefaultAsync(m => m.ManagerId == managerId);
+
+        if (manager is null)
+        {
+            throw new KeyNotFoundException("Manager not found.");
+        }
+
+        return manager.Functions
+            .Where(f => f.IsActive && f.Function != FunctionType.None)
+            .Select(f => f.Function)
+            .ToList();
+    }
+
+    public async Task SetFunctionsAsync(Guid managerId, IReadOnlyCollection<FunctionType> functions)
+    {
+        var invalidFunctions = functions
+            .Where(function => function == FunctionType.None || !Enum.IsDefined(function))
+            .Distinct()
+            .ToList();
+
+        if (invalidFunctions.Count > 0)
+        {
+            throw new ArgumentException("The function list contains an invalid function.");
+        }
+
+        var manager = await _db.Managers
+            .Include(m => m.Functions)
+            .FirstOrDefaultAsync(m => m.ManagerId == managerId);
+
+        if (manager is null)
+        {
+            throw new KeyNotFoundException("Manager not found.");
+        }
+
+        var requestedFunctions = functions.Distinct().ToHashSet();
+        manager.Functions.Clear();
+        foreach (var function in requestedFunctions)
+        {
+            manager.Functions.Add(new ManagerFunction
+            {
+                ManagerId = manager.Id,
+                Function = function
+            });
+        }
+
         await _db.SaveChangesAsync();
     }
 
@@ -154,7 +218,8 @@ public class ManagerService : IManagerService
             Email = manager.Email,
             PhoneNumber = manager.PhoneNumber,
             Tier = manager.Tier.ToString(),
-            MustChangePassword = manager.MustChangePassword
+            MustChangePassword = manager.MustChangePassword,
+            Functions = new List<FunctionType>()
         };
     }
 

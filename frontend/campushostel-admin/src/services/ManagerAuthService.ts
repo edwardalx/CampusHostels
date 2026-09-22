@@ -1,5 +1,7 @@
 const baseUrl = '/api/Managers'
 
+export type FunctionType = 0 | 1 | 2 | 3 | 4
+
 export interface ManagerAuthResponse {
   token: string
   managerId: string
@@ -9,6 +11,7 @@ export interface ManagerAuthResponse {
   email: string
   tier: 'Standard' | 'Super'
   mustChangePassword: boolean
+  functions: FunctionType[]
   expires: string
 }
 
@@ -21,6 +24,7 @@ export interface ManagerProfile {
   phoneNumber: string
   tier: 'Standard' | 'Super'
   mustChangePassword: boolean
+  functions: FunctionType[]
 }
 
 export async function loginManager(credentials: {

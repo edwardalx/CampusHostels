@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using CampusHostels.API.Domain.Enums;
 
 namespace CampusHostels.API.Application.DTOs;
 
@@ -19,7 +20,8 @@ public class ManagerAuthResponseDto
     public string LastName { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
     public string Tier { get; set; } = string.Empty;
-    // public bool MustChangePassword { get; set; }
+    public bool MustChangePassword { get; set; }
+    public IReadOnlyList<FunctionType> Functions { get; set; } = new List<FunctionType>();
     public DateTime Expires { get; set; }
 }
 
@@ -33,6 +35,12 @@ public class ManagerProfileDto
     public string PhoneNumber { get; set; } = string.Empty;
     public string Tier { get; set; } = string.Empty;
     public bool MustChangePassword { get; set; }
+    public IReadOnlyList<FunctionType> Functions { get; set; } = new List<FunctionType>();
+}
+
+public class ManagerFunctionsUpdateDto
+{
+    public List<FunctionType> Functions { get; set; } = [];
 }
 
 public class ManagerChangePasswordDto

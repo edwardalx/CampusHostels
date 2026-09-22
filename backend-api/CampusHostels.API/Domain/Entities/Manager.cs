@@ -35,4 +35,5 @@ public class Manager
     // by ManagerPasswordExpiryJob — Super Managers are exempt from the recurring rotation.
     public bool MustChangePassword { get; set; } = true;
     public DateTime? LastPasswordChangeAt { get; set; }
+    public List<ManagerFunction> Functions { get; set; } = new();
 }

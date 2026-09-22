@@ -60,6 +60,39 @@ public class ManagersController : ControllerBase
         }
     }
 
+    [Authorize(Policy = "RequireManager")]
+    [HttpGet("{managerId:guid}/functions")]
+    public async Task<IActionResult> GetFunctions(Guid managerId)
+    {
+        try
+        {
+            return Ok(await _managerService.GetFunctionsAsync(managerId));
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { error = ex.Message });
+        }
+    }
+
+    [Authorize(Policy = "RequireSuperManager")]
+    [HttpPut("{managerId:guid}/functions")]
+    public async Task<IActionResult> SetFunctions(Guid managerId, [FromBody] ManagerFunctionsUpdateDto dto)
+    {
+        try
+        {
+            await _managerService.SetFunctionsAsync(managerId, dto.Functions);
+            return Ok(await _managerService.GetFunctionsAsync(managerId));
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { error = ex.Message });
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
+    }
+
     // Deliberately not a public "register" endpoint — Manager accounts are never self-service.
     // Only an existing Super Manager can create new manager accounts.
     [Authorize(Policy = "RequireSuperManager")]

@@ -9,6 +9,7 @@ public class ApplicationDbContext : DbContext
 
     public DbSet<User> Users { get; set; }
     public DbSet<Manager> Managers { get; set; }
+    public DbSet<ManagerFunction> ManagerFunctions { get; set; }
     public DbSet<Property> Properties { get; set; }
     public DbSet<Unit> Units { get; set; }
     public DbSet<Image> Images { get; set; }
@@ -59,6 +60,19 @@ public class ApplicationDbContext : DbContext
                 MustChangePassword = true,
                 CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc)
             });
+        });
+
+        modelBuilder.Entity<ManagerFunction>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Function)
+                .HasConversion<string>()
+                .IsRequired();
+            entity.HasOne(e => e.Manager)
+                .WithMany(e => e.Functions)
+                .HasForeignKey(e => e.ManagerId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.HasIndex(e => new { e.ManagerId, e.Function }).IsUnique();
         });
 
         // Property configuration
