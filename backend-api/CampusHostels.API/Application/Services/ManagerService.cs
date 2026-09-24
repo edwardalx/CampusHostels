@@ -71,10 +71,7 @@ public class ManagerService : IManagerService
             Email = manager.Email,
             Tier = manager.Tier.ToString(),
             MustChangePassword = manager.MustChangePassword,
-            Functions = manager.Functions
-                .Where(f => f.IsActive && f.Function != FunctionType.None)
-                .Select(f => f.Function)
-                .ToList(),
+            Functions = GetEffectiveFunctions(manager),
             Expires = expires
         };
     }
@@ -96,10 +93,7 @@ public class ManagerService : IManagerService
             PhoneNumber = manager.PhoneNumber,
             Tier = manager.Tier.ToString(),
             MustChangePassword = manager.MustChangePassword,
-            Functions = manager.Functions
-                .Where(f => f.IsActive && f.Function != FunctionType.None)
-                .Select(f => f.Function)
-                .ToList()
+            Functions = GetEffectiveFunctions(manager)
         };
     }
 
@@ -133,10 +127,7 @@ public class ManagerService : IManagerService
             throw new KeyNotFoundException("Manager not found.");
         }
 
-        return manager.Functions
-            .Where(f => f.IsActive && f.Function != FunctionType.None)
-            .Select(f => f.Function)
-            .ToList();
+        return GetEffectiveFunctions(manager);
     }
 
     public async Task SetFunctionsAsync(Guid managerId, IReadOnlyCollection<FunctionType> functions)
@@ -221,6 +212,21 @@ public class ManagerService : IManagerService
             MustChangePassword = manager.MustChangePassword,
             Functions = new List<FunctionType>()
         };
+    }
+
+    private static IReadOnlyList<FunctionType> GetEffectiveFunctions(Manager manager)
+    {
+        if (manager.Tier == ManagerTier.Super)
+        {
+            return Enum.GetValues<FunctionType>()
+                .Where(f => f != FunctionType.None)
+                .ToList();
+        }
+
+        return manager.Functions
+            .Where(f => f.IsActive && f.Function != FunctionType.None)
+            .Select(f => f.Function)
+            .ToList();
     }
 
     private static string NormalizePhone(string phone)

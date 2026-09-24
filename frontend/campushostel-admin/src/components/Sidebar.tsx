@@ -1,7 +1,26 @@
 import { useAuth } from '../context/AuthContext'
+import { FunctionType, type FunctionType as FunctionTypeValue } from '../services/ManagerAuthService'
+
+interface NavItem {
+  label: string
+  requiredFunction?: FunctionTypeValue
+}
+
+const navItems: NavItem[] = [
+  { label: 'Overview' },
+  { label: 'Properties', requiredFunction: FunctionType.ManageProperties },
+  { label: 'Tenants', requiredFunction: FunctionType.ManageUsers },
+  { label: 'Payments' },
+  { label: 'Maintenance' },
+  { label: 'Reports', requiredFunction: FunctionType.ViewReports },
+]
 
 export function Sidebar() {
   const { manager, logout } = useAuth()
+
+  const visibleNavItems = navItems.filter(
+    (item) => !item.requiredFunction || manager?.functions.includes(item.requiredFunction),
+  )
 
   return (
     <aside className="sidebar">
@@ -14,12 +33,11 @@ export function Sidebar() {
       </div>
 
       <nav className="nav">
-        <button className="nav-item active">Overview</button>
-        <button className="nav-item">Properties</button>
-        <button className="nav-item">Tenants</button>
-        <button className="nav-item">Payments</button>
-        <button className="nav-item">Maintenance</button>
-        <button className="nav-item">Reports</button>
+        {visibleNavItems.map((item, index) => (
+          <button key={item.label} className={`nav-item${index === 0 ? ' active' : ''}`}>
+            {item.label}
+          </button>
+        ))}
       </nav>
 
       <div className="sidebar-card">

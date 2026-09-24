@@ -2,6 +2,14 @@ const baseUrl = '/api/Managers'
 
 export type FunctionType = 0 | 1 | 2 | 3 | 4
 
+export const FunctionType = {
+  None: 0,
+  ManageManagers: 1,
+  ManageUsers: 2,
+  ViewReports: 3,
+  ManageProperties: 4,
+} as const
+
 export interface ManagerAuthResponse {
   token: string
   managerId: string
