@@ -35,7 +35,24 @@ public class ManagerProfileDto
     public string PhoneNumber { get; set; } = string.Empty;
     public string Tier { get; set; } = string.Empty;
     public bool MustChangePassword { get; set; }
+    public bool IsActive { get; set; }
     public IReadOnlyList<FunctionType> Functions { get; set; } = new List<FunctionType>();
+}
+
+public class ManagerUpdateDto
+{
+    [Required]
+    public string FirstName { get; set; } = string.Empty;
+    [Required]
+    public string LastName { get; set; } = string.Empty;
+    [Required]
+    [EmailAddress]
+    public string Email { get; set; } = string.Empty;
+    [Required]
+    public string PhoneNumber { get; set; } = string.Empty;
+    // "Standard" or "Super". Only reachable by an existing Super Manager, so both are trusted choices.
+    public string Tier { get; set; } = "Standard";
+    public bool IsActive { get; set; } = true;
 }
 
 public class ManagerFunctionsUpdateDto

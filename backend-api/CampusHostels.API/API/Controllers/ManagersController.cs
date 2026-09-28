@@ -80,8 +80,8 @@ public class ManagersController : ControllerBase
     {
         try
         {
-            await _managerService.SetFunctionsAsync(managerId, dto.Functions);
-            return Ok(await _managerService.GetFunctionsAsync(managerId));
+            var profile = await _managerService.SetFunctionsAsync(managerId, dto.Functions);
+            return Ok(profile);
         }
         catch (KeyNotFoundException ex)
         {
@@ -103,6 +103,33 @@ public class ManagersController : ControllerBase
         {
             var profile = await _managerService.CreateManagerAsync(dto);
             return CreatedAtAction(nameof(Me), profile);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Conflict(new { error = ex.Message });
+        }
+    }
+
+    [Authorize(Policy = "RequireSuperManager")]
+    [HttpGet]
+    public async Task<IActionResult> GetAll()
+    {
+        var managers = await _managerService.GetAllManagersAsync();
+        return Ok(managers);
+    }
+
+    [Authorize(Policy = "RequireSuperManager")]
+    [HttpPut("{managerId:guid}")]
+    public async Task<IActionResult> Update(Guid managerId, [FromBody] ManagerUpdateDto dto)
+    {
+        try
+        {
+            var profile = await _managerService.UpdateManagerAsync(managerId, dto);
+            return Ok(profile);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { error = ex.Message });
         }
         catch (InvalidOperationException ex)
         {

@@ -93,6 +93,7 @@ public class ManagerService : IManagerService
             PhoneNumber = manager.PhoneNumber,
             Tier = manager.Tier.ToString(),
             MustChangePassword = manager.MustChangePassword,
+            IsActive = manager.IsActive,
             Functions = GetEffectiveFunctions(manager)
         };
     }
@@ -130,7 +131,7 @@ public class ManagerService : IManagerService
         return GetEffectiveFunctions(manager);
     }
 
-    public async Task SetFunctionsAsync(Guid managerId, IReadOnlyCollection<FunctionType> functions)
+    public async Task<ManagerProfileDto> SetFunctionsAsync(Guid managerId, IReadOnlyCollection<FunctionType> functions)
     {
         var invalidFunctions = functions
             .Where(function => function == FunctionType.None || !Enum.IsDefined(function))
@@ -162,7 +163,22 @@ public class ManagerService : IManagerService
             });
         }
 
+        manager.UpdatedAt = DateTime.UtcNow;
         await _db.SaveChangesAsync();
+
+        return new ManagerProfileDto
+        {
+            ManagerId = manager.ManagerId,
+            Username = manager.Username,
+            FirstName = manager.FirstName,
+            LastName = manager.LastName,
+            Email = manager.Email,
+            PhoneNumber = manager.PhoneNumber,
+            Tier = manager.Tier.ToString(),
+            MustChangePassword = manager.MustChangePassword,
+            IsActive = manager.IsActive,
+            Functions = GetEffectiveFunctions(manager)
+        };
     }
 
     public async Task<ManagerProfileDto> CreateManagerAsync(ManagerCreateDto dto)
@@ -210,7 +226,83 @@ public class ManagerService : IManagerService
             PhoneNumber = manager.PhoneNumber,
             Tier = manager.Tier.ToString(),
             MustChangePassword = manager.MustChangePassword,
+            IsActive = manager.IsActive,
             Functions = new List<FunctionType>()
+        };
+    }
+
+    public async Task<IReadOnlyList<ManagerProfileDto>> GetAllManagersAsync()
+    {
+        var managers = await _db.Managers
+            .Include(m => m.Functions)
+            .OrderBy(m => m.FirstName)
+            .ThenBy(m => m.LastName)
+            .ToListAsync();
+
+        return managers.Select(manager => new ManagerProfileDto
+        {
+            ManagerId = manager.ManagerId,
+            Username = manager.Username,
+            FirstName = manager.FirstName,
+            LastName = manager.LastName,
+            Email = manager.Email,
+            PhoneNumber = manager.PhoneNumber,
+            Tier = manager.Tier.ToString(),
+            MustChangePassword = manager.MustChangePassword,
+            IsActive = manager.IsActive,
+            Functions = GetEffectiveFunctions(manager)
+        }).ToList();
+    }
+
+    public async Task<ManagerProfileDto> UpdateManagerAsync(Guid managerId, ManagerUpdateDto dto)
+    {
+        var manager = await _db.Managers
+            .Include(m => m.Functions)
+            .FirstOrDefaultAsync(m => m.ManagerId == managerId);
+
+        if (manager is null)
+        {
+            throw new KeyNotFoundException("Manager not found.");
+        }
+
+        var normalizedEmail = dto.Email?.Trim().ToLowerInvariant() ?? string.Empty;
+        var normalizedPhone = NormalizePhone(dto.PhoneNumber ?? string.Empty);
+
+        var existing = await _db.Managers.FirstOrDefaultAsync(m =>
+            m.Id != manager.Id && (m.Email == normalizedEmail || m.PhoneNumber == normalizedPhone));
+        if (existing != null)
+        {
+            if (existing.Email == normalizedEmail) throw new InvalidOperationException("A manager with this email already exists.");
+            throw new InvalidOperationException("A manager with this phone number already exists.");
+        }
+
+        if (!Enum.TryParse<ManagerTier>(dto.Tier, ignoreCase: true, out var tier))
+        {
+            tier = ManagerTier.Standard;
+        }
+
+        manager.FirstName = dto.FirstName;
+        manager.LastName = dto.LastName;
+        manager.Email = normalizedEmail;
+        manager.PhoneNumber = normalizedPhone;
+        manager.Tier = tier;
+        manager.IsActive = dto.IsActive;
+        manager.UpdatedAt = DateTime.UtcNow;
+
+        await _db.SaveChangesAsync();
+
+        return new ManagerProfileDto
+        {
+            ManagerId = manager.ManagerId,
+            Username = manager.Username,
+            FirstName = manager.FirstName,
+            LastName = manager.LastName,
+            Email = manager.Email,
+            PhoneNumber = manager.PhoneNumber,
+            Tier = manager.Tier.ToString(),
+            MustChangePassword = manager.MustChangePassword,
+            IsActive = manager.IsActive,
+            Functions = GetEffectiveFunctions(manager)
         };
     }
 

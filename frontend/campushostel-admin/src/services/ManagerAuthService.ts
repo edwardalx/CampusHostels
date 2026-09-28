@@ -32,6 +32,7 @@ export interface ManagerProfile {
   phoneNumber: string
   tier: 'Standard' | 'Super'
   mustChangePassword: boolean
+  isActive: boolean
   functions: FunctionType[]
 }
 
