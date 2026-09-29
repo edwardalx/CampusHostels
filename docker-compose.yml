@@ -101,6 +101,9 @@ services:
       - .env
     environment:
       ASPNETCORE_ENVIRONMENT: "Production"
+      # .env sets ASPNETCORE_URLS=5000 for backend_api; override it here so
+      # this service binds on the port nginx/images.conf actually proxies to.
+      ASPNETCORE_URLS: "http://0.0.0.0:80"
     volumes:
       - image_data:/campus-hostels
     networks:
