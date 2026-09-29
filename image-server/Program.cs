@@ -51,14 +51,20 @@ builder.Services.AddCors(options =>
 });
 
 var storageSection = builder.Configuration.GetSection("Storage");
-var storageRoot = Path.GetFullPath(storageSection["RootPath"] ?? "/campus-hostels/properties");
-var publicBaseUrl = (storageSection["PublicBaseUrl"] ?? "http://images.campushostels.duckdns.org/campus-hostels/properties").TrimEnd('/');
+var storageRoot = Path.GetFullPath(storageSection["RootPath"] ?? "/campus-hostels");
+var publicBaseUrl = (storageSection["PublicBaseUrl"] ?? "http://images.campushostels.duckdns.org/campus-hostels").TrimEnd('/');
 var maxFileSizeBytes = storageSection.GetValue<long?>("MaxFileSizeBytes") ?? 5 * 1024 * 1024;
 var allowedExtensions = new HashSet<string>(
     storageSection.GetSection("AllowedExtensions").Get<string[]>() ?? [".jpg", ".jpeg", ".png", ".webp"],
     StringComparer.OrdinalIgnoreCase);
+var categories = new HashSet<string>(
+    storageSection.GetSection("Categories").Get<string[]>() ?? ["properties", "rooms", "amenities"],
+    StringComparer.OrdinalIgnoreCase);
 
-Directory.CreateDirectory(storageRoot);
+foreach (var category in categories)
+{
+    Directory.CreateDirectory(Path.Combine(storageRoot, category));
+}
 
 var app = builder.Build();
 
@@ -68,15 +74,23 @@ app.UseAuthorization();
 
 // Uploaded images are served back out publicly (they're embedded via <img> tags across the
 // public site), so static file serving is intentionally not gated behind auth.
-app.UseStaticFiles(new StaticFileOptions
+foreach (var category in categories)
 {
-    FileProvider = new PhysicalFileProvider(storageRoot),
-    RequestPath = "/campus-hostels/properties",
-    ContentTypeProvider = new FileExtensionContentTypeProvider()
-});
+    app.UseStaticFiles(new StaticFileOptions
+    {
+        FileProvider = new PhysicalFileProvider(Path.Combine(storageRoot, category)),
+        RequestPath = $"/campus-hostels/{category}",
+        ContentTypeProvider = new FileExtensionContentTypeProvider()
+    });
+}
 
-app.MapPost("/campus-hostels/properties/upload", async (HttpRequest request) =>
+app.MapPost("/campus-hostels/{category}/upload", async (string category, HttpRequest request) =>
 {
+    if (!categories.Contains(category))
+    {
+        return Results.BadRequest(new { error = $"Unknown category '{category}'. Allowed: {string.Join(", ", categories)}" });
+    }
+
     if (!request.HasFormContentType)
     {
         return Results.BadRequest(new { error = "Expected multipart/form-data." });
@@ -101,14 +115,14 @@ app.MapPost("/campus-hostels/properties/upload", async (HttpRequest request) =>
     }
 
     var fileName = $"{Guid.NewGuid():N}{extension.ToLowerInvariant()}";
-    var filePath = Path.Combine(storageRoot, fileName);
+    var filePath = Path.Combine(storageRoot, category, fileName);
 
     await using (var stream = File.Create(filePath))
     {
         await file.CopyToAsync(stream);
     }
 
-    return Results.Ok(new { url = $"{publicBaseUrl}/{fileName}" });
+    return Results.Ok(new { url = $"{publicBaseUrl}/{category}/{fileName}" });
 }).RequireAuthorization("RequireManager");
 
 app.MapGet("/health", () => Results.Ok(new { status = "ok" }));
