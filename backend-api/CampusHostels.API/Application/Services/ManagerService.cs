@@ -254,6 +254,36 @@ public class ManagerService : IManagerService
         }).ToList();
     }
 
+    public async Task<IReadOnlyList<ManagerOwnerOptionDto>> GetActiveManagerOwnerOptionsAsync()
+    {
+        return await _db.Managers
+            .Where(manager => manager.IsActive)
+            .OrderBy(manager => manager.FirstName)
+            .ThenBy(manager => manager.LastName)
+            .Select(manager => new ManagerOwnerOptionDto
+            {
+                ManagerId = manager.ManagerId,
+                FirstName = manager.FirstName,
+                LastName = manager.LastName,
+                Username = manager.Username
+            })
+            .ToListAsync();
+    }
+
+    public Task<bool> IsActiveManagerAsync(Guid managerId)
+    {
+        return _db.Managers.AnyAsync(manager => manager.ManagerId == managerId && manager.IsActive);
+    }
+
+    public Task<bool> CanManagePropertiesAsync(Guid managerId)
+    {
+        return _db.Managers.AnyAsync(manager =>
+            manager.ManagerId == managerId &&
+            manager.IsActive &&
+            (manager.Tier == ManagerTier.Super || manager.Functions.Any(function =>
+                function.IsActive && function.Function == FunctionType.ManageProperties)));
+    }
+
     public async Task<ManagerProfileDto> UpdateManagerAsync(Guid managerId, ManagerUpdateDto dto)
     {
         var manager = await _db.Managers

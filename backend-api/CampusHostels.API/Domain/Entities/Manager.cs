@@ -36,4 +36,5 @@ public class Manager
     public bool MustChangePassword { get; set; } = true;
     public DateTime? LastPasswordChangeAt { get; set; }
     public List<ManagerFunction> Functions { get; set; } = new();
+    public List<Property> OwnedProperties { get; set; } = new();
 }

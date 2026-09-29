@@ -1,5 +1,6 @@
 using AutoMapper;
 using CampusHostels.API.Application.DTOs;
+using CampusHostels.API.Application.Interfaces;
 using CampusHostels.API.Infrastructure.Repositories;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -12,11 +13,13 @@ public class PropertiesController : ControllerBase
 {
     private readonly IPropertyRepository _repo;
     private readonly IMapper _mapper;
+    private readonly IManagerService _managerService;
 
-    public PropertiesController(IPropertyRepository repo, IMapper mapper)
+    public PropertiesController(IPropertyRepository repo, IMapper mapper, IManagerService managerService)
     {
         _repo = repo;
         _mapper = mapper;
+        _managerService = managerService;
     }
 
     [HttpGet]
@@ -39,6 +42,23 @@ public class PropertiesController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] PropertyCreateDto dto)
     {
+        var currentManagerId = User.FindFirst("managerId")?.Value;
+        if (!Guid.TryParse(currentManagerId, out var creatorManagerId) || dto.OwnerManagerId is not Guid ownerManagerId)
+        {
+            return BadRequest(new { error = "A valid property owner is required." });
+        }
+
+        var canAssignAnotherOwner = await _managerService.CanManagePropertiesAsync(creatorManagerId);
+        if (!canAssignAnotherOwner && ownerManagerId != creatorManagerId)
+        {
+            return Forbid();
+        }
+
+        if (!await _managerService.IsActiveManagerAsync(ownerManagerId))
+        {
+            return BadRequest(new { error = "The selected property owner is not an active manager." });
+        }
+
         var entity = _mapper.Map<Domain.Entities.Property>(dto);
         await _repo.AddAsync(entity);
         await _repo.SaveChangesAsync();

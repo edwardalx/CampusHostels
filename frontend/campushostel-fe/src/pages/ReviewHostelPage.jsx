@@ -45,7 +45,7 @@ export function ReviewHostelPage({ hostel, reviews: reviewsProp = [], onClose = 
       <div className="space-y-4">
         {/* Header Card */}
         <div className="bg-gradient-to-r from-teal-500 to-cyan-500 text-white p-4 rounded-xl shadow-md">
-          <h2 className="text-lg font-bold">{hostel.name}</h2>
+          <h2 className="text-lg font-bold capitalize">{hostel.name}</h2>
           <p className="text-sm opacity-90">
             Overall Rating: {hostel.averageRating ?? 0}
           </p>

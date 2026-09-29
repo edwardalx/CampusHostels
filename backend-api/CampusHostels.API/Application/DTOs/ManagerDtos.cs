@@ -39,6 +39,14 @@ public class ManagerProfileDto
     public IReadOnlyList<FunctionType> Functions { get; set; } = new List<FunctionType>();
 }
 
+public class ManagerOwnerOptionDto
+{
+    public Guid ManagerId { get; set; }
+    public string FirstName { get; set; } = string.Empty;
+    public string LastName { get; set; } = string.Empty;
+    public string Username { get; set; } = string.Empty;
+}
+
 public class ManagerUpdateDto
 {
     [Required]

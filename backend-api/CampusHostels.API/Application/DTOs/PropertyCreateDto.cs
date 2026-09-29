@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace CampusHostels.API.Application.DTOs;
 
 public class PropertyCreateDto
@@ -7,4 +9,7 @@ public class PropertyCreateDto
     public string? ImageUrl { get; set; }
     public int? NoOfUnits { get; set; }
     public int? NoOfFloors { get; set; }
+    public decimal? StartingPrice { get; set; }
+    [Required]
+    public Guid? OwnerManagerId { get; set; }
 }

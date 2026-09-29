@@ -2,7 +2,9 @@ import { getStoredManagerToken } from './ManagerAuthService'
 
 const uploadUrl =
   (import.meta.env.VITE_IMAGE_UPLOAD_URL as string | undefined) ??
-  'http://images.campushostels.duckdns.org/campus-hostels/properties/upload'
+  (import.meta.env.DEV
+    ? 'http://localhost:5080/campus-hostels/properties/upload'
+    : '/image-service/campus-hostels/properties/upload')
 
 export async function uploadPropertyImage(file: File): Promise<string> {
   const token = getStoredManagerToken()

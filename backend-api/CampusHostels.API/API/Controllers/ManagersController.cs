@@ -110,6 +110,17 @@ public class ManagersController : ControllerBase
         }
     }
 
+    [Authorize(Policy = "RequireManager")]
+    [HttpGet("owner-options")]
+    public async Task<IActionResult> GetOwnerOptions()
+    {
+        var managerIdClaim = User.FindFirst("managerId")?.Value;
+        if (!Guid.TryParse(managerIdClaim, out var managerId)) return Unauthorized();
+        if (!await _managerService.CanManagePropertiesAsync(managerId)) return Forbid();
+
+        return Ok(await _managerService.GetActiveManagerOwnerOptionsAsync());
+    }
+
     [Authorize(Policy = "RequireSuperManager")]
     [HttpGet]
     public async Task<IActionResult> GetAll()

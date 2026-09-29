@@ -90,7 +90,7 @@ export default function HostelCard({
       {/* Content Container */}
       <div className="p-5 sm:p-6 flex flex-col flex-grow">
         {/* Name */}
-        <h3 className="text-lg sm:text-xl font-bold text-gray-800 mb-2 line-clamp-2">
+        <h3 className="text-lg sm:text-xl font-bold text-gray-800 mb-2 line-clamp-2 capitalize">
           {hostel.name}
         </h3>
 
