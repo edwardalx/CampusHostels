@@ -41,10 +41,13 @@ services:
     environment:
       DOTNET_ENVIRONMENT: Production
       ConnectionStrings__DefaultConnection: "Host=db;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}"
-    entrypoint: ["/bin/sh", "-lc"]
-    command: >
-      dotnet tool install --tool-path /tmp/tools dotnet-ef --version 9.0.10 &&
-      /tmp/tools/dotnet-ef database update --project CampusHostels.API.csproj --context ApplicationDbContext
+    entrypoint: ["/bin/sh"]
+    command:
+      - -c
+      - >-
+        set -eu;
+        dotnet tool install --tool-path /tmp/tools dotnet-ef --version 9.0.10;
+        exec /tmp/tools/dotnet-ef database update --project CampusHostels.API.csproj --context ApplicationDbContext
     depends_on:
       - db
     networks:
