@@ -30,39 +30,20 @@ pipeline {
                                 
                                 cd ${env.PROJECT_DIR}
                                 
-                                # Reset and update
+                                # Update the deployment checkout
                                 git reset --hard HEAD
                                 git pull origin main
                                 
-                                echo "🔨 Building frontend..."
-                                cd frontend/campushostel-fe
-                                
-                                # Build
-                                rm -rf node_modules package-lock.json
-                                npm install --force --legacy-peer-deps
-                                npm run build
-                                
-                                echo "✅ Frontend built successfully"
-                                
-                                echo "📦 Deploying files..."
-                                
-                                # Get volume path from Docker
-                                VOLUME_PATH=\$(docker volume inspect campushostels_frontend-static --format "{{.Mountpoint}}")
-                                
-                                if [ -z "\$VOLUME_PATH" ]; then
-                                    echo "❌ Could not find volume path"
-                                    exit 1
-                                fi
-                                
-                                echo "Copying to: \$VOLUME_PATH"
-                                
-                                # Remove old files and copy new ones
-                                sudo rm -rf "\$VOLUME_PATH"/*
-                                sudo cp -r dist/* "\$VOLUME_PATH"/
-                                
-                                # Reload nginx
-                                docker exec campushostels_nginx nginx -s reload
-                                
+                                echo "🔨 Building and deploying both frontend apps..."
+                                docker compose config --quiet
+                                docker compose up -d --build frontend nginx
+
+                                echo "🔎 Verifying manager build and nginx configuration..."
+                                docker compose exec -T frontend test -s /usr/share/nginx/html/manager/index.html
+                                docker exec campushostels_nginx nginx -t
+                                curl --fail --silent --show-error --retry 5 --retry-delay 2 \\
+                                    https://campushostels.duckdns.org/manager/ >/dev/null
+
                                 echo "✅ Frontend deployment completed!"
                                 echo "🌐 Check: https://campushostels.duckdns.org/"
                             '
@@ -85,12 +66,11 @@ pipeline {
                                 
                                 cd ${env.PROJECT_DIR}
                                 
-                                echo "📁 Files in nginx container:"
-                                docker exec campushostels_nginx ls -la /var/www/campushostels-fe/ 2>/dev/null || echo "Cannot access nginx"
-                                
+                                echo "📦 Frontend and nginx containers:"
+                                docker compose ps frontend nginx
+
                                 echo -e "\\\\n📊 Build info:"
                                 echo "Branch: ${params.BRANCH}"
-                                echo "Files in dist: \$(ls -la frontend/campushostel-fe/dist/ 2>/dev/null | wc -l) files"
                                 
                                 echo -e "\\\\n✅ Deployment completed successfully!"
                             '

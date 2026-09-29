@@ -37,6 +37,20 @@ pipeline {
                             echo "🔨 Rebuilding images…"
                             docker compose build
 
+                            echo "🗄️ Applying .NET EF Core migrations…"
+                            docker compose up -d db
+                            for attempt in \$(seq 1 30); do
+                                if docker compose exec -T db pg_isready >/dev/null 2>&1; then
+                                    break
+                                fi
+                                if [ "\$attempt" -eq 30 ]; then
+                                    echo "PostgreSQL did not become ready; aborting deployment."
+                                    exit 1
+                                fi
+                                sleep 2
+                            done
+                            docker compose run --rm ef-migrator
+
                             echo "🔄 Restarting services…"
                             docker compose down
                             docker compose up -d --build --remove-orphans
