@@ -102,7 +102,7 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: "Production"
     volumes:
-      - image_data:/campus-hostels/properties
+      - image_data:/campus-hostels
     networks:
       - campushostels_net
     restart: always
