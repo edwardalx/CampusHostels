@@ -1,9 +1,10 @@
-import React, { use, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Eye, EyeOff, Briefcase } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { RegisterApi, RegisterAjax } from "../services/AuthServices";
 import RegSuccessModel from "../components/RegSuccessModel";
-import { useGoogleLogin } from "@react-oauth/google";
+import ErrorBoundary from "../components/ErrorBoundary";
+import GoogleLoginButton from "../components/GoogleLoginButton";
 import { GoogleAuthWithToken } from "../services/GoogleAuthService";
 
 // Layout constants
@@ -117,7 +118,6 @@ export default function RegisterPage() {
   const [resData, setResData] = useState(null);
   const [storedToken, setStoredToken] = useState(null);
   let response;
-  const navigate = useNavigate();
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData((prev) => ({
@@ -211,32 +211,25 @@ export default function RegisterPage() {
     console.log("Response:", resData?.email);
     // TODO: Handle registration logic
   };
-  const handleGoogleRegister = useGoogleLogin({
-    flow: "implicit",
-    scope: "openid email profile",
+  const handleGoogleRegisterSuccess = async (response) => {
+    const accessToken = response.access_token;
 
-    onSuccess: async (response) => {
-      const accessToken = response.access_token;
-
-      console.log("Google Access Token:", accessToken);
-      console.log("response", response);
-      try {
-        const data = await GoogleAuthWithToken(accessToken);
-        data.token
-          ? setStoredToken(data.token)
-          : setErrorMsg({ general: "Google login failed. Please try again." });
-      } catch (err) {
-        console.error("Google login error:", err);
-      }
-    },
-  });
+    try {
+      const data = await GoogleAuthWithToken(accessToken);
+      data.token
+        ? setStoredToken(data.token)
+        : setErrorMessage({ general: "Google login failed. Please try again." });
+    } catch (err) {
+      console.error("Google login error:", err);
+    }
+  };
   const handleFacebookLogin = () => {
     setErrorMessage({
       general: "Facebook login failed. Please try a different method.",
     });
     console.log("Continue with Facebook");
   };
-  const handleBlur = async (e) => {
+  const handleBlur = async () => {
     const ajaxData = {
       email: formData.email,
       phoneNumber: formData.phoneNumber,
@@ -429,9 +422,9 @@ export default function RegisterPage() {
                       className="absolute right-4 cursor-pointer text-gray-500 dark:text-gray-400 hover:text-white transition-colors"
                     >
                       {showPassword ? (
-                        <Eye size={ICON.PASSWORD_TOGGLE_SIZE} />
-                      ) : (
                         <EyeOff size={ICON.PASSWORD_TOGGLE_SIZE} />
+                      ) : (
+                        <Eye size={ICON.PASSWORD_TOGGLE_SIZE} />
                       )}
                     </div>
                   </div>
@@ -466,9 +459,9 @@ export default function RegisterPage() {
                       className="absolute right-4 cursor-pointer text-gray-500 dark:text-gray-400 hover:text-white transition-colors p-1"
                     >
                       {showConfirmPassword ? (
-                        <Eye size={ICON.PASSWORD_TOGGLE_SIZE} />
-                      ) : (
                         <EyeOff size={ICON.PASSWORD_TOGGLE_SIZE} />
+                      ) : (
+                        <Eye size={ICON.PASSWORD_TOGGLE_SIZE} />
                       )}
                     </div>
                   </div>
@@ -538,36 +531,46 @@ export default function RegisterPage() {
               {/* Social Sign-Up */}
               <div className={`flex w-full ${SPACING.SOCIAL_GAP}`}>
                 {/* Google Button */}
-                <button
-                  type="button"
-                  className={`flex ${BUTTON.SECONDARY.HEIGHT} flex-1 items-center justify-center gap-3 rounded-lg border border-gray-700 bg-gray-800 text-white transition-colors hover:bg-gray-700`}
-                  onClick={handleGoogleRegister}
+                <ErrorBoundary
+                  fallback={
+                    <div
+                      title="Google sign-up is unavailable right now"
+                      className={`flex ${BUTTON.SECONDARY.HEIGHT} flex-1 items-center justify-center gap-3 rounded-lg border border-gray-700 bg-gray-800/50 text-gray-500 cursor-not-allowed`}
+                    >
+                      <span>Google unavailable</span>
+                    </div>
+                  }
                 >
-                  <svg
-                    className={ICON.SOCIAL_ICON_SIZE}
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    xmlns="http://www.w3.org/2000/svg"
+                  <GoogleLoginButton
+                    onSuccess={handleGoogleRegisterSuccess}
+                    className={`flex ${BUTTON.SECONDARY.HEIGHT} flex-1 items-center justify-center gap-3 rounded-lg border border-gray-700 bg-gray-800 text-white transition-colors hover:bg-gray-700`}
                   >
-                    <path
-                      d="M21.9999 12.2273C21.9999 11.3977 21.9272 10.5864 21.7863 9.80682H12.2272V14.3318H17.8067C17.5726 15.6364 16.8908 16.75 15.8681 17.4659V20.125H19.5567C21.1681 18.6705 21.9999 16.2045 21.9999 12.2273Z"
-                      fill={COLORS.GOOGLE.BLUE}
-                    ></path>
-                    <path
-                      d="M12.2272 22C15.0226 22 17.3635 21.0568 19.0181 19.5568L15.8681 17.4659C14.9317 18.0682 13.7135 18.4432 12.2272 18.4432C9.44761 18.4432 7.0908 16.5909 6.22716 14.1H2.98171V16.2045C4.63625 19.6477 8.13625 22 12.2272 22Z"
-                      fill={COLORS.GOOGLE.GREEN}
-                    ></path>
-                    <path
-                      d="M6.22727 14.1C5.97727 13.3977 5.84091 12.6477 5.84091 11.875C5.84091 11.1023 5.97727 10.3523 6.22727 9.64773V6.98864H2.98182C2.37045 8.21591 2 9.97727 2 11.875C2 13.7727 2.37045 15.5341 2.98182 16.7614L6.22727 14.1Z"
-                      fill={COLORS.GOOGLE.YELLOW}
-                    ></path>
-                    <path
-                      d="M12.2272 5.30682C13.8226 5.30682 15.1135 5.89773 16.2272 6.96591L19.0908 4.1C17.3635 2.53409 15.0226 1.75 12.2272 1.75C8.13625 1.75 4.63625 4.10227 2.98171 7.54545L6.22716 9.64773C7.0908 7.15909 9.44761 5.30682 12.2272 5.30682Z"
-                      fill={COLORS.GOOGLE.RED}
-                    ></path>
-                  </svg>
-                  <span>Google</span>
-                </button>
+                    <svg
+                      className={ICON.SOCIAL_ICON_SIZE}
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M21.9999 12.2273C21.9999 11.3977 21.9272 10.5864 21.7863 9.80682H12.2272V14.3318H17.8067C17.5726 15.6364 16.8908 16.75 15.8681 17.4659V20.125H19.5567C21.1681 18.6705 21.9999 16.2045 21.9999 12.2273Z"
+                        fill={COLORS.GOOGLE.BLUE}
+                      ></path>
+                      <path
+                        d="M12.2272 22C15.0226 22 17.3635 21.0568 19.0181 19.5568L15.8681 17.4659C14.9317 18.0682 13.7135 18.4432 12.2272 18.4432C9.44761 18.4432 7.0908 16.5909 6.22716 14.1H2.98171V16.2045C4.63625 19.6477 8.13625 22 12.2272 22Z"
+                        fill={COLORS.GOOGLE.GREEN}
+                      ></path>
+                      <path
+                        d="M6.22727 14.1C5.97727 13.3977 5.84091 12.6477 5.84091 11.875C5.84091 11.1023 5.97727 10.3523 6.22727 9.64773V6.98864H2.98182C2.37045 8.21591 2 9.97727 2 11.875C2 13.7727 2.37045 15.5341 2.98182 16.7614L6.22727 14.1Z"
+                        fill={COLORS.GOOGLE.YELLOW}
+                      ></path>
+                      <path
+                        d="M12.2272 5.30682C13.8226 5.30682 15.1135 5.89773 16.2272 6.96591L19.0908 4.1C17.3635 2.53409 15.0226 1.75 12.2272 1.75C8.13625 1.75 4.63625 4.10227 2.98171 7.54545L6.22716 9.64773C7.0908 7.15909 9.44761 5.30682 12.2272 5.30682Z"
+                        fill={COLORS.GOOGLE.RED}
+                      ></path>
+                    </svg>
+                    <span>Google</span>
+                  </GoogleLoginButton>
+                </ErrorBoundary>
 
                 {/* Facebook Button */}
                 <button

@@ -11,7 +11,6 @@
 
 import React from "react";
 import { Facebook, Instagram, Youtube } from "lucide-react";
-import { useNavigate} from "react-router-dom";
 
 const socialIcons = {
   facebook: Facebook,
@@ -35,13 +34,13 @@ export default function Footer({
           {/* Links Section */}
           <nav className="flex flex-wrap gap-6 sm:gap-8">
             {links.map((link) => (
-              <div
+              <button
                 key={link}
                 onClick={() => onLinkClick(link)}
-                className="text-gray-600 text-sm font-medium hover:text-teal-400 transition-colors bg-gray-200"
+                className="text-gray-600 text-sm font-medium hover:text-primary-teal transition-colors"
               >
                 {link}
-              </div>
+              </button>
             ))}
           </nav>
 
@@ -67,8 +66,8 @@ export default function Footer({
 
         {/* Copyright */}
         <div className="mt-8 pt-8 border-t border-gray-200 text-center">
-          <p className="text-teal-400 text-sm">
-            &copy; 2025 CampusHostels. All rights reserved.
+          <p className="text-secondary-gray text-sm">
+            &copy; {new Date().getFullYear()} CampusHostels. All rights reserved.
           </p>
         </div>
       </div>

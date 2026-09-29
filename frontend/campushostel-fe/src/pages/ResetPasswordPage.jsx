@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState } from "react";
 import { useSearchParams } from "react-router-dom";
+import { KeyRound } from "lucide-react";
 import { VerifyReset, ResetPassword } from "../services/PasswordResetService";
 
 export default function ResetPasswordPage() {
@@ -15,34 +15,20 @@ export default function ResetPasswordPage() {
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [verifyRes, setVerifyRes] = useState("");
-  const passwordRegex = /^(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^&*])/; // regex for aspecial characters, numbers, etc
   const specialCharRegex = /[!@#$%^&*(),.?":{}|<>]/; //only special characters
-  const isPhone = /^[0-9]+$/.test(email);
-  const navigate = useNavigate();
   const payload = {
     phoneNumber,
     email,
     token,
     newPassword: password,
   };
-
-  useEffect(() => {
-    validatePassword();
-  }, [password, confirmPassword]);
-
-  const validatePassword = () => {
-    if (password.length !== confirmPassword) {
-      setError("");
-    }
-    if (
-      password.length === confirmPassword.length &&
-      password !== confirmPassword
-    ) {
-      setError("Passwords do not match");
-    }
-
-    console.log(error);
-  };
+  // Derived at render time rather than via an effect — it's just a function
+  // of the two password fields, not something that needs to synchronize with
+  // an external system.
+  const passwordsMismatch =
+    confirmPassword.length > 0 &&
+    password.length === confirmPassword.length &&
+    password !== confirmPassword;
 
   const verifyPasswordApi = async () => {
     try {
@@ -64,12 +50,11 @@ export default function ResetPasswordPage() {
       return;
     }
     try {
-      const response = await ResetPassword(payload);
-      // setVerifyRes(response.message);
+      await ResetPassword(payload);
       setMessage(
         <>
           Password reset successful. Click{" "}
-          <a href="/login" className="text-green-500">
+          <a href="/login" className="underline font-semibold">
             here
           </a>{" "}
           to login.
@@ -77,8 +62,6 @@ export default function ResetPasswordPage() {
       );
       setConfirmPassword("");
       setPassword("");
-      console.log(response.message);
-      // navigate("/login");
     } catch (error) {
       setError(error.details || error.message);
     }
@@ -98,36 +81,29 @@ export default function ResetPasswordPage() {
       return;
     }
     await updatePassword();
-    // const verificaionResult = await verifyPasswordApi();
-    // const isValid = verificaionResult === "Token is valid";
-    // if (verificaionResult === "Token is valid") {
-    //   await updatePassword();
-    // }
-
-    console.log(payload);
-    console.log(error);
-    console.log(verifyRes);
-
-    // send to API
-    // fetch("/api/reset-password", { method:"POST", body: JSON.stringify(payload) })
   };
 
   return (
-    <div className="w-full min-h-screen  bg-gradient-to-br from-teal-700 to-teal-800 dark:bg-gray-800 flex  justify-center">
-      <div className=" text-white max-w-2xl w-full max-h-96 mt-28 bg-gradient-to-br from-teal-500 to-teal-600 dark:bg-gray-800 rounded-xl shadow-lg p-8">
-        <div className="flex justify-center m-12">
-          <h1 className="text-2xl font-bold text-center mb-6">
+    <div className="w-full min-h-screen bg-gradient-to-br from-teal-700 to-teal-800 flex items-center justify-center px-4 py-12">
+      <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8">
+        <div className="flex flex-col items-center gap-4 mb-6">
+          <div className="bg-teal-50 p-3 rounded-full">
+            <KeyRound className="w-6 h-6 text-primary-teal" />
+          </div>
+          <h1 className="text-2xl font-bold text-center text-gray-900">
             Create New Password
           </h1>
         </div>
-        <div className="flex justify-center ">
+
+        {(message || verifyRes || error || passwordsMismatch) && (
           <p
-            className={`text-md font-bold text-center font-thin ${verifyRes ? "text-purple-700" : "text-red-500"}`}
-            style={{ fontFamily: "Playfair Display" }}
+            className={`text-center text-sm font-medium mb-4 ${
+              message || verifyRes ? "text-teal-700" : "text-red-500"
+            }`}
           >
-            {message || verifyRes || error}
+            {message || verifyRes || error || "Passwords do not match"}
           </p>
-        </div>
+        )}
 
         <form
           onSubmit={handleSubmit}
@@ -135,10 +111,10 @@ export default function ResetPasswordPage() {
             setError("");
             setVerifyRes("");
           }}
-          className="space-y-4"
+          className="space-y-5"
         >
           <div>
-            <label className="block text-sm font-medium  dark:text-gray-300">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
               Enter New Password
             </label>
             <input
@@ -146,11 +122,11 @@ export default function ResetPasswordPage() {
               placeholder="New password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full p-5 h-7 border border-black rounded-lg focus:ring-2 focus:ring-teal-500 outline-none"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium  dark:text-gray-300">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
               Confirm New Password
             </label>
             <input
@@ -158,15 +134,16 @@ export default function ResetPasswordPage() {
               placeholder="Confirm password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              className="w-full p-5 h-7 border border-black rounded-lg focus:ring-2 focus:ring-teal-500 outline-none"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none"
             />
           </div>
 
-          <div className="flex justify-center m-4">
-            <button className="w-xl bg-white text-teal-900 rounded-lg font-semibold hover:bg-gray-100 py-3 transition">
-              Reset Password
-            </button>
-          </div>
+          <button
+            type="submit"
+            className="w-full bg-primary-teal text-white rounded-lg font-semibold hover:bg-teal-600 py-3 transition-colors"
+          >
+            Reset Password
+          </button>
         </form>
       </div>
     </div>

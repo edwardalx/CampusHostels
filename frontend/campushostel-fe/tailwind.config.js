@@ -11,6 +11,18 @@ export default {
         accent: {
           gold: '#F1C40F',
         },
+        // Brand tokens referenced throughout the app (Header, Footer, cards, grids).
+        // These were used across components but never defined, so they silently
+        // rendered as unstyled text/backgrounds.
+        primary: {
+          teal: '#0d9488',
+          orange: '#f97316',
+        },
+        secondary: {
+          gray: '#6b7280',
+          'dark-gray': '#1f2937',
+          'light-gray': '#f8fafc',
+        },
       },
       fontSize: {
         logo: '28px',

@@ -18,12 +18,10 @@
  * - onViewDetails: (id: number) => void
  */
 
-import React, { useState } from "react";
-import { Heart, MapPin, Star } from "lucide-react";
-import { redirect, useNavigate, useParams, Link } from "react-router-dom";
+import React from "react";
+import { Heart, MapPin } from "lucide-react";
+import { useNavigate, Link } from "react-router-dom";
 import { ShowRate } from "./RateReview/Rate";
-import { ReviewHostelPage } from "../pages/ReviewHostelPage";
-import { likeProperty, unlikeProperty } from "../services/AuthServices";
 
 export default function HostelCard({
   hostel = {
@@ -38,52 +36,15 @@ export default function HostelCard({
     isFavorite: false,
   },
   onLike = () => {},
-  onToggleReviewForm = () => {},
   userLikedHostels,
 }) {
-  const [isFavorite, setIsFavorite] = useState(false);
-  // const handleLike = (e) => {
-  //   e.stopPropagation();
-  //   // setIsFavorite(!isFavorite);
-  //   // onLike(hostel.id, !isFavorite);
-  //   const payload = {
-  //     propertyId: hostel.id,
-  //     tenantId: JSON.parse(localStorage.getItem("user")).tenantId,
-  //   };
-  //   if (isFavorite || userLikedHostels.includes(hostel.id)) {
-  //     try {
-  //       unlikeProperty(payload);
-  //     } catch (error) {
-  //       console.error("Error unliking property:", error);
-  //     }
-  //   } else {
-  //     try {
-  //       likeProperty(payload);
-  //     } catch (error) {
-  //       console.error("Error liking property:", error);
-  //     }
-  //   }
-  // };
-
   const navigate = useNavigate();
   const handleViewDetails = () => {
-    // localStorage.setItem("selectedHostel", JSON.stringify(hostel.id));
     navigate(`/hostel/${hostel.id}`);
-  };
-  const getTagColor = (tag) => {
-    if (tag === "Student Favorite") return "bg-cyan-500";
-    if (tag === "Party Friendly") return "bg-purple-500";
-    return "bg-gray-400";
-  };
-
-  const getRatingColor = (rating) => {
-    if (rating >= 4.5) return "text-yellow-400";
-    if (rating >= 4) return "text-yellow-400";
-    return "text-yellow-300";
   };
 
   return (
-    <div className="bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 flex flex-col h-full">
+    <div className="card-hover bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-lg flex flex-col h-full">
       {/* Image Container */}
       <div className="relative overflow-hidden aspect-video sm:aspect-square">
         <Link to={`/hostel/${hostel.id}`}>
@@ -109,7 +70,11 @@ export default function HostelCard({
         <button
           onClick={() => onLike(hostel)}
           className="absolute top-3 right-3 bg-white rounded-full p-2 hover:bg-gray-100 transition-colors shadow-md"
-          aria-label={isFavorite ? "Remove from favorites" : "Add to favorites"}
+          aria-label={
+            userLikedHostels?.includes(hostel.id)
+              ? "Remove from favorites"
+              : "Add to favorites"
+          }
         >
           <Heart
             size={20}
@@ -155,7 +120,7 @@ export default function HostelCard({
           </div>
           <button
             onClick={handleViewDetails}
-            className="!border !border-black px-5 py-2 m-2 bg-gray-300 text-white text-sm font-semibold rounded-full hover:bg-teal-500 transition-colors duration-200 whitespace-nowrap shadow-sm hover:shadow-md flex-shrink-0"
+            className="px-5 py-2 bg-primary-teal text-white text-sm font-semibold rounded-full hover:bg-teal-600 transition-colors duration-200 whitespace-nowrap shadow-sm hover:shadow-md flex-shrink-0"
           >
             View
           </button>

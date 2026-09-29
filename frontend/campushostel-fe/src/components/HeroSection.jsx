@@ -22,13 +22,13 @@ export default function HeroSection({
 
       <div className="max-w-7xl mx-auto relative z-10">
         {/* Title */}
-        <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white text-center mb-2 sm:mb-4">
+        <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white text-center mb-2 sm:mb-4 [text-shadow:0_2px_10px_rgba(0,0,0,0.25)]">
           {title}
         </h2>
 
         {/* Subtitle */}
         {subtitle && (
-          <p className="text-base sm:text-lg text-white/90 text-center mb-8 sm:mb-12">
+          <p className="text-base sm:text-lg text-white text-center mb-8 sm:mb-12 [text-shadow:0_1px_6px_rgba(0,0,0,0.25)]">
             {subtitle}
           </p>
         )}
