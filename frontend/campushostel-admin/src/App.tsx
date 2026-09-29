@@ -9,6 +9,9 @@ import { RecentReservationsTable } from './components/RecentReservationsTable'
 import { ActivityFeed } from './components/ActivityFeed'
 import { LoginPage } from './components/LoginPage'
 import { ChangePasswordPage } from './components/ChangePasswordPage'
+import { CreateManagerPage } from './components/CreateManagerPage'
+import { ManagersListPage } from './components/ManagersListPage'
+import { CreatePropertyPage } from './components/CreatePropertyPage'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import {
   activityFeed,
@@ -47,6 +50,30 @@ function App() {
     <Routes>
       <Route path="/login" element={<LoginPage />} />
       <Route path="/change-password" element={<ChangePasswordPage />} />
+      <Route
+        path="/managers"
+        element={
+          <ProtectedRoute>
+            <ManagersListPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/managers/new"
+        element={
+          <ProtectedRoute>
+            <CreateManagerPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/properties/new"
+        element={
+          <ProtectedRoute>
+            <CreatePropertyPage />
+          </ProtectedRoute>
+        }
+      />
       <Route
         path="/"
         element={

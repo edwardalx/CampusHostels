@@ -92,6 +92,21 @@ services:
       - campushostels_net
     restart: always
 
+  image-server:
+    build:
+      context: ./image-server
+      dockerfile: Dockerfile
+    container_name: campushostels_image_server
+    env_file:
+      - .env
+    environment:
+      ASPNETCORE_ENVIRONMENT: "Production"
+    volumes:
+      - image_data:/campus-hostels/properties
+    networks:
+      - campushostels_net
+    restart: always
+
   app1:
     build:
       context: /var/www/book-shelf-be
@@ -144,6 +159,7 @@ services:
       - app1
       - frontend # ← ADD THIS
       - portainer # ← ADD PORTAINER HERE
+      - image-server
     networks:
       - campushostels_net
     restart: always
@@ -152,6 +168,7 @@ volumes:
   postgres_data:
   mssql_data:
   frontend-static:
+  image_data:
 
 networks:
   campushostels_net:

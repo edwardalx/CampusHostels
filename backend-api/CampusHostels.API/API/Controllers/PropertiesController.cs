@@ -1,6 +1,7 @@
 using AutoMapper;
 using CampusHostels.API.Application.DTOs;
 using CampusHostels.API.Infrastructure.Repositories;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CampusHostels.API.API.Controllers;
@@ -34,6 +35,7 @@ public class PropertiesController : ControllerBase
         return Ok(_mapper.Map<PropertyDto>(item));
     }
 
+    [Authorize(Policy = "RequireManager")]
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] PropertyCreateDto dto)
     {
