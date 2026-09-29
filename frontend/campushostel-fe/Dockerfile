@@ -1,35 +1,22 @@
-# campushostel-fe/Dockerfile
+FROM node:22-alpine AS build
 
-# ----------------------
-# Stage 1: Build
-# ----------------------
-FROM node:20-alpine AS build
-
-WORKDIR /app
-
-# Copy package files first for caching
-COPY package.json package-lock.json ./
-RUN npm install
-
-# Copy all source code
-COPY . ./
-
-# Build the app
+WORKDIR /work/campushostel-fe
+COPY campushostel-fe/package.json campushostel-fe/package-lock.json ./
+RUN npm ci
+COPY campushostel-fe/ ./
 RUN npm run build
 
-# ----------------------
-# Stage 2: Production
-# ----------------------
+WORKDIR /work/campushostel-admin
+RUN corepack enable && corepack prepare pnpm@10.8.1 --activate
+COPY campushostel-admin/package.json campushostel-admin/pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile
+COPY campushostel-admin/ ./
+RUN pnpm run build
+
 FROM nginx:alpine
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY --from=build /work/campushostel-fe/dist /usr/share/nginx/html
+COPY --from=build /work/campushostel-admin/dist /usr/share/nginx/html/manager
 
-# Copy built files from previous stage (Vite outputs to /dist)
-COPY --from=build /app/dist /usr/share/nginx/html
-
-# Copy custom nginx config if you have one (optional)
-# COPY nginx.conf /etc/nginx/conf.d/default.conf
-
-# Expose port
 EXPOSE 80
-
-# Start Nginx
 CMD ["nginx", "-g", "daemon off;"]

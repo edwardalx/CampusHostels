@@ -52,17 +52,13 @@ services:
 
   frontend:
     build:
-      context: ./frontend/campushostel-fe
-      dockerfile: Dockerfile
-    # ports:
-    #   - "80:80"
-    volumes:
-      - frontend-static:/usr/share/nginx/html:ro # Read-only for frontend
+      context: ./frontend
+      dockerfile: campushostel-fe/Dockerfile
     restart: unless-stopped
-    depends_on:
-      - web
     environment:
       - VITE_API_URL=http://backend-api:8000
+    networks:
+      - campushostels_net
 
   web:
     build:
@@ -174,7 +170,6 @@ services:
       - /etc/letsencrypt:/etc/letsencrypt:ro
       - /var/www/certbot:/var/www/certbot:ro # ← ADD THIS LINE
       - /var/www/book-shelf-fe:/var/www/book-shelf-fe:ro
-      - frontend-static:/var/www/campushostels-fe:ro # ← CHANGE THIS LINE
     depends_on:
       - web
       - app1
@@ -188,7 +183,6 @@ services:
 volumes:
   postgres_data:
   mssql_data:
-  frontend-static:
   image_data:
 
 networks:
