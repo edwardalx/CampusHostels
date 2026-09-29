@@ -8,6 +8,8 @@ export interface PropertyCreatePayload {
   imageUrl?: string
   noOfUnits?: number
   noOfFloors?: number
+  startingPrice?: number
+  ownerManagerId: string
 }
 
 export interface Property {
@@ -17,6 +19,8 @@ export interface Property {
   imageUrl?: string | null
   noOfUnits?: number | null
   noOfFloors?: number | null
+  startingPrice?: number | null
+  ownerManagerId?: string | null
 }
 
 export async function createProperty(payload: PropertyCreatePayload): Promise<Property> {

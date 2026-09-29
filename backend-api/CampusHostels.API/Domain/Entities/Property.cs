@@ -11,6 +11,8 @@ public class Property
     public int? NoOfUnits { get; set; }
     public int? NoOfFloors { get; set; }
     public decimal? StartingPrice { get; set; } = 120;  // Default starting price per month
+    public Guid? OwnerManagerId { get; set; }
+    public Manager? OwnerManager { get; set; }
     public bool Availability { get; set; } = true;
     public List<User> LikedByUsers { get; set; } = [];
     public ICollection<Rating> Ratings { get; set; } = [];

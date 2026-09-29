@@ -18,7 +18,7 @@ export function PropertyHealthPanel({ properties }: PropertyHealthPanelProps) {
         {properties.map((property) => (
           <div key={property.name} className="property-item">
             <div>
-              <strong>{property.name}</strong>
+              <strong className="capitalize">{property.name}</strong>
               <span>Occupancy {property.occupancy}</span>
             </div>
             <span className="status-tag">{property.status}</span>

@@ -9,6 +9,9 @@ public interface IManagerService
     Task<ManagerProfileDto?> GetCurrentManagerAsync(Guid managerId);
     Task<ManagerProfileDto> CreateManagerAsync(ManagerCreateDto dto);
     Task<IReadOnlyList<ManagerProfileDto>> GetAllManagersAsync();
+    Task<IReadOnlyList<ManagerOwnerOptionDto>> GetActiveManagerOwnerOptionsAsync();
+    Task<bool> IsActiveManagerAsync(Guid managerId);
+    Task<bool> CanManagePropertiesAsync(Guid managerId);
     Task<ManagerProfileDto> UpdateManagerAsync(Guid managerId, ManagerUpdateDto dto);
     Task ChangePasswordAsync(Guid managerId, ManagerChangePasswordDto dto);
     Task<IReadOnlyList<FunctionType>> GetFunctionsAsync(Guid managerId);

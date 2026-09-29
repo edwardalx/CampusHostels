@@ -36,6 +36,26 @@ export interface ManagerProfile {
   functions: FunctionType[]
 }
 
+export interface ManagerOwnerOption {
+  managerId: string
+  firstName: string
+  lastName: string
+  username: string
+}
+
+export async function fetchManagerOwnerOptions(): Promise<ManagerOwnerOption[]> {
+  const response = await fetch(`${baseUrl}/owner-options`, {
+    headers: { Authorization: `Bearer ${getStoredManagerToken()}` },
+  })
+
+  const data = await response.json()
+  if (!response.ok) {
+    throw new Error(data?.error ?? 'Unable to load property owners')
+  }
+
+  return data
+}
+
 export async function loginManager(credentials: {
   username: string
   password: string

@@ -82,6 +82,11 @@ public class ApplicationDbContext : DbContext
             entity.Property(e => e.Name).IsRequired();
             entity.HasIndex(e => e.Name).IsUnique();
             entity.Property(e => e.Availability).HasDefaultValue(true);
+            entity.HasOne(e => e.OwnerManager)
+                .WithMany(m => m.OwnedProperties)
+                .HasForeignKey(e => e.OwnerManagerId)
+                .HasPrincipalKey(m => m.ManagerId)
+                .OnDelete(DeleteBehavior.Restrict);
         });
 
         // Unit configuration

@@ -124,7 +124,7 @@ export default function HostelDetails() {
               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 {/* Name and Location */}
                 <div className="mb-6">
-                  <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-2">
+                  <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-2 capitalize">
                     {selectedHostel.name}
                   </h1>
                   <div className="flex items-center gap-2 text-gray-600 mb-4">
