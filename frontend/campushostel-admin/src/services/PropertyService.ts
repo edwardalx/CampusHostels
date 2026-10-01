@@ -1,27 +1,7 @@
 import { getStoredManagerToken } from './ManagerAuthService'
+import type { ManagedProperty, Property, PropertyCreatePayload } from '../type/property'
 
 const baseUrl = '/api/Properties'
-
-export interface PropertyCreatePayload {
-  name: string
-  location: string
-  imageUrl?: string
-  noOfUnits?: number
-  noOfFloors?: number
-  startingPrice?: number
-  ownerManagerId: string
-}
-
-export interface Property {
-  id: number
-  name: string
-  location: string
-  imageUrl?: string | null
-  noOfUnits?: number | null
-  noOfFloors?: number | null
-  startingPrice?: number | null
-  ownerManagerId?: string | null
-}
 
 export async function createProperty(payload: PropertyCreatePayload): Promise<Property> {
   const token = getStoredManagerToken()
@@ -40,4 +20,19 @@ export async function createProperty(payload: PropertyCreatePayload): Promise<Pr
   }
 
   return data
+}
+
+export async function fetchManagedProperties(signal?: AbortSignal): Promise<ManagedProperty[]> {
+  const token = getStoredManagerToken()
+  const response = await fetch(`${baseUrl}/managed`, {
+    headers: { Authorization: `Bearer ${token}` },
+    signal,
+  })
+
+  const data = await response.json().catch(() => null)
+  if (!response.ok) {
+    throw new Error(data?.error ?? 'Unable to load properties')
+  }
+
+  return data as ManagedProperty[]
 }

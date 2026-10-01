@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { FunctionType } from '../services/ManagerAuthService'
+import { FunctionType } from '../type/manager'
 
 export function DashboardHeader() {
   const { manager } = useAuth()

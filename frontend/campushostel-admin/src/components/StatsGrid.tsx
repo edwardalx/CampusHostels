@@ -1,4 +1,4 @@
-import type { SummaryCard } from '../data/dashboardData'
+import type { SummaryCard } from '../type/dashboard'
 
 type StatsGridProps = {
   cards: SummaryCard[]

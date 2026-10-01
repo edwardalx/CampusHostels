@@ -4,7 +4,10 @@ using CampusHostels.API.Application.Services;
 using CampusHostels.API.Domain.Entities;
 using CampusHostels.API.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging.Abstractions;
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -12,6 +15,15 @@ namespace CampusHostels.API.Application.Tests;
 
 public class AccountServiceTests
 {
+    private static AccountService CreateService(ApplicationDbContext context)
+    {
+        var config = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>())
+            .Build();
+
+        return new AccountService(context, new MockTokenService(), NullLogger<AccountService>.Instance, config);
+    }
+
     private ApplicationDbContext CreateInMemoryContext()
     {
         var options = new DbContextOptionsBuilder<ApplicationDbContext>()
@@ -23,10 +35,8 @@ public class AccountServiceTests
     [Fact]
     public async Task RegisterAsync_ValidData_CreatesUserAndReturnsToken()
     {
-        // Arrange
         var context = CreateInMemoryContext();
-        var tokenService = new MockTokenService();
-        var service = new AccountService(context, tokenService);
+        var service = CreateService(context);
 
         var dto = new RegisterDto
         {
@@ -35,12 +45,9 @@ public class AccountServiceTests
             Role = "tenant"
         };
 
-        // Act
         var response = await service.RegisterAsync(dto);
 
-        // Assert
         Assert.NotNull(response);
-        Assert.Equal("test@example.com", response.Email);
         Assert.Equal("test@example.com", response.Email);
         Assert.Equal("tenant", response.Role);
         Assert.NotNull(response.Token);
@@ -49,12 +56,9 @@ public class AccountServiceTests
     [Fact]
     public async Task RegisterAsync_DuplicateUsername_ThrowsException()
     {
-        // Arrange
         var context = CreateInMemoryContext();
-        var tokenService = new MockTokenService();
-        var service = new AccountService(context, tokenService);
+        var service = CreateService(context);
 
-        // Pre-create a user
         var existingUser = new User
         {
             PhoneNumber = "existing-phone",
@@ -72,38 +76,28 @@ public class AccountServiceTests
             Role = "tenant"
         };
 
-        // Act & Assert
         await Assert.ThrowsAsync<InvalidOperationException>(() => service.RegisterAsync(dto));
     }
 
     [Fact]
     public async Task LoginAsync_ValidCredentials_ReturnsTokenResponse()
     {
-        // Arrange
         var context = CreateInMemoryContext();
-        var tokenService = new MockTokenService();
-        var service = new AccountService(context, tokenService);
+        var service = CreateService(context);
 
-        // Register a user so password hashing is consistent with AccountService
-        var registerDto = new RegisterDto
+        await service.RegisterAsync(new RegisterDto
         {
             Email = "test@example.com",
             Password = "Password123!",
             Role = "tenant"
-        };
+        });
 
-        await service.RegisterAsync(registerDto);
-
-        var dto = new LoginDto
+        var response = await service.LoginAsync(new LoginDto
         {
             Email = "test@example.com",
             Password = "Password123!"
-        };
+        });
 
-        // Act
-        var response = await service.LoginAsync(dto);
-
-        // Assert
         Assert.NotNull(response);
         Assert.Equal("test@example.com", response.Email);
         Assert.NotNull(response.Token);
@@ -112,32 +106,24 @@ public class AccountServiceTests
     [Fact]
     public async Task LoginAsync_InvalidPassword_ThrowsException()
     {
-        // Arrange
         var context = CreateInMemoryContext();
-        var tokenService = new MockTokenService();
-        var service = new AccountService(context, tokenService);
+        var service = CreateService(context);
 
-        var registerDto = new RegisterDto
+        await service.RegisterAsync(new RegisterDto
         {
             Email = "test@example.com",
             Password = "Password123!",
             Role = "tenant"
-        };
+        });
 
-        await service.RegisterAsync(registerDto);
-
-        var dto = new LoginDto
+        await Assert.ThrowsAsync<UnauthorizedAccessException>(() => service.LoginAsync(new LoginDto
         {
             Email = "test@example.com",
             Password = "WrongPassword"
-        };
-
-        // Act & Assert
-        await Assert.ThrowsAsync<UnauthorizedAccessException>(() => service.LoginAsync(dto));
+        }));
     }
 }
 
-/// <summary>Mock ITokenService for testing.</summary>
 public class MockTokenService : ITokenService
 {
     public string CreateToken(User user, out DateTime expires)

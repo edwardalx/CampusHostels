@@ -1,10 +1,10 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import type { ManagerOwnerOption } from "../type/manager";
+import { FunctionType } from "../type/manager";
 import {
   fetchManagerOwnerOptions,
-  FunctionType,
-  type ManagerOwnerOption,
 } from "../services/ManagerAuthService";
 import { uploadPropertyImage } from "../services/ImageService";
 import { createProperty } from "../services/PropertyService";

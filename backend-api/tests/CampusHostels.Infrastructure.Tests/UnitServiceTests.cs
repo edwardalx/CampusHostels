@@ -58,6 +58,70 @@ public class UnitServiceTests
     }
 
     [Fact]
+    public async Task GetByPropertyAsync_ReturnsPersistedBedsLeft()
+    {
+        await using var context = CreateInMemoryContext();
+        var mapper = CreateMapper();
+        var service = new UnitService(new EfUnitRepository(context), mapper);
+        var property = new Property { Name = "Test Property", Location = "123 Main" };
+        context.Properties.Add(property);
+        await context.SaveChangesAsync();
+
+        var unit = new Unit
+        {
+            PropertyId = property.Id,
+            RoomNumber = "101",
+            MaxNoOfPeople = 2,
+            BedsLeft = 2
+        };
+        context.Units.Add(unit);
+        await context.SaveChangesAsync();
+
+        var now = DateTime.UtcNow;
+        context.TenancyAgreements.AddRange(
+            new TenancyAgreement
+            {
+                PropertyId = property.Id,
+                UnitId = unit.Id,
+                TenantId = Guid.NewGuid(),
+                ContractStartDate = now.AddDays(-10),
+                ContractDurationMonths = 6,
+                ContractEndDate = now.AddMonths(2),
+                IsActive = true,
+                TotalAmountPaid = 100m
+            },
+            new TenancyAgreement
+            {
+                PropertyId = property.Id,
+                UnitId = unit.Id,
+                TenantId = Guid.NewGuid(),
+                ContractStartDate = now.AddDays(-10),
+                ContractDurationMonths = 6,
+                ContractEndDate = now.AddMonths(2),
+                IsActive = false,
+                TotalAmountPaid = 100m
+            },
+            new TenancyAgreement
+            {
+                PropertyId = property.Id,
+                UnitId = unit.Id,
+                TenantId = Guid.NewGuid(),
+                ContractStartDate = now.AddMonths(-3),
+                ContractDurationMonths = 1,
+                ContractEndDate = now.AddMonths(-2),
+                IsActive = true,
+                TotalAmountPaid = 100m
+            }
+        );
+        await context.SaveChangesAsync();
+
+        var result = await service.GetByPropertyAsync(property.Id);
+
+        var unitDto = Assert.Single(result);
+        Assert.Equal(2, unitDto.BedsLeft);
+    }
+
+    [Fact]
     public async Task CreateAsync_ValidDto_CreatesUnit()
     {
         // Arrange

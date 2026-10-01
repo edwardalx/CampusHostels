@@ -1,25 +1,12 @@
-import { getStoredManagerToken, type FunctionType, type ManagerProfile } from './ManagerAuthService'
+import { getStoredManagerToken } from './ManagerAuthService'
+import type {
+  FunctionType,
+  ManagerCreatePayload,
+  ManagerProfile,
+  ManagerUpdatePayload,
+} from '../type/manager'
 
 const baseUrl = '/api/Managers'
-
-export interface ManagerCreatePayload {
-  firstName: string
-  lastName: string
-  username: string
-  email: string
-  phoneNumber: string
-  password: string
-  tier: 'Standard' | 'Super'
-}
-
-export interface ManagerUpdatePayload {
-  firstName: string
-  lastName: string
-  email: string
-  phoneNumber: string
-  tier: 'Standard' | 'Super'
-  isActive: boolean
-}
 
 function authHeaders() {
   const token = getStoredManagerToken()

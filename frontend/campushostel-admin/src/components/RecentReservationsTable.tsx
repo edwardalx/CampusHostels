@@ -1,4 +1,4 @@
-import type { ReservationStatus } from '../data/dashboardData'
+import type { ReservationStatus } from '../type/dashboard'
 
 type RecentReservationsTableProps = {
   reservations: Array<[string, string, string, ReservationStatus]>

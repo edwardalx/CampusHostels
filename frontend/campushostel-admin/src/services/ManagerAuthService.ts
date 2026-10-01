@@ -1,47 +1,11 @@
 const baseUrl = '/api/Managers'
-
-export type FunctionType = 0 | 1 | 2 | 3 | 4
-
-export const FunctionType = {
-  None: 0,
-  ManageManagers: 1,
-  ManageUsers: 2,
-  ViewReports: 3,
-  ManageProperties: 4,
-} as const
-
-export interface ManagerAuthResponse {
-  token: string
-  managerId: string
-  username: string
-  firstName: string
-  lastName: string
-  email: string
-  tier: 'Standard' | 'Super'
-  mustChangePassword: boolean
-  functions: FunctionType[]
-  expires: string
-}
-
-export interface ManagerProfile {
-  managerId: string
-  username: string
-  firstName: string
-  lastName: string
-  email: string
-  phoneNumber: string
-  tier: 'Standard' | 'Super'
-  mustChangePassword: boolean
-  isActive: boolean
-  functions: FunctionType[]
-}
-
-export interface ManagerOwnerOption {
-  managerId: string
-  firstName: string
-  lastName: string
-  username: string
-}
+import type {
+  ManagerAuthResponse,
+  ManagerLoginCredentials,
+  ManagerOwnerOption,
+  ManagerPasswordChangePayload,
+  ManagerProfile,
+} from '../type/manager'
 
 export async function fetchManagerOwnerOptions(): Promise<ManagerOwnerOption[]> {
   const response = await fetch(`${baseUrl}/owner-options`, {
@@ -56,10 +20,7 @@ export async function fetchManagerOwnerOptions(): Promise<ManagerOwnerOption[]> 
   return data
 }
 
-export async function loginManager(credentials: {
-  username: string
-  password: string
-}): Promise<ManagerAuthResponse> {
+export async function loginManager(credentials: ManagerLoginCredentials): Promise<ManagerAuthResponse> {
   const response = await fetch(`${baseUrl}/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -90,10 +51,7 @@ export async function fetchCurrentManager(): Promise<ManagerProfile> {
   return data
 }
 
-export async function changeManagerPassword(payload: {
-  currentPassword: string
-  newPassword: string
-}): Promise<void> {
+export async function changeManagerPassword(payload: ManagerPasswordChangePayload): Promise<void> {
   const token = getStoredManagerToken()
   const response = await fetch(`${baseUrl}/change-password`, {
     method: 'POST',

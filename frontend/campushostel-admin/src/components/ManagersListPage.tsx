@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { FunctionType, type FunctionType as FunctionTypeValue, type ManagerProfile } from '../services/ManagerAuthService'
+import { FunctionType, type FunctionType as FunctionTypeValue } from '../type/manager'
 import {
   fetchAllManagers,
   setManagerFunctions,
   updateManager,
-  type ManagerUpdatePayload,
 } from '../services/ManagerService'
+import type { ManagerProfile, ManagerUpdatePayload } from '../type/manager'
 
 type EditableFields = Omit<ManagerUpdatePayload, 'tier'> & { tier: 'Standard' | 'Super' }
 

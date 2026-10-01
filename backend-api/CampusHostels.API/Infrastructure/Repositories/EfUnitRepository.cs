@@ -23,12 +23,15 @@ public class EfUnitRepository : IUnitRepository
 
     public async Task<Unit?> GetByIdAsync(int id)
     {
-        return await _db.Units.FindAsync(id);
+        return await _db.Units.AsNoTracking().FirstOrDefaultAsync(unit => unit.Id == id);
     }
 
     public async Task<IEnumerable<Unit>> GetByPropertyIdAsync(int propertyId)
     {
-        return await _db.Units.Where(u => u.PropertyId == propertyId).AsNoTracking().ToListAsync();
+        return await _db.Units
+            .Where(unit => unit.PropertyId == propertyId)
+            .AsNoTracking()
+            .ToListAsync();
     }
 
     public async Task <IEnumerable<Unit>> GetAllUnitsAsync()
@@ -40,4 +43,5 @@ public class EfUnitRepository : IUnitRepository
     {
         await _db.SaveChangesAsync();
     }
+
 }

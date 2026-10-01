@@ -1,4 +1,4 @@
-import type { ActivityItem } from '../data/dashboardData'
+import type { ActivityItem } from '../type/dashboard'
 
 type ActivityFeedProps = {
   items: ActivityItem[]

@@ -1,14 +1,16 @@
 import { useAuth } from '../context/AuthContext'
-import { FunctionType, type FunctionType as FunctionTypeValue } from '../services/ManagerAuthService'
+import { FunctionType, type FunctionType as FunctionTypeValue } from '../type/manager'
+import { useLocation, useNavigate } from 'react-router-dom'
 
 interface NavItem {
   label: string
+  path?: string
   requiredFunction?: FunctionTypeValue
 }
 
 const navItems: NavItem[] = [
-  { label: 'Overview' },
-  { label: 'Properties', requiredFunction: FunctionType.ManageProperties },
+  { label: 'Overview', path: '/' },
+  { label: 'Properties', path: '/properties', requiredFunction: FunctionType.ManageProperties },
   { label: 'Tenants', requiredFunction: FunctionType.ManageUsers },
   { label: 'Payments' },
   { label: 'Maintenance' },
@@ -17,9 +19,14 @@ const navItems: NavItem[] = [
 
 export function Sidebar() {
   const { manager, logout } = useAuth()
+  const location = useLocation()
+  const navigate = useNavigate()
 
   const visibleNavItems = navItems.filter(
-    (item) => !item.requiredFunction || manager?.functions.includes(item.requiredFunction),
+    (item) =>
+      !item.requiredFunction ||
+      manager?.tier === 'Super' ||
+      manager?.functions.includes(item.requiredFunction),
   )
 
   return (
@@ -33,8 +40,13 @@ export function Sidebar() {
       </div>
 
       <nav className="nav">
-        {visibleNavItems.map((item, index) => (
-          <button key={item.label} className={`nav-item${index === 0 ? ' active' : ''}`}>
+        {visibleNavItems.map((item) => (
+          <button
+            key={item.label}
+            className={`nav-item${item.path === location.pathname ? ' active' : ''}`}
+            onClick={() => item.path && navigate(item.path)}
+            type="button"
+          >
             {item.label}
           </button>
         ))}

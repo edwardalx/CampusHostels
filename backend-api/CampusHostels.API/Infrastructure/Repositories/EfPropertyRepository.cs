@@ -25,6 +25,21 @@ public class EfPropertyRepository : IPropertyRepository
         return await _db.Properties.AsNoTracking().OrderBy(p => p.Id).ToListAsync();
     }
 
+    public async Task<IEnumerable<Property>> GetForManagerAsync(Guid? ownerManagerId)
+    {
+        var query = _db.Properties
+            .AsNoTracking()
+            .Include(property => property.Units)
+            .AsQueryable();
+
+        if (ownerManagerId.HasValue)
+        {
+            query = query.Where(property => property.OwnerManagerId == ownerManagerId.Value);
+        }
+
+        return await query.OrderBy(property => property.Id).ToListAsync();
+    }
+
     public async Task<Property?> GetByIdAsync(int id)
     {
         return await _db.Properties.FindAsync(id);

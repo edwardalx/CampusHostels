@@ -5,15 +5,19 @@ import {
   getStoredManagerToken,
   loginManager,
   logoutManager,
-  type ManagerProfile,
 } from '../services/ManagerAuthService'
+import type {
+  ManagerLoginCredentials,
+  ManagerPasswordChangePayload,
+  ManagerProfile,
+} from '../type/manager'
 
 interface AuthContextValue {
   manager: ManagerProfile | null
   isLoading: boolean
-  login: (credentials: { username: string; password: string }) => Promise<void>
+  login: (credentials: ManagerLoginCredentials) => Promise<void>
   logout: () => void
-  changePassword: (payload: { currentPassword: string; newPassword: string }) => Promise<void>
+  changePassword: (payload: ManagerPasswordChangePayload) => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined)
@@ -38,7 +42,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .finally(() => setIsLoading(false))
   }, [])
 
-  async function login(credentials: { username: string; password: string }) {
+  async function login(credentials: ManagerLoginCredentials) {
     await loginManager(credentials)
     const profile = await fetchCurrentManager()
     setManager(profile)
@@ -49,7 +53,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setManager(null)
   }
 
-  async function changePassword(payload: { currentPassword: string; newPassword: string }) {
+  async function changePassword(payload: ManagerPasswordChangePayload) {
     await changeManagerPassword(payload)
     const profile = await fetchCurrentManager()
     setManager(profile)

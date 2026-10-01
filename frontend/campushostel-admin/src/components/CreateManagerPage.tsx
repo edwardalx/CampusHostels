@@ -1,8 +1,8 @@
 import { useState, type FormEvent } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { FunctionType, type FunctionType as FunctionTypeValue } from '../services/ManagerAuthService'
 import { createManager, setManagerFunctions } from '../services/ManagerService'
+import { FunctionType, type FunctionType as FunctionTypeValue, type ManagerTier } from '../type/manager'
 
 const functionOptions: { label: string; value: FunctionTypeValue }[] = [
   { label: 'Manage managers', value: FunctionType.ManageManagers },
@@ -21,7 +21,7 @@ export function CreateManagerPage() {
   const [email, setEmail] = useState('')
   const [phoneNumber, setPhoneNumber] = useState('')
   const [password, setPassword] = useState('')
-  const [tier, setTier] = useState<'Standard' | 'Super'>('Standard')
+  const [tier, setTier] = useState<ManagerTier>('Standard')
   const [functions, setFunctions] = useState<FunctionTypeValue[]>([])
   const [error, setError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)

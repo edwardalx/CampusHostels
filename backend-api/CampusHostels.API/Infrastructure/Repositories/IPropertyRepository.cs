@@ -7,6 +7,7 @@ namespace CampusHostels.API.Infrastructure.Repositories;
 public interface IPropertyRepository
 {
     Task<IEnumerable<Property>> GetAllAsync();
+    Task<IEnumerable<Property>> GetForManagerAsync(Guid? ownerManagerId);
     Task<Property?> GetByIdAsync(int id);
     Task AddAsync(Property property);
     Task SaveChangesAsync();
