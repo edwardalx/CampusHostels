@@ -1,3 +1,4 @@
+using CampusHostels.API.Application.Security;
 using CampusHostels.API.Application.DTOs;
 using CampusHostels.API.Application.Interfaces;
 using CampusHostels.API.Domain.Entities;
@@ -49,7 +50,7 @@ public class ManagerService : IManagerService
             throw new UnauthorizedAccessException("This manager account has been locked due to multiple failed login attempts.");
         }
 
-        if (!AccountService.VerifyPassword(dto.Password, manager.PasswordHash))
+        if (!PasswordHasher.Verify(dto.Password, manager.PasswordHash, out var needsRehash))
         {
             manager.FailedLoginAttempts++;
             await _db.SaveChangesAsync();
@@ -59,6 +60,11 @@ public class ManagerService : IManagerService
         var token = _tokenService.CreateToken(manager, out var expires);
         manager.LastLoginAt = DateTime.UtcNow;
         manager.FailedLoginAttempts = 0;
+        if (needsRehash)
+        {
+            // Upgrade an old unsalted SHA-256 hash while we have the plain password in hand.
+            manager.PasswordHash = PasswordHasher.Hash(dto.Password);
+        }
         await _db.SaveChangesAsync();
 
         return new ManagerAuthResponseDto

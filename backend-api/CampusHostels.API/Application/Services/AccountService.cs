@@ -1,5 +1,6 @@
 using CampusHostels.API.Application.DTOs;
 using CampusHostels.API.Application.Interfaces;
+using CampusHostels.API.Application.Security;
 using CampusHostels.API.Domain.Entities;
 using CampusHostels.API.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
@@ -133,7 +134,7 @@ public class AccountService : IAccountService
             throw new UnauthorizedAccessException("Your account has been locked due to multiple failed login attempts. Contact support to unlock your account.");
         }
 
-        if (!VerifyPassword(dto.Password, user.PasswordHash))
+        if (!PasswordHasher.Verify(dto.Password, user.PasswordHash, out var needsRehash))
         {
             user.FailedLoginAttempts++;
             await _db.SaveChangesAsync();
@@ -145,6 +146,11 @@ public class AccountService : IAccountService
         var token = _tokenService.CreateToken(user, out var expires);
         user.LastLoginAt = DateTime.UtcNow;
         user.FailedLoginAttempts = 0; // reset on successful login
+        if (needsRehash)
+        {
+            // Upgrade an old unsalted SHA-256 hash while we have the plain password in hand.
+            user.PasswordHash = PasswordHasher.Hash(dto.Password);
+        }
         await _db.SaveChangesAsync();
 
         return new AuthResponseDto
@@ -245,22 +251,11 @@ public class AccountService : IAccountService
         };
     }
 
-    /// <summary>Hash a password using SHA256 (dev-only; replace with Identity later).</summary>
-    public static string HashPassword(string password)
-    {
-        using (var sha256 = SHA256.Create())
-        {
-            var hashedBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(password));
-            return Convert.ToBase64String(hashedBytes);
-        }
-    }
+    /// <summary>Hash a password (PBKDF2 with a per-password salt; see <see cref="PasswordHasher"/>).</summary>
+    public static string HashPassword(string password) => PasswordHasher.Hash(password);
 
-    /// <summary>Verify a password against its hash.</summary>
-    public static bool VerifyPassword(string password, string hash)
-    {
-        var hashOfInput = HashPassword(password);
-        return hashOfInput == hash;
-    }
+    /// <summary>Verify a password against its stored hash (also accepts legacy SHA-256 hashes).</summary>
+    public static bool VerifyPassword(string password, string hash) => PasswordHasher.Verify(password, hash);
 
     public async Task<UserExistsDto> EmailPhoneNoCheckAsync(LoginDto dto)
     {

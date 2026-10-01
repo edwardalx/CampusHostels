@@ -13,6 +13,6 @@ public class RegisterDtoValidator : AbstractValidator<RegisterDto>
         RuleFor(x => x.PhoneNumber)
             .NotEmpty().WithMessage("Phone number is required.")
             .Matches("^\\+?\\d+$").WithMessage("Phone number must contain only digits and an optional leading '+'.");
-        RuleFor(x => x.Password).NotEmpty().MinimumLength(6).WithMessage("Password must be at least 6 characters.");
+        RuleFor(x => x.Password).NotEmpty().MinimumLength(8).WithMessage("Password must be at least 8 characters.");
     }
 }

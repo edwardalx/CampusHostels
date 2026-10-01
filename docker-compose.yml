@@ -162,7 +162,8 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./portainer-data:/data
     ports:
-      - "9000:9000"
+      # Loopback only: reach it through an SSH tunnel (ssh -L 9000:127.0.0.1:9000 ...), never the internet.
+      - "127.0.0.1:9000:9000"
     networks:
       - campushostels_net
   nginx:
@@ -185,7 +186,6 @@ services:
       - web
       - app1
       - frontend # ← ADD THIS
-      - portainer # ← ADD PORTAINER HERE
       - image-server
     networks:
       - campushostels_net
