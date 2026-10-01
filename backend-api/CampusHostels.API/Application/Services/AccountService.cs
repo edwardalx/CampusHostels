@@ -9,8 +9,6 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 using Google.Apis.Auth;
-using System.Net.Http.Headers;
-using System.Text.Json;
 
 namespace CampusHostels.API.Application.Services;
 
@@ -36,7 +34,7 @@ public class AccountService : IAccountService
         var normalizedPhone = NormalizePhone(dto.PhoneNumber ?? string.Empty);
 
         // Single DB call to check for existing user by email or phone
-        var existing = await _db.Users.FirstOrDefaultAsync(u => u.Email == normalizedEmail || u.PhoneNumber == normalizedPhone);
+        var existing = await _db.Users.FirstOrDefaultAsync(u => u.Email == normalizedEmail || (normalizedPhone != "" && u.PhoneNumber == normalizedPhone));
         if (existing != null)
         {
             if (existing.Email == normalizedEmail) throw new InvalidOperationException("Email already exists.");
@@ -117,7 +115,7 @@ public class AccountService : IAccountService
         }
 
         // Single DB call to find matching user
-        var user = await _db.Users.FirstOrDefaultAsync(u => u.Email == normalizedEmail) ?? await _db.Users.FirstOrDefaultAsync(u => u.PhoneNumber == normalizedPhone);
+        var user = await _db.Users.FirstOrDefaultAsync(u => u.Email == normalizedEmail) ?? (normalizedPhone.Length > 0 ? await _db.Users.FirstOrDefaultAsync(u => u.PhoneNumber == normalizedPhone) : null);
 
         if (user is null)
         {
@@ -160,65 +158,78 @@ public class AccountService : IAccountService
             Expires = expires
         };
     }
-    public async Task<AuthResponseDto> GoogleLoginAsync(string accessToken)
+    public async Task<AuthResponseDto> GoogleLoginAsync(string idToken)
     {
-        if (string.IsNullOrWhiteSpace(accessToken))
-            throw new ArgumentException("accessToken is null or empty");
+        if (string.IsNullOrWhiteSpace(idToken))
+            throw new ArgumentException("idToken is required.");
 
-        using var client = new HttpClient();
+        var clientId = _config["Authentication:GoogleClientId"];
+        if (string.IsNullOrWhiteSpace(clientId))
+            throw new InvalidOperationException("Google sign-in is not available right now.");
 
-        client.DefaultRequestHeaders.Authorization =
-            new AuthenticationHeaderValue("Bearer", accessToken);
-
-        var response = await client.GetAsync(
-            "https://www.googleapis.com/oauth2/v3/userinfo"
-        );
-
-        if (!response.IsSuccessStatusCode)
+        // Verifies the signature against Google's published keys, the expiry, the issuer and that the
+        // token was issued to THIS application (audience), so tokens minted for other apps are rejected.
+        GoogleJsonWebSignature.Payload payload;
+        try
         {
-            var error = await response.Content.ReadAsStringAsync();
-            throw new Exception($"Google token validation failed: {error}");
+            payload = await GoogleJsonWebSignature.ValidateAsync(
+                idToken,
+                new GoogleJsonWebSignature.ValidationSettings { Audience = new[] { clientId } });
+        }
+        catch (InvalidJwtException ex)
+        {
+            _logger.LogWarning(ex, "Rejected an invalid Google ID token.");
+            throw new UnauthorizedAccessException("Google sign-in failed. Please try again.");
         }
 
-        var json = await response.Content.ReadAsStringAsync();
+        if (string.IsNullOrWhiteSpace(payload.Email) || !payload.EmailVerified)
+            throw new UnauthorizedAccessException("Your Google account's email address is not verified.");
 
-        var googleUser = JsonSerializer.Deserialize<GoogleUserInfo>(
-            json,
-            new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            });
-
-        if (googleUser == null || string.IsNullOrWhiteSpace(googleUser.Email))
-            throw new Exception("Unable to retrieve Google user information");
-
-        var email = googleUser.Email.Trim().ToLowerInvariant();
-
+        var email = payload.Email.Trim().ToLowerInvariant();
         var user = await _db.Users.FirstOrDefaultAsync(u => u.Email == email);
 
-        if (user == null)
+        if (user is null)
         {
             user = new User
             {
-                FirstName = googleUser.GivenName ?? googleUser.Name ?? "Google",
-                LastName = googleUser.FamilyName ?? "",
+                FirstName = payload.GivenName ?? payload.Name ?? "Google",
+                LastName = payload.FamilyName ?? string.Empty,
                 Email = email,
                 TenantId = Guid.NewGuid(),
-                Role = "Student",
+                // No phone number yet; they add one when they book. Uniqueness only applies to
+                // non-empty phone numbers (see ApplicationDbContext).
+                PhoneNumber = string.Empty,
+                Role = "Tenant",
+                // Google has verified the address, so there is nothing further to activate.
                 IsActive = true,
+                // Google-only account: an empty hash can never match a password.
                 PasswordHash = string.Empty,
                 LastLoginAt = DateTime.UtcNow
             };
 
             _db.Users.Add(user);
-            await _db.SaveChangesAsync();
+            try
+            {
+                await _db.SaveChangesAsync();
+            }
+            catch (DbUpdateException)
+            {
+                // Two first-time sign-ins racing: the other request created the account.
+                _db.Entry(user).State = EntityState.Detached;
+                user = await _db.Users.FirstOrDefaultAsync(u => u.Email == email) ?? throw new InvalidOperationException("Unable to create the account.");
+            }
         }
-        else
-        {
-            user.LastLoginAt = DateTime.UtcNow;
-            user.FailedLoginAttempts = 0; // reset on successful login
-            await _db.SaveChangesAsync();
-        }
+
+        // Same account rules as password sign-in.
+        if (!user.IsActive)
+            throw new UnauthorizedAccessException("User account is inactive. Contact support to activate your account.");
+
+        if (user.FailedLoginAttempts >= 5)
+            throw new UnauthorizedAccessException("Your account has been locked due to multiple failed login attempts. Contact support to unlock your account.");
+
+        user.LastLoginAt = DateTime.UtcNow;
+        user.FailedLoginAttempts = 0;
+        await _db.SaveChangesAsync();
 
         var token = _tokenService.CreateToken(user, out var expires);
 
@@ -257,7 +268,8 @@ public class AccountService : IAccountService
         var normalizedPhone = NormalizePhone(dto.PhoneNumber ?? string.Empty);
 
         var emailExists = await _db.Users.AnyAsync(u => u.Email.ToLower() == normalizedEmail);
-        var phoneExists = await _db.Users.AnyAsync(u => u.PhoneNumber == normalizedPhone);
+        // Google-created accounts have a blank phone number, which must never count as "taken".
+        var phoneExists = normalizedPhone.Length > 0 && await _db.Users.AnyAsync(u => u.PhoneNumber == normalizedPhone);
 
         return new UserExistsDto
         {

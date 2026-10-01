@@ -83,8 +83,20 @@ public class AccountsController : ControllerBase
     [HttpPost("google-login")]
     public async Task<IActionResult> GoogleLogin([FromBody] GoogleAuthDto dto)
     {
-        var result = await _accountService.GoogleLoginAsync(dto.AccessToken);
-        return Ok(result);
+        try
+        {
+            var result = await _accountService.GoogleLoginAsync(dto.IdToken);
+            return Ok(result);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Unauthorized(new { error = ex.Message });
+        }
+        catch (InvalidOperationException ex)
+        {
+            // Google sign-in has not been configured (missing client ID) on this server.
+            return StatusCode(StatusCodes.Status503ServiceUnavailable, new { error = ex.Message });
+        }
     }
 
     [HttpPost("check-email-phone")]

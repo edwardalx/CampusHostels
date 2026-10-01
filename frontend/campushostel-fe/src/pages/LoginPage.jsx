@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from "react";
-import { Eye, EyeOff, Home, Facebook } from "lucide-react";
+import { Eye, EyeOff, Home } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { FcGoogle } from "react-icons/fc";
 import { LoadingSpinner } from "../components/SkeletonCard";
 import { LoginApi } from "../services/AuthServices";
-import { GoogleAuthWithToken } from "../services/GoogleAuthService";
+import { GoogleAuthWithIdToken } from "../services/GoogleAuthService";
 import ErrorBoundary from "../components/ErrorBoundary";
 import GoogleLoginButton from "../components/GoogleLoginButton";
+import SocialButton, { FacebookIcon } from "../components/SocialButton";
 
 export default function LoginPage() {
   const [loading, setLoading] = useState(false);
@@ -70,21 +71,19 @@ export default function LoginPage() {
     // TODO: Handle login logic
   };
 
-  const handleGoogleSuccess = async (response) => {
-    const accessToken = response.access_token;
-
+  const handleGoogleSuccess = async (idToken) => {
     try {
-      const data = await GoogleAuthWithToken(accessToken);
-      data.token
-        ? navigate("/")
-        : setErrorMsg({ general: "Google login failed. Please try again." });
-    } catch (err) {
-      console.error("Google login error:", err);
+      await GoogleAuthWithIdToken(idToken);
+      navigate("/");
+    } catch (error) {
+      setErrorMsg({ general: error.message });
     }
+  };
+  const handleGoogleError = () => {
+    setErrorMsg({ general: "Google sign-in failed. Please try again." });
   };
   const handleFacebookLogin = () => {
     setErrorMsg({ general: "Facebook login failed. Please try a different method." });
-    console.log("Continue with Facebook");
   };
   // const handleForgotPass = ()=>{
   //   navigate("/password-reset")
@@ -239,35 +238,24 @@ export default function LoginPage() {
           </div>
 
           {/* Social Login Buttons */}
-          <div className="flex flex-col gap-5">
+          <div className="flex flex-col gap-3">
             <ErrorBoundary
               fallback={
-                <div
-                  title="Google sign-in is unavailable right now"
-                  className="w-full py-4 gap-2 bg-gray-800/50 text-gray-500 rounded-lg font-medium flex items-center justify-center space-x-3 shadow-md cursor-not-allowed"
-                >
-                  <FcGoogle className="w-5 h-5 opacity-50" />
-                  <span>Google sign-in unavailable</span>
-                </div>
+                <SocialButton disabled title="Google sign-in is unavailable right now" icon={<FcGoogle className="h-5 w-5" />}>
+                  Google sign-in unavailable
+                </SocialButton>
               }
             >
               <GoogleLoginButton
                 onSuccess={handleGoogleSuccess}
-                className="w-full py-4 gap-2 bg-gray-800 text-gray-700 rounded-lg font-medium hover:bg-gray-100 transition-colors duration-200 flex items-center justify-center space-x-3 shadow-md"
-              >
-                <FcGoogle className="w-5 h-5" />
-                <span>Continue with Google</span>
-              </GoogleLoginButton>
+                onError={handleGoogleError}
+                text="continue_with"
+              />
             </ErrorBoundary>
 
-            <button
-              type="button"
-              onClick={handleFacebookLogin}
-              className="w-full py-4 gap-2 bg-gray-800 text-gray-700 rounded-lg font-medium hover:bg-gray-100 transition-colors duration-200 flex items-center justify-center space-x-3 shadow-md"
-            >
-              <Facebook className="w-5 h-5 text-[#1877F2]" />
-              <span>Continue with Facebook</span>
-            </button>
+            <SocialButton onClick={handleFacebookLogin} icon={<FacebookIcon />}>
+              Continue with Facebook
+            </SocialButton>
           </div>
 
           {/* Bottom Link */}

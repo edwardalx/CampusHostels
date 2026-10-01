@@ -5,7 +5,9 @@ import { RegisterApi, RegisterAjax } from "../services/AuthServices";
 import RegSuccessModel from "../components/RegSuccessModel";
 import ErrorBoundary from "../components/ErrorBoundary";
 import GoogleLoginButton from "../components/GoogleLoginButton";
-import { GoogleAuthWithToken } from "../services/GoogleAuthService";
+import SocialButton, { FacebookIcon } from "../components/SocialButton";
+import { FcGoogle } from "react-icons/fc";
+import { GoogleAuthWithIdToken } from "../services/GoogleAuthService";
 
 // Layout constants
 const LAYOUT = {
@@ -211,23 +213,21 @@ export default function RegisterPage() {
     console.log("Response:", resData?.email);
     // TODO: Handle registration logic
   };
-  const handleGoogleRegisterSuccess = async (response) => {
-    const accessToken = response.access_token;
-
+  const handleGoogleRegisterSuccess = async (idToken) => {
     try {
-      const data = await GoogleAuthWithToken(accessToken);
-      data.token
-        ? setStoredToken(data.token)
-        : setErrorMessage({ general: "Google login failed. Please try again." });
-    } catch (err) {
-      console.error("Google login error:", err);
+      const data = await GoogleAuthWithIdToken(idToken);
+      setStoredToken(data.token);
+    } catch (error) {
+      setErrorMessage({ general: error.message });
     }
+  };
+  const handleGoogleRegisterError = () => {
+    setErrorMessage({ general: "Google sign-up failed. Please try again." });
   };
   const handleFacebookLogin = () => {
     setErrorMessage({
       general: "Facebook login failed. Please try a different method.",
     });
-    console.log("Continue with Facebook");
   };
   const handleBlur = async () => {
     const ajaxData = {
@@ -529,68 +529,27 @@ export default function RegisterPage() {
               </div>
 
               {/* Social Sign-Up */}
-              <div className={`flex w-full ${SPACING.SOCIAL_GAP}`}>
+              <div className="flex w-full flex-col gap-3">
                 {/* Google Button */}
                 <ErrorBoundary
                   fallback={
-                    <div
-                      title="Google sign-up is unavailable right now"
-                      className={`flex ${BUTTON.SECONDARY.HEIGHT} flex-1 items-center justify-center gap-3 rounded-lg border border-gray-700 bg-gray-800/50 text-gray-500 cursor-not-allowed`}
-                    >
-                      <span>Google unavailable</span>
-                    </div>
+                    <SocialButton disabled title="Google sign-up is unavailable right now" icon={<FcGoogle className="h-5 w-5" />}>
+                      Google unavailable
+                    </SocialButton>
                   }
                 >
                   <GoogleLoginButton
                     onSuccess={handleGoogleRegisterSuccess}
-                    className={`flex ${BUTTON.SECONDARY.HEIGHT} flex-1 items-center justify-center gap-3 rounded-lg border border-gray-700 bg-gray-800 text-white transition-colors hover:bg-gray-700`}
-                  >
-                    <svg
-                      className={ICON.SOCIAL_ICON_SIZE}
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <path
-                        d="M21.9999 12.2273C21.9999 11.3977 21.9272 10.5864 21.7863 9.80682H12.2272V14.3318H17.8067C17.5726 15.6364 16.8908 16.75 15.8681 17.4659V20.125H19.5567C21.1681 18.6705 21.9999 16.2045 21.9999 12.2273Z"
-                        fill={COLORS.GOOGLE.BLUE}
-                      ></path>
-                      <path
-                        d="M12.2272 22C15.0226 22 17.3635 21.0568 19.0181 19.5568L15.8681 17.4659C14.9317 18.0682 13.7135 18.4432 12.2272 18.4432C9.44761 18.4432 7.0908 16.5909 6.22716 14.1H2.98171V16.2045C4.63625 19.6477 8.13625 22 12.2272 22Z"
-                        fill={COLORS.GOOGLE.GREEN}
-                      ></path>
-                      <path
-                        d="M6.22727 14.1C5.97727 13.3977 5.84091 12.6477 5.84091 11.875C5.84091 11.1023 5.97727 10.3523 6.22727 9.64773V6.98864H2.98182C2.37045 8.21591 2 9.97727 2 11.875C2 13.7727 2.37045 15.5341 2.98182 16.7614L6.22727 14.1Z"
-                        fill={COLORS.GOOGLE.YELLOW}
-                      ></path>
-                      <path
-                        d="M12.2272 5.30682C13.8226 5.30682 15.1135 5.89773 16.2272 6.96591L19.0908 4.1C17.3635 2.53409 15.0226 1.75 12.2272 1.75C8.13625 1.75 4.63625 4.10227 2.98171 7.54545L6.22716 9.64773C7.0908 7.15909 9.44761 5.30682 12.2272 5.30682Z"
-                        fill={COLORS.GOOGLE.RED}
-                      ></path>
-                    </svg>
-                    <span>Google</span>
-                  </GoogleLoginButton>
+                    onError={handleGoogleRegisterError}
+                    text="signup_with"
+                    className="flex w-full justify-center"
+                  />
                 </ErrorBoundary>
 
                 {/* Facebook Button */}
-                <button
-                  type="button"
-                  className={`flex ${BUTTON.SECONDARY.HEIGHT} flex-1 items-center justify-center gap-3 rounded-lg border border-gray-700 bg-gray-800 text-white transition-colors hover:bg-gray-700`}
-                  onClick={handleFacebookLogin}
-                >
-                  <svg
-                    className={ICON.SOCIAL_ICON_SIZE}
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      d="M14 13.5H16.5L17.5 9.5H14V7.5C14 6.47 14 5.5 16 5.5H17.5V2.14C17.174 2.097 15.943 2 14.643 2C11.928 2 10 3.657 10 6.7V9.5H7V13.5H10V22H14V13.5Z"
-                      fill={COLORS.FACEBOOK}
-                    ></path>
-                  </svg>
-                  <span>Facebook</span>
-                </button>
+                <SocialButton onClick={handleFacebookLogin} icon={<FacebookIcon />}>
+                  Sign up with Facebook
+                </SocialButton>
               </div>
             </div>
           </div>

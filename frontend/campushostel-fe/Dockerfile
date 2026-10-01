@@ -1,5 +1,9 @@
 FROM node:22-alpine AS build
 
+# Vite bakes VITE_* values into the bundle at build time, so the Google client ID must be a build arg.
+ARG VITE_GOOGLE_CLIENT_ID=""
+ENV VITE_GOOGLE_CLIENT_ID=$VITE_GOOGLE_CLIENT_ID
+
 WORKDIR /work/campushostel-fe
 COPY campushostel-fe/package.json campushostel-fe/package-lock.json ./
 RUN npm ci
