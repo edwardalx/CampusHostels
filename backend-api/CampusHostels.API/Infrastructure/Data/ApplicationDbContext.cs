@@ -29,7 +29,8 @@ public class ApplicationDbContext : DbContext
         {
             entity.HasKey(e => e.Id);
             entity.HasIndex(e => e.Email).IsUnique();
-            entity.HasIndex(e => e.PhoneNumber).IsUnique();
+            // Google sign-ups have no phone number yet, so only non-empty numbers must be unique.
+            entity.HasIndex(e => e.PhoneNumber).IsUnique().HasFilter("\"PhoneNumber\" <> ''");
             entity.Property(e => e.Role).HasDefaultValue("Tenant");
         });
 

@@ -16,7 +16,7 @@ public interface IAccountService
     /// <summary>Update user details (phone, first name, last name).</summary>
     Task<bool> UpdateUserAsync(UpdateUserDto dto);
 
-    Task<AuthResponseDto> GoogleLoginAsync(string accessToken);
+    Task<AuthResponseDto> GoogleLoginAsync(string idToken);
     Task<UserLikedHostelsDto> GetUserLikedHostelsAsync(Guid tenantId);
     Task<UserLikedHostelsDto> AddLikedHostelAsync(Guid tenantId, int hostelId);
     Task<UserLikedHostelsDto> RemoveLikedHostelAsync(Guid tenantId, int hostelId);

@@ -57,6 +57,11 @@ services:
     build:
       context: ./frontend
       dockerfile: campushostel-fe/Dockerfile
+      args:
+        # Google sign-in button. Uses VITE_GOOGLE_CLIENT_ID from .env if set, otherwise falls back to
+        # Authentication__GoogleClientId. Both must hold the SAME client ID: the API only accepts Google
+        # tokens issued to its own Authentication__GoogleClientId.
+        VITE_GOOGLE_CLIENT_ID: ${VITE_GOOGLE_CLIENT_ID:-${Authentication__GoogleClientId:-}}
     restart: unless-stopped
     environment:
       - VITE_API_URL=http://backend-api:8000

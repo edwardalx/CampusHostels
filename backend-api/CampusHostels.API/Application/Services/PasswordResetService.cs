@@ -54,7 +54,7 @@ namespace CampusHostels.API.Application.Services
         {
             var normalizedEmail = dto.Email?.Trim().ToLowerInvariant() ?? string.Empty;
             var normalizedPhone = NormalizePhone(dto.PhoneNumber ?? string.Empty);
-            var user = _db.Users.FirstOrDefault(u => u.Email.ToLower() == normalizedEmail) ?? _db.Users.FirstOrDefault(u => u.PhoneNumber == normalizedPhone);
+            var user = _db.Users.FirstOrDefault(u => u.Email.ToLower() == normalizedEmail) ?? (normalizedPhone.Length > 0 ? _db.Users.FirstOrDefault(u => u.PhoneNumber == normalizedPhone) : null);
 
             // Always return success to avoid account enumeration
             if (user == null)
@@ -120,7 +120,7 @@ namespace CampusHostels.API.Application.Services
         {
             var normalizedEmail = dto.Email?.Trim().ToLowerInvariant() ?? string.Empty;
             var normalizedPhone = NormalizePhone(dto.PhoneNumber ?? string.Empty);
-            var user = _db.Users.FirstOrDefault(u => u.Email.ToLower() == normalizedEmail) ?? _db.Users.FirstOrDefault(u => u.PhoneNumber == normalizedPhone);
+            var user = _db.Users.FirstOrDefault(u => u.Email.ToLower() == normalizedEmail) ?? (normalizedPhone.Length > 0 ? _db.Users.FirstOrDefault(u => u.PhoneNumber == normalizedPhone) : null);
             if (user == null) return Task.FromResult(false);
             var result = AccountService.VerifyPassword(dto.NewPassword!, user.PasswordHash);
             if (result)
