@@ -418,3 +418,21 @@ The customer-app line numbers in this report are against commit `68f34db`. The m
 - The unused `tailwind.config.js` was deleted (Tailwind v4 does not load it; the design tokens now live in `src/index.css`).
 
 Nothing in Part 1 (the security vulnerabilities) has been fixed by that work. None of the backend, nginx, Docker or CI findings were touched.
+
+---
+
+## Appendix – fixed on branch `fix/security-hardening`
+
+Status of the highest-severity items after this branch. "Fixed in code" does not mean the live system is safe until the deployment steps below are done.
+
+| ID | Status | What changed | Still to do (operations) |
+|----|--------|--------------|--------------------------|
+| V-01 Committed credentials | **Partly fixed** | Database connection strings and JWT keys removed from every tracked `appsettings*.json` (API and image server). They are read from environment variables / a git-ignored `.env` (templates: `.env.example`, `backend-api/CampusHostels.API/.env.example`, `image-server/.env.example`). `dotnet ef` now reads `.env` too and no longer silently falls back to SQLite. | **Rotate every value that was ever committed** (production and Neon database passwords, all JWT keys). They remain in git history, so removal alone does not make them safe. Then set `JwtSettings__SecretKey` (and the DB password) in the server `.env`. |
+| V-02 Weak or shared JWT key | **Fixed in code** | The API and image server refuse to start without a `JwtSettings:SecretKey` of 32+ characters. The unused `JwtExtensions.cs` (hard-coded fallback key) was deleted. `ef-migrator` now receives the `.env`. | Use a new random key on the server and the **same** value for the API and image server. All users are signed out when it changes. |
+| V-03 Seeded Super Manager | **Fixed in code** | The seed was removed from the model. Migration `LockSeededSuperAdmin` replaces the documented password with a marker nobody can match (only if the account still has that password). `MustChangePassword` is now enforced by the API: a flagged token can only reach `me` and `change-password`, which then returns a fresh token. `Bootstrap__SuperManagerPassword` (12+ characters) restores access once. | Apply the migration. If you rely on `superadmin`, set the bootstrap password once, sign in, change it, remove the setting. Review other manager accounts for weak or default passwords. |
+| V-04 Unauthenticated payment and tenancy endpoints | **Fixed in code** | Everything in `PaymentsController` now requires a signed-in tenant (the Paystack webhook stays anonymous and signature-checked). Payments and tenancies are checked against the caller's own `tenantId` claim; other people's records return 403/404. Responses use DTOs, not entities. The test-only `verify-raw` endpoint was removed. Liked-hostels endpoints require the caller's own tenant id. The customer app sends its token on these calls. | – |
+| V-05 Editing another user's profile | **Fixed in code** | `/Accounts/update` only accepts the caller's own email. | – |
+
+Not addressed by this branch: V-06 to V-10 (reset-link poisoning, `verify-reset` password oracle, unsalted SHA-256 hashing, Google token audience (fixed earlier on `fix/google-signin`), public Portainer), and everything in V-11 onwards.
+
+Tests: `SecurityTests.cs` adds 20 tests for the rules above. The test project's reference to another machine's path was corrected. Five older tests (`AccountServiceTests`, `PaymentServiceTests`) were already failing before these changes and still fail.

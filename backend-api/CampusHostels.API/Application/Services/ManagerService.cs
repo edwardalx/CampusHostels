@@ -98,7 +98,7 @@ public class ManagerService : IManagerService
         };
     }
 
-    public async Task ChangePasswordAsync(Guid managerId, ManagerChangePasswordDto dto)
+    public async Task<(string Token, DateTime Expires)> ChangePasswordAsync(Guid managerId, ManagerChangePasswordDto dto)
     {
         var manager = await _db.Managers.FirstOrDefaultAsync(m => m.ManagerId == managerId);
         if (manager is null)
@@ -115,6 +115,9 @@ public class ManagerService : IManagerService
         manager.MustChangePassword = false;
         manager.LastPasswordChangeAt = DateTime.UtcNow;
         await _db.SaveChangesAsync();
+
+        var token = _tokenService.CreateToken(manager, out var expires);
+        return (token, expires);
     }
 
     public async Task<IReadOnlyList<FunctionType>> GetFunctionsAsync(Guid managerId)

@@ -41,6 +41,13 @@ public class ManagerTokenService : IManagerTokenService
             new Claim("managerTier", manager.Tier.ToString()),
         };
 
+        // Enforced server-side by the RequireManager policies: until the temporary password is
+        // changed, this token can only reach change-password and "me".
+        if (manager.MustChangePassword)
+        {
+            claims.Add(new Claim("mustChangePassword", "true"));
+        }
+
         var token = new JwtSecurityToken(
             issuer: issuer,
             audience: audience,

@@ -1,3 +1,4 @@
+using CampusHostels.API.API.Extensions;
 using CampusHostels.API.Application.DTOs;
 using CampusHostels.API.Application.Interfaces;
 using CampusHostels.API.Application.Services;
@@ -156,25 +157,47 @@ public class AccountsController : ControllerBase
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
 
+        // A signed-in user may only edit their own profile. Previously the account to change came from
+        // the request body, so any tenant could change another tenant's phone number and then take the
+        // account over through password reset.
+        var callerEmail = User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value;
+        if (string.IsNullOrWhiteSpace(callerEmail)
+            || !string.Equals(callerEmail.Trim(), dto.Email?.Trim(), StringComparison.OrdinalIgnoreCase))
+        {
+            return Forbid();
+        }
+
         var success = await _accountService.UpdateUserAsync(dto);
         if (!success) return BadRequest(new { message = "User not found" });
         return Ok(new { message = "User updated successfully" });
     }
+    [Authorize]
     [HttpGet("liked-hostels")]
     public async Task<IActionResult> GetLikedHostels([FromQuery] Guid tenantId)
     {
+        if (!User.TryGetTenantId(out var callerTenantId)) return Unauthorized();
+        if (callerTenantId != tenantId) return Forbid();
+
         var result = await _accountService.GetUserLikedHostelsAsync(tenantId);
         return Ok(result);
     }
+    [Authorize]
     [HttpPost("liked-hostels/add")]
     public async Task<IActionResult> AddLikedHostel([FromQuery] Guid tenantId, [FromQuery] int hostelId)
     {
+        if (!User.TryGetTenantId(out var callerTenantId)) return Unauthorized();
+        if (callerTenantId != tenantId) return Forbid();
+
         var result = await _accountService.AddLikedHostelAsync(tenantId, hostelId);
         return Ok(result);
     }
+    [Authorize]
     [HttpPost("liked-hostels/remove")]
     public async Task<IActionResult> RemoveLikedHostel([FromQuery] Guid tenantId, [FromQuery] int hostelId)
     {
+        if (!User.TryGetTenantId(out var callerTenantId)) return Unauthorized();
+        if (callerTenantId != tenantId) return Forbid();
+
         var result = await _accountService.RemoveLikedHostelAsync(tenantId, hostelId);
         return Ok(result);
     }

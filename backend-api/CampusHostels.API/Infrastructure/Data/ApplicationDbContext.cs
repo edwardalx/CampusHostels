@@ -43,25 +43,6 @@ public class ApplicationDbContext : DbContext
             entity.HasIndex(e => e.Email).IsUnique();
             entity.HasIndex(e => e.PhoneNumber).IsUnique();
             entity.Property(e => e.Tier).HasConversion<string>().HasDefaultValue(CampusHostels.API.Domain.Enums.ManagerTier.Standard);
-
-            // Dev-only bootstrap Super Manager so the admin app can be logged into before the
-            // Phase B "grant manager" workflow exists. Username: superadmin, Password: SuperManager123!
-            // — rotate/remove this seed before any non-local deployment.
-            entity.HasData(new Manager
-            {
-                Id = 1,
-                ManagerId = Guid.Parse("11111111-1111-1111-1111-111111111111"),
-                FirstName = "Super",
-                LastName = "Manager",
-                Username = "superadmin",
-                Email = "superadmin@campushostels.dev",
-                PhoneNumber = "+10000000000",
-                PasswordHash = "hDgl6VBbn//EPILc2W7vuugsmjjjrXbroJhcpZe3dpY=",
-                Tier = CampusHostels.API.Domain.Enums.ManagerTier.Super,
-                IsActive = true,
-                MustChangePassword = true,
-                CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc)
-            });
         });
 
         modelBuilder.Entity<ManagerFunction>(entity =>

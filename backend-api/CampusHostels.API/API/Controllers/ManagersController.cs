@@ -30,7 +30,7 @@ public class ManagersController : ControllerBase
         }
     }
 
-    [Authorize(Policy = "RequireManager")]
+    [Authorize(Policy = "RequireManagerSession")]
     [HttpGet("me")]
     public async Task<IActionResult> Me()
     {
@@ -42,7 +42,7 @@ public class ManagersController : ControllerBase
         return Ok(profile);
     }
 
-    [Authorize(Policy = "RequireManager")]
+    [Authorize(Policy = "RequireManagerSession")]
     [HttpPost("change-password")]
     public async Task<IActionResult> ChangePassword([FromBody] ManagerChangePasswordDto dto)
     {
@@ -51,8 +51,8 @@ public class ManagersController : ControllerBase
 
         try
         {
-            await _managerService.ChangePasswordAsync(managerId, dto);
-            return Ok(new { message = "Password updated successfully." });
+            var (token, expires) = await _managerService.ChangePasswordAsync(managerId, dto);
+            return Ok(new { message = "Password updated successfully.", token, expires });
         }
         catch (UnauthorizedAccessException ex)
         {

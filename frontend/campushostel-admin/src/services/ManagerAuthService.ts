@@ -62,9 +62,15 @@ export async function changeManagerPassword(payload: ManagerPasswordChangePayloa
     body: JSON.stringify(payload),
   })
 
+  const data = await response.json().catch(() => null)
   if (!response.ok) {
-    const data = await response.json()
     throw new Error(data?.error ?? 'Unable to change password')
+  }
+
+  // The API issues a fresh token once the temporary password has been replaced; the old one stays
+  // restricted to this screen.
+  if (data?.token) {
+    localStorage.setItem('managerToken', data.token)
   }
 }
 

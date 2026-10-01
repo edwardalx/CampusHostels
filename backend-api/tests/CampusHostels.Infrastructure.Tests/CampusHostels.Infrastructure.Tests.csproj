@@ -13,7 +13,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="C:\Users\obedd\MyAlxProjects\CampusHostels\backend-api\CampusHostels.API\CampusHostels.API.csproj" />
+    <ProjectReference Include="..\..\CampusHostels.API\CampusHostels.API.csproj" />
   </ItemGroup>
 
 </Project>

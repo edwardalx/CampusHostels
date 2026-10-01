@@ -4,12 +4,25 @@ using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
 
+// Local development reads secrets from a git-ignored .env file next to the project (see .env.example).
+// Existing environment variables always win, so Docker/production settings are never overridden.
+if (string.Equals(Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT"), "Development", StringComparison.OrdinalIgnoreCase))
+{
+    LoadDotEnv(Path.Combine(Directory.GetCurrentDirectory(), ".env"));
+}
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Must match backend-api's JwtSettings exactly (same SecretKey/Issuer/Audience) so a
 // manager token issued by backend-api is also accepted here.
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
-var secretKey = jwtSettings["SecretKey"] ?? throw new Exception("JwtSettings:SecretKey not configured");
+var secretKey = jwtSettings["SecretKey"];
+if (string.IsNullOrWhiteSpace(secretKey) || secretKey.Length < 32)
+{
+    throw new InvalidOperationException(
+        "JwtSettings:SecretKey is missing or shorter than 32 characters. Set JwtSettings__SecretKey in the environment " +
+        "or the .env file; it must match the API's value.");
+}
 var issuer = jwtSettings["Issuer"] ?? "CampusHostels";
 var audience = jwtSettings["Audience"] ?? "CampusHostelsUsers";
 
@@ -31,7 +44,9 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 builder.Services.AddAuthorization(options =>
 {
-    options.AddPolicy("RequireManager", policy => policy.RequireClaim("scope", "manager"));
+    options.AddPolicy("RequireManager", policy => policy
+        .RequireClaim("scope", "manager")
+        .RequireAssertion(context => !context.User.HasClaim("mustChangePassword", "true")));
 });
 
 var allowedOrigins = builder.Configuration.GetSection("AllowedOrigins").Get<string[]>() ?? [];
@@ -158,6 +173,30 @@ app.MapPost("/campus-hostels/{category}/upload", async (string category, HttpReq
 }).RequireAuthorization("RequireManager");
 
 app.MapGet("/health", () => Results.Ok(new { status = "ok" }));
+
+static void LoadDotEnv(string path)
+{
+    if (!File.Exists(path)) return;
+    foreach (var rawLine in File.ReadAllLines(path))
+    {
+        var line = rawLine.Trim();
+        if (line.Length == 0 || line.StartsWith('#')) continue;
+        var separator = line.IndexOf('=');
+        if (separator <= 0) continue;
+
+        var key = line[..separator].Trim();
+        var value = line[(separator + 1)..].Trim();
+        if (value.Length >= 2 && value[0] == value[^1] && (value[0] == '"' || value[0] == '\''))
+        {
+            value = value[1..^1];
+        }
+
+        if (Environment.GetEnvironmentVariable(key) is null)
+        {
+            Environment.SetEnvironmentVariable(key, value);
+        }
+    }
+}
 
 static string Slugify(string? value)
 {

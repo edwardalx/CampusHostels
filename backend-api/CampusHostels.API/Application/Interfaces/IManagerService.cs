@@ -14,7 +14,8 @@ public interface IManagerService
     Task<bool> CanManagePropertiesAsync(Guid managerId);
     Task<bool> CanManageUsersAsync(Guid managerId);
     Task<ManagerProfileDto> UpdateManagerAsync(Guid managerId, ManagerUpdateDto dto);
-    Task ChangePasswordAsync(Guid managerId, ManagerChangePasswordDto dto);
+    /// <summary>Changes the password and returns a fresh token (without the must-change flag).</summary>
+    Task<(string Token, DateTime Expires)> ChangePasswordAsync(Guid managerId, ManagerChangePasswordDto dto);
     Task<IReadOnlyList<FunctionType>> GetFunctionsAsync(Guid managerId);
     Task<ManagerProfileDto> SetFunctionsAsync(Guid managerId, IReadOnlyCollection<FunctionType> functions);
 }

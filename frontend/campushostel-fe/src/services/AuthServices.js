@@ -109,7 +109,9 @@ export const unlikeProperty = async (payload) => {
 };
 
 export const getLikedHostels = async (tenantId) => {
-  const response = await fetch(`${baseUrl}/liked-hostels?tenantId=${tenantId}`);
+  const response = await fetch(`${baseUrl}/liked-hostels?tenantId=${tenantId}`, {
+    headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+  });
   const data = await response.json();
   console.log("Liked hostels", data);
   if (!response.ok) {

@@ -23,6 +23,23 @@ Env.Load();
 // Add to configuration builder (this will include all env vars including those from .env)
 builder.Configuration.AddEnvironmentVariables();
 
+// Secrets are never committed: they come from environment variables or the git-ignored .env file.
+// Refuse to start without them (and without a strong signing key) rather than falling back to
+// a weak or shared default.
+var configuredJwtKey = builder.Configuration["JwtSettings:SecretKey"];
+if (string.IsNullOrWhiteSpace(configuredJwtKey) || configuredJwtKey.Length < 32)
+{
+    throw new InvalidOperationException(
+        "JwtSettings:SecretKey is missing or shorter than 32 characters. Set JwtSettings__SecretKey in the " +
+        ".env file or environment (generate one with: openssl rand -base64 48). The image server must use the same value.");
+}
+
+if (string.IsNullOrWhiteSpace(builder.Configuration.GetConnectionString("DefaultConnection")))
+{
+    throw new InvalidOperationException(
+        "ConnectionStrings:DefaultConnection is not set. Set ConnectionStrings__DefaultConnection in the .env file or environment.");
+}
+
 #region Core MVC & API
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
@@ -218,11 +235,7 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
-builder.Services.AddAuthorization(options =>
-{
-    options.AddPolicy("RequireManager", policy => policy.RequireClaim("scope", "manager"));
-    options.AddPolicy("RequireSuperManager", policy => policy.RequireClaim("managerTier", "Super"));
-});
+builder.Services.AddAuthorization(CampusHostels.API.API.Extensions.AuthorizationPolicies.Configure);
 #endregion
 
 
@@ -328,6 +341,8 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 app.UseHangfireDashboard();
+
+await SuperManagerBootstrap.RunAsync(app.Services, app.Configuration);
 
 foreach (var url in app.Urls)
 {

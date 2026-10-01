@@ -20,7 +20,9 @@ export const createTenancy = async (tenancyPayload) => {
 };
 
 export const getPaidTenancies = async (tenantId) => {
-  const response = await fetch(`${baseUrl}/paid/${tenantId}`);
+  const response = await fetch(`${baseUrl}/paid/${tenantId}`, {
+    headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+  });
   const data = await response.json();
   if (!response.ok) {
     throw data;

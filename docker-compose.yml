@@ -38,6 +38,9 @@ services:
     working_dir: /src/CampusHostels.API
     volumes:
       - ./backend-api:/src
+    # `dotnet ef` builds the app's host, which now refuses to start without JwtSettings__SecretKey
+    env_file:
+      - .env
     environment:
       DOTNET_ENVIRONMENT: Production
       ConnectionStrings__DefaultConnection: "Host=db;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}"

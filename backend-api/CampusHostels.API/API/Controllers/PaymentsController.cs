@@ -8,6 +8,9 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using CampusHostels.API.Application.DTOs;
 using CampusHostels.API.Domain.Entities;
+using CampusHostels.API.API.Extensions;
+using CampusHostels.API.Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
 
 using System.ComponentModel.DataAnnotations;
 
@@ -15,18 +18,20 @@ namespace CampusHostels.API.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize] // everything here needs a signed-in tenant, except the Paystack webhook (signature-checked)
 public class PaymentsController : ControllerBase
 {
     private readonly IPaymentService _paymentService;
     private readonly IPaystackService _paystack;
     private readonly IMapper _mapper;
+    private readonly ApplicationDbContext _db;
 
-
-    public PaymentsController(IPaymentService paymentService, IPaystackService paystack, IMapper mapper)
+    public PaymentsController(IPaymentService paymentService, IPaystackService paystack, IMapper mapper, ApplicationDbContext db)
     {
         _paymentService = paymentService;
         _paystack = paystack;
         _mapper = mapper;
+        _db = db;
     }
 
     //     public class InitializeRequest
@@ -59,6 +64,12 @@ public class PaymentsController : ControllerBase
     [HttpPost("initialize")]
     public async Task<IActionResult> Initialize([FromBody] InitializePaymentRequest req)
     {
+        if (!User.TryGetTenantId(out var tenantId)) return Unauthorized();
+
+        // A tenant may only start a payment against their own tenancy.
+        var ownsTenancy = await _db.TenancyAgreements.AnyAsync(t => t.Id == req.TenancyId && t.TenantId == tenantId);
+        if (!ownsTenancy) return Forbid();
+
         // var entity = _mapper.Map<Domain.Entities.Payment>(req);
         var (reference, authorizationUrl) = await _paymentService.InitializePaymentAsync(req.TenancyId, req.Amount, req.Email, req.CallbackUrl!, req.Phone, req.Provider.ToString(), req.UnitId, req.Currency);
         return Ok(new { reference, authorizationUrl });
@@ -75,6 +86,16 @@ public class PaymentsController : ControllerBase
 
         if (req == null || string.IsNullOrWhiteSpace(req.Reference))
             return BadRequest("Reference is required");
+
+        if (!User.TryGetTenantId(out var tenantId)) return Unauthorized();
+
+        // Only the tenant who made the payment can ask for it to be verified (the webhook covers everyone else).
+        var paymentTenantId = await _db.Payments
+            .Where(p => p.Reference == req.Reference)
+            .Select(p => (Guid?)p.TenantId)
+            .FirstOrDefaultAsync();
+        if (paymentTenantId is null) return NotFound("Payment not found");
+        if (paymentTenantId != tenantId) return Forbid();
 
         // Let the service handle verification and DB updates
         // Payment payment;
@@ -123,55 +144,35 @@ public class PaymentsController : ControllerBase
         return Ok();
     }
 
-    /// <summary>
-    /// Tolerant verify endpoint for testing: accepts raw JSON or plain text reference bodies.
-    /// Useful from curl/powershell when model-binding fails.
-    /// </summary>
-    [HttpPost("verify-raw")]
-    public async Task<IActionResult> VerifyRaw()
-    {
-        Request.EnableBuffering();
-        using var sr = new StreamReader(Request.Body, Encoding.UTF8, leaveOpen: true);
-        var body = await sr.ReadToEndAsync();
-        Request.Body.Position = 0;
-
-        string? reference = null;
-        try
-        {
-            using var doc = JsonDocument.Parse(body);
-            if (doc.RootElement.ValueKind == JsonValueKind.Object && doc.RootElement.TryGetProperty("reference", out var prop))
-            {
-                reference = prop.GetString();
-            }
-        }
-        catch
-        {
-            // Not JSON — fallthrough to plain text
-        }
-
-        if (string.IsNullOrWhiteSpace(reference))
-        {
-            // Try plain text body (trim quotes/newlines)
-            reference = body?.Trim().Trim('"', '\'', '\r', '\n');
-        }
-
-        if (string.IsNullOrWhiteSpace(reference)) return BadRequest("reference required");
-
-        var (isValid, actualChannel, gatewayResponse) = await _paystack.VerifyTransactionAsync(reference);
-        if (!isValid) return BadRequest("Payment not successful or not found");
-
-        var payment = await _paymentService.VerifyPaymentAsync(reference);
-        return Ok(payment);
-    }
     [HttpGet("tenancy/{tenancyId}")]
     public async Task<IActionResult> GetPaymentsByTenancy(int tenancyId)
     {
-        var payments = await _paymentService.GetPaymentsByTenancyAsync(tenancyId);
+        if (!User.TryGetTenantId(out var tenantId)) return Unauthorized();
+
+        var ownsTenancy = await _db.TenancyAgreements.AnyAsync(t => t.Id == tenancyId && t.TenantId == tenantId);
+        if (!ownsTenancy) return NotFound();
+
+        // Return a DTO, not the entity (which carries the tenant's email, phone and id).
+        var payments = (await _paymentService.GetPaymentsByTenancyAsync(tenancyId))
+            .Select(p => new PaymentDto
+            {
+                Id = p.Id,
+                Amount = p.Amount,
+                Reference = p.Reference,
+                PaidAt = p.PaidAt,
+                CreatedAt = p.CreatedAt,
+                Status = p.Status.ToString(),
+                Channel = p.Channel,
+                Currency = p.Currency
+            });
         return Ok(payments);
     }
     [HttpGet("tenant/{tenantId}")]
     public async Task<IActionResult> GetPaymentsByTenant(Guid tenantId)
     {
+        if (!User.TryGetTenantId(out var callerTenantId)) return Unauthorized();
+        if (callerTenantId != tenantId) return Forbid();
+
         var payments = await _paymentService.GetPaymentsByTenantAsync(tenantId);
         return Ok(payments);
     }

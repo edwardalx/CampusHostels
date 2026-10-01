@@ -11,6 +11,10 @@ public class DesignTimeDbContextFactory : IDesignTimeDbContextFactory<Applicatio
     {
         var builder = new DbContextOptionsBuilder<ApplicationDbContext>();
 
+        // Secrets live in the git-ignored .env file locally (and in real environment variables in Docker),
+        // so read it here too; this factory runs before Program.cs does.
+        DotNetEnv.Env.Load();
+
         // Use the environment variable to determine dev or prod
         var env = Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT") ?? "Production";
 
@@ -23,17 +27,15 @@ public class DesignTimeDbContextFactory : IDesignTimeDbContextFactory<Applicatio
 
         var conn = config.GetConnectionString("DefaultConnection");
 
-        // Prefer PostgreSQL for both development and production in this repo
-        // (development previously used Sqlite; switch to Npgsql to match runtime).
-        if (!string.IsNullOrEmpty(conn) && (conn.StartsWith("Host=") || conn.StartsWith("postgres://") || conn.Contains("neon")))
+        if (string.IsNullOrWhiteSpace(conn))
         {
-            builder.UseNpgsql(conn);
+            // Never guess a provider: scaffolding against the wrong one produces a broken migration.
+            throw new InvalidOperationException(
+                "ConnectionStrings:DefaultConnection is not set. Put ConnectionStrings__DefaultConnection in the .env file " +
+                "(see .env.example) or the environment before running dotnet ef.");
         }
-        else
-        {
-            // Fallback to Sqlite only if a non-postgres connection string is present
-            builder.UseSqlite(conn);
-        }
+
+        builder.UseNpgsql(conn);
 
         return new ApplicationDbContext(builder.Options);
     }
