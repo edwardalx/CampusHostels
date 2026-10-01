@@ -1,27 +1,17 @@
 /**
  * HostelCard Component
  *
- * Individual hostel card with image, info, rating, tag, and action buttons.
+ * Property card: image with favourite button and rating chip, name, location and price.
  *
  * Props:
- * - hostel: {
- *     id: number,
- *     name: string,
- *     location: string,
- *     price: number,
- *     rating: number,
- *     image: string,
- *     tag: 'Student Favorite' | 'Party Friendly' | null,
- *     isFavorite: boolean
- *   }
- * - onLike: (id: number, isFavorite: boolean) => void
- * - onViewDetails: (id: number) => void
+ * - hostel: { id, name, location, startingPrice, averageRating, imageUrl }
+ * - onLike: (hostel) => void
+ * - userLikedHostels: number[] - ids the signed-in user has favourited
  */
 
-import React from "react";
-import { Heart, MapPin } from "lucide-react";
-import { useNavigate, Link } from "react-router-dom";
-import { ShowRate } from "./RateReview/Rate";
+import { useState } from "react";
+import { Heart, Home, MapPin, Star } from "lucide-react";
+import { Link } from "react-router-dom";
 import { resolveImageUrl } from "../utils/imageUrl";
 
 export default function HostelCard({
@@ -29,104 +19,89 @@ export default function HostelCard({
     id: 1,
     name: "Hostel Name",
     location: "Location",
-    price: 15,
-    rating: 4.5,
-    imageUrl:
-      "http://images.campushostels.duckdns.org/campus-hostels/rooms/Room11.jpeg",
-    tag: "Student Favorite",
-    isFavorite: false,
+    startingPrice: 0,
+    averageRating: 0,
+    imageUrl: "",
   },
   onLike = () => {},
-  userLikedHostels,
+  userLikedHostels = [],
 }) {
-  const navigate = useNavigate();
-  const handleViewDetails = () => {
-    navigate(`/hostel/${hostel.id}`);
-  };
+  const [imageFailed, setImageFailed] = useState(false);
+  const isLiked = userLikedHostels?.includes(hostel.id);
+  const imageSrc = resolveImageUrl(hostel.imageUrl);
+  const hasRating = hostel.averageRating > 0;
 
   return (
-    <div className="card-hover bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-lg flex flex-col h-full">
-      {/* Image Container */}
-      <div className="relative overflow-hidden aspect-video sm:aspect-square">
-        <Link to={`/hostel/${hostel.id}`}>
-          <img
-            src={resolveImageUrl(hostel.imageUrl)}
-            alt={hostel.name}
-            className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
-            loading="lazy"
-          />
+    <article className="card card-hover flex h-full flex-col overflow-hidden">
+      {/* Image */}
+      <div className="relative aspect-[4/3] overflow-hidden bg-slate-100">
+        <Link to={`/hostel/${hostel.id}`} className="block h-full" aria-label={`View ${hostel.name}`}>
+          {imageSrc && !imageFailed ? (
+            <img
+              src={imageSrc}
+              alt={hostel.name}
+              loading="lazy"
+              onError={() => setImageFailed(true)}
+              className="h-full w-full object-cover transition-transform duration-500 hover:scale-105"
+            />
+          ) : (
+            <div className="grid h-full w-full place-items-center bg-hero-gradient">
+              <Home size={40} className="text-white/60" aria-hidden="true" />
+            </div>
+          )}
         </Link>
-        {/* Tag Badge */}
-        {/* {hostel.tag && (
-          <div
-            className={`absolute top-3 left-3 ${getTagColor(
-              hostel.tag,
-            )} text-white text-xs sm:text-sm font-medium px-3 py-1 rounded-full`}
-          >
-            {hostel.tag}
-          </div>
-        )} */}
 
-        {/* Like Button */}
+        {hasRating && (
+          <span className="absolute bottom-3 left-3 inline-flex items-center gap-1 rounded-full bg-white/95 px-2.5 py-1 text-xs font-bold text-ink shadow-sm backdrop-blur">
+            <Star size={13} className="fill-amber-400 text-amber-400" aria-hidden="true" />
+            {Number(hostel.averageRating).toFixed(1)}
+          </span>
+        )}
+
         <button
+          type="button"
           onClick={() => onLike(hostel)}
-          className="absolute top-3 right-3 bg-white rounded-full p-2 hover:bg-gray-100 transition-colors shadow-md"
-          aria-label={
-            userLikedHostels?.includes(hostel.id)
-              ? "Remove from favorites"
-              : "Add to favorites"
-          }
+          aria-pressed={isLiked}
+          aria-label={isLiked ? "Remove from favourites" : "Add to favourites"}
+          className="absolute top-3 right-3 grid h-11 w-11 place-items-center rounded-full bg-white/95 shadow-md backdrop-blur transition-transform active:scale-90"
         >
           <Heart
             size={20}
-            className={`transition-colors ${
-              userLikedHostels?.includes(hostel.id)
-                ? "fill-red-500 text-red-500"
-                : "text-gray-400"
-            }`}
+            className={isLiked ? "fill-primary-orange text-primary-orange" : "text-slate-400"}
+            aria-hidden="true"
           />
         </button>
       </div>
 
-      {/* Content Container */}
-      <div className="p-5 sm:p-6 flex flex-col flex-grow">
-        {/* Name */}
-        <h3 className="text-lg sm:text-xl font-bold text-gray-800 mb-2 line-clamp-2 capitalize">
-          {hostel.name}
-        </h3>
-
-        {/* Location */}
-        <div className="flex items-center gap-1 text-gray-600 text-sm mb-4">
-          <MapPin size={16} className="flex-shrink-0 text-teal-500" />
-          <span className="line-clamp-1">{hostel.location}</span>
+      {/* Details */}
+      <div className="flex flex-1 flex-col gap-3 p-4 sm:p-5">
+        <div>
+          <h3 className="line-clamp-2 text-lg leading-snug font-bold text-ink capitalize">
+            <Link to={`/hostel/${hostel.id}`}>{hostel.name}</Link>
+          </h3>
+          <p className="mt-1 flex items-center gap-1 text-sm text-secondary-gray">
+            <MapPin size={15} className="shrink-0 text-primary-teal" aria-hidden="true" />
+            <span className="line-clamp-1">{hostel.location}</span>
+          </p>
         </div>
 
-        {/* Price and Button Row */}
-        <div className="flex items-center justify-between  mt-auto pt-5 border-t border-gray-200">
-          <div className="flex flex-col">
-            {/* Rating Section */}
-            {hostel.averageRating > 0 ? (
-              <ShowRate hostel={hostel} isReviews={false} />
-            ) : (
-              <p className="italic text-gray-600 text-sm">
-                No ratings available
-              </p>
-            )}
-            <div className="flex items-baseline gap-1">
-              <span className="text-xl sm:text-l font-bold text-gray-900">
-                GH₵{hostel.startingPrice}
-              </span>
-              <span className="text-sm text-gray-600 font-medium">/month</span>
-            </div>
+        <div className="mt-auto flex items-end justify-between gap-3 border-t border-slate-100 pt-3">
+          <div>
+            <p className="text-[11px] font-semibold tracking-wide text-secondary-gray uppercase">From</p>
+            <p className="text-xl leading-none font-extrabold text-ink">
+              GH₵{hostel.startingPrice}
+              <span className="ml-1 text-sm font-medium text-secondary-gray">/month</span>
+            </p>
+            {!hasRating && <p className="mt-1 text-xs text-secondary-gray italic">No ratings yet</p>}
           </div>
-          <button
-            onClick={handleViewDetails}
-            className="px-5 py-2 bg-primary-teal text-white text-sm font-semibold rounded-full hover:bg-teal-600 transition-colors duration-200 whitespace-nowrap shadow-sm hover:shadow-md flex-shrink-0"
+          <Link
+            to={`/hostel/${hostel.id}`}
+            className="inline-flex min-h-11 shrink-0 items-center rounded-full bg-ink px-5 text-sm font-semibold text-white transition-colors hover:bg-slate-800 active:scale-95"
           >
             View
-          </button>
+          </Link>
         </div>
       </div>
-    </div>
+    </article>
   );
 }

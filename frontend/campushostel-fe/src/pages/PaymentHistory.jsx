@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { getPaymentHistory } from "../services/PaymentService";
 import PaymentTable from "../components/PaymentTable";
 
@@ -11,21 +11,22 @@ export default function PaymentHistory() {
       try {
         const response = await getPaymentHistory(storedUser.tenantId);
         setPaymentHistory(response);
-      } catch (error) {
-        console.error("Error fetching payment history:", error);
+      } catch {
+        setPaymentHistory([]);
       }
     };
 
     if (storedUser) {
       fetchPaymentHistory();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
-    <div className="flex flex-col items-center gap-6 py-10 sm:py-14 px-4 min-h-screen bg-secondary-light-gray">
-      <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">
-        Payment History
-      </h2>
+    <div className="flex flex-1 flex-col items-center gap-5 bg-secondary-light-gray px-4 py-8 sm:py-12">
+      <h1 className="w-full max-w-2xl text-2xl font-extrabold tracking-tight text-ink sm:text-3xl">
+        Payment history
+      </h1>
       <PaymentTable payments={paymentHistory} />
     </div>
   );

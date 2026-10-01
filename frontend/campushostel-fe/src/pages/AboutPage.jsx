@@ -49,7 +49,7 @@ function InfoCard({ icon, iconClass, title, items }) {
 
 export default function AboutPage() {
   return (
-    <div className="w-full min-h-screen bg-gradient-to-br from-teal-600 to-teal-800 py-12 sm:py-16 px-4">
+    <div className="w-full flex-1 bg-gradient-to-b from-ink via-slate-900 to-teal-950 py-12 sm:py-16 px-4">
       <div className="max-w-5xl mx-auto">
         <h1 className="text-3xl sm:text-4xl font-bold text-center text-white mb-4">
           About Our Housing Platform

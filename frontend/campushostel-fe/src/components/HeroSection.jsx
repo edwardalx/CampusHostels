@@ -1,44 +1,44 @@
 /**
  * HeroSection Component
- * 
- * Full-width gradient hero section with title and subtitle.
- * 
+ *
+ * Full-width gradient hero with a title and subtitle. Left-aligned and compact on phones,
+ * centred and roomier from `sm` upwards.
+ *
  * Props:
  * - title: string - Main heading text
  * - subtitle: string - Optional subheading text
+ * - eyebrow: string - Optional small line above the title (e.g. a greeting)
  * - children: ReactNode - Optional content (e.g., SearchBar)
  */
 
-export default function HeroSection({ 
-  title = 'EXPLORE HOSTELS & CO-LIVING',
-  subtitle = ``,
-  children = null
+export default function HeroSection({
+  title = "Explore hostels & co-living",
+  subtitle = "",
+  eyebrow = "",
+  children = null,
 }) {
   return (
-    <section className="w-full bg-hero-gradient rounded-b-3xl sm:rounded-b-4xl py-12 sm:py-16 px-4 relative overflow-hidden">
-      {/* Decorative background shapes */}
-      <div className="absolute top-0 left-0 w-20 h-20 sm:w-32 sm:h-32 bg-white/10 rounded-full -translate-x-1/2 -translate-y-1/2"></div>
-      <div className="absolute bottom-0 right-0 w-24 h-24 sm:w-40 sm:h-40 bg-white/10 rounded-full translate-x-1/2 translate-y-1/2"></div>
+    <section className="relative w-full overflow-hidden rounded-b-[2rem] bg-hero-gradient px-5 pt-8 pb-10 sm:rounded-b-[3rem] sm:px-6 sm:py-16">
+      {/* Decorative shapes */}
+      <div className="pointer-events-none absolute -top-10 -left-10 h-40 w-40 rounded-full bg-white/10 sm:h-56 sm:w-56" />
+      <div className="pointer-events-none absolute -right-12 -bottom-12 h-44 w-44 rounded-full bg-primary-orange/25 blur-2xl sm:h-64 sm:w-64" />
 
-      <div className="max-w-7xl mx-auto relative z-10">
-        {/* Title */}
-        <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white text-center mb-2 sm:mb-4 [text-shadow:0_2px_10px_rgba(0,0,0,0.25)]">
+      <div className="relative z-10 mx-auto max-w-7xl text-left sm:text-center">
+        {eyebrow && (
+          <p className="mb-2 text-sm font-semibold text-teal-100">{eyebrow}</p>
+        )}
+
+        <h1 className="text-[1.9rem] leading-[1.1] font-extrabold tracking-tight text-white sm:text-5xl lg:text-6xl">
           {title}
-        </h2>
+        </h1>
 
-        {/* Subtitle */}
         {subtitle && (
-          <p className="text-base sm:text-lg text-white text-center mb-8 sm:mb-12 [text-shadow:0_1px_6px_rgba(0,0,0,0.25)]">
+          <p className="mt-3 max-w-md text-base text-teal-50/90 sm:mx-auto sm:max-w-2xl sm:text-lg">
             {subtitle}
           </p>
         )}
 
-        {/* Children (SearchBar or other content) */}
-        {children && (
-          <div className="mt-8 sm:mt-12">
-            {children}
-          </div>
-        )}
+        {children && <div className="mt-6 sm:mt-10">{children}</div>}
       </div>
     </section>
   );

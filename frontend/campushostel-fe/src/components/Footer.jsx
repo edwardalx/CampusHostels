@@ -6,10 +6,9 @@
  * Props:
  * - links: string[] - Footer link labels
  * - onLinkClick: (link: string) => void - Called when a link is clicked
- * - socials: { icon: Component, url: string }[] - Social media links
+ * - socials: { id, icon, url }[] - Social media links
  */
 
-import React from "react";
 import { Facebook, Instagram, Youtube } from "lucide-react";
 
 const socialIcons = {
@@ -19,7 +18,7 @@ const socialIcons = {
 };
 
 export default function Footer({
-  links = ['Home', 'About', 'Company', 'Links', 'Contact'],
+  links = ["Home", "About", "Contact"],
   onLinkClick = () => {},
   socials = [
     { id: "facebook", icon: "facebook", url: "https://facebook.com" },
@@ -28,24 +27,23 @@ export default function Footer({
   ],
 }) {
   return (
-    <footer className="bg-white border-t border-gray-200">
-      <div className="max-w-7xl mx-auto mt-16 px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
-        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-8">
-          {/* Links Section */}
-          <nav className="flex flex-wrap gap-6 sm:gap-8">
+    <footer className="mt-10 border-t border-slate-200 bg-white">
+      <div className="mx-auto max-w-7xl px-5 py-8 sm:px-6 sm:py-10 lg:px-8">
+        <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+          <nav aria-label="Footer" className="flex flex-wrap gap-x-6 gap-y-2">
             {links.map((link) => (
               <button
                 key={link}
+                type="button"
                 onClick={() => onLinkClick(link)}
-                className="text-gray-600 text-sm font-medium hover:text-primary-teal transition-colors"
+                className="min-h-10 text-sm font-semibold text-secondary-gray hover:text-primary-teal"
               >
                 {link}
               </button>
             ))}
           </nav>
 
-          {/* Social Icons */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             {socials.map((social) => {
               const IconComponent = socialIcons[social.icon];
               return (
@@ -54,7 +52,7 @@ export default function Footer({
                   href={social.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-secondary-gray hover:text-primary-teal transition-colors"
+                  className="grid h-11 w-11 place-items-center rounded-full bg-slate-100 text-secondary-gray transition-colors hover:bg-teal-50 hover:text-primary-teal"
                   aria-label={social.id}
                 >
                   {IconComponent && <IconComponent size={20} />}
@@ -64,12 +62,9 @@ export default function Footer({
           </div>
         </div>
 
-        {/* Copyright */}
-        <div className="mt-8 pt-8 border-t border-gray-200 text-center">
-          <p className="text-secondary-gray text-sm">
-            &copy; {new Date().getFullYear()} CampusHostels. All rights reserved.
-          </p>
-        </div>
+        <p className="mt-8 border-t border-slate-100 pt-6 text-center text-sm text-secondary-gray">
+          &copy; {new Date().getFullYear()} CampusHostels. All rights reserved.
+        </p>
       </div>
     </footer>
   );

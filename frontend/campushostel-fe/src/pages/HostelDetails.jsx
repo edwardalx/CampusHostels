@@ -5,9 +5,8 @@ import {
 } from "../services/HostelServices";
 import { useParams } from "react-router-dom";
 import { SkeletonCard } from "../components/SkeletonCard";
-import { HeroSection } from "../components";
 import { Tile } from "../components/UnitTile";
-// import { Tile2 } from "../components/UnitTile2";
+import { resolveImageUrl } from "../utils/imageUrl";
 import {
   ArrowLeft,
   MapPin,
@@ -77,7 +76,7 @@ export default function HostelDetails() {
 
   if (loading) {
     return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 lg:gap-6">
+      <div className="mx-auto grid max-w-7xl grid-cols-1 gap-4 px-4 py-8 sm:grid-cols-2 sm:gap-5 sm:px-6 sm:py-12 lg:grid-cols-3 lg:gap-6 lg:px-8 xl:grid-cols-4">
         {[...Array(8)].map((_, i) => (
           <SkeletonCard key={i} />
         ))}
@@ -86,19 +85,19 @@ export default function HostelDetails() {
   }
   return (
     <>
-      <div className="flex flex-col min-h-screen bg-secondary-light-gray">
+      <div className="flex flex-1 flex-col bg-secondary-light-gray">
         {/* Main Content */}
         <main className="flex-grow">
           {/* Header Section */}
-          <div className="bg-white border-b border-gray-200 sticky top-0 z-40">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <div className="sticky top-[calc(3.5rem+env(safe-area-inset-top))] z-30 border-b border-slate-200 bg-white/95 backdrop-blur md:top-16">
+            <div className="mx-auto max-w-7xl px-4 py-3 sm:px-6 lg:px-8">
               <div className="flex items-center justify-between">
                 <button
                   onClick={() => window.history.back()}
-                  className="flex items-center gap-2 text-primary-teal hover:text-teal-600 font-medium text-sm transition-colors"
+                  className="flex min-h-11 items-center gap-2 rounded-full px-2 text-sm font-semibold text-ink hover:bg-slate-100"
                 >
                   <ArrowLeft size={18} />
-                  Back to listings
+                  Back
                 </button>
                 <button
                   onClick={() =>
@@ -106,25 +105,39 @@ export default function HostelDetails() {
                       .querySelector("[data-rooms-section]")
                       ?.scrollIntoView({ behavior: "smooth" })
                   }
-                  className="px-6 py-2.5 bg-primary-teal text-white font-semibold rounded-full hover:bg-teal-600 transition-colors text-sm"
+                  className="min-h-11 rounded-full bg-ink px-6 text-sm font-semibold text-white hover:bg-slate-800 active:scale-95"
                 >
-                  Book Now
+                  Book now
                 </button>
               </div>
             </div>
           </div>
 
-          {loading && <div>Loading hostel details...</div>}
-          {error && <div className="text-red-500">{error}</div>}
-          {!selectedHostel && <p>No hostel found.</p>}
+          {error && (
+            <p role="alert" className="mx-4 mt-4 rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-600 sm:mx-6 lg:mx-8">
+              {error}
+            </p>
+          )}
+          {!selectedHostel && <p className="p-6 text-secondary-gray">No hostel found.</p>}
+
+          {selectedHostel?.imageUrl && (
+            <div className="relative aspect-[16/10] max-h-[440px] w-full overflow-hidden bg-slate-200 sm:aspect-[21/9]">
+              <img
+                src={resolveImageUrl(selectedHostel.imageUrl)}
+                alt={selectedHostel.name}
+                className="h-full w-full object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-ink/40 to-transparent"></div>
+            </div>
+          )}
 
           {/* Property Header Info */}
           {selectedHostel && (
-            <div className="bg-white border-b border-gray-200">
-              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div className={`relative border-b border-slate-200 bg-white ${selectedHostel.imageUrl ? "-mt-6 rounded-t-[2rem] sm:mt-0 sm:rounded-none" : ""}`}>
+              <div className="mx-auto max-w-7xl px-5 py-6 sm:px-6 sm:py-8 lg:px-8">
                 {/* Name and Location */}
                 <div className="mb-6">
-                  <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-2 capitalize">
+                  <h1 className="mb-2 text-3xl font-extrabold tracking-tight text-ink capitalize sm:text-4xl">
                     {selectedHostel.name}
                   </h1>
                   <div className="flex items-center gap-2 text-gray-600 mb-4">
@@ -204,7 +217,7 @@ export default function HostelDetails() {
 
           {/* Available Rooms Section */}
           <section
-            className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12"
+            className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8"
             data-rooms-section
           >
             <div className="mb-8">
@@ -215,7 +228,7 @@ export default function HostelDetails() {
                 Select a room and proceed to booking
               </p>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 lg:gap-6">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3 lg:gap-6 xl:grid-cols-4">
               {units?.map((unit) => (
                 <Tile key={unit.id} hostel={selectedHostel} unit={unit} />
               ))}
@@ -223,8 +236,8 @@ export default function HostelDetails() {
           </section>
 
           {/* Reviews Section */}
-          <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 border-t border-gray-200">
-            <div className="mb-8 flex items-center justify-between">
+          <section className="mx-auto max-w-7xl border-t border-slate-200 px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
+            <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
                   Reviews
@@ -263,7 +276,7 @@ export default function HostelDetails() {
               </div>
               <button
                 onClick={() => setShowReviewForm(true)}
-                className="flex items-center bg-white gap-2 px-6 py-2.5 border-2 border-primary-teal text-primary-teal font-semibold rounded-full hover:bg-teal-50 transition-colors text-sm"
+                className="flex min-h-12 items-center justify-center gap-2 rounded-full border-2 border-primary-teal bg-white px-6 text-sm font-semibold text-primary-teal hover:bg-teal-50"
               >
                 <MessageSquare size={18} />
                 Leave a review
@@ -318,7 +331,7 @@ export default function HostelDetails() {
                 </p>
                 <button
                   onClick={() => setShowReviewForm(true)}
-                  className="px-6 py-2.5 bg-primary-teal text-white font-semibold rounded-full hover:bg-teal-600 transition-colors text-sm"
+                  className="min-h-12 rounded-full bg-ink px-6 text-sm font-semibold text-white hover:bg-slate-800"
                 >
                   Leave a review
                 </button>
@@ -332,11 +345,11 @@ export default function HostelDetails() {
       {showReviewForm && (
         <div
           onClick={() => setShowReviewForm(false)}
-          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 backdrop-blur-sm"
+          className="fixed inset-0 z-50 flex items-end justify-center bg-ink/60 backdrop-blur-sm sm:items-center sm:p-4"
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="relative bg-white rounded-2xl shadow-xl w-full max-w-4xl p-6 sm:p-8 max-h-[90vh] overflow-y-auto"
+            className="relative max-h-[92vh] w-full max-w-4xl animate-sheet-up overflow-y-auto rounded-t-[2rem] bg-white p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] shadow-float sm:rounded-[2rem] sm:p-8"
           >
             <ReviewHostelPage
               hostel={selectedHostel}

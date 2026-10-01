@@ -89,18 +89,18 @@ export default function MaintenancePage() {
   };
 
   const inputClass =
-    "w-full rounded-xl border border-gray-300 bg-white px-3 py-3 text-base focus:border-teal-500 focus:outline-none";
+    "field";
 
   return (
-    <div className="flex flex-col items-center gap-8 py-10 sm:py-14 px-4 min-h-screen bg-secondary-light-gray">
-      <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">Maintenance</h2>
+    <div className="flex flex-1 flex-col items-center gap-6 bg-secondary-light-gray px-4 py-8 sm:py-12">
+      <h1 className="w-full max-w-2xl text-2xl font-extrabold tracking-tight text-ink sm:text-3xl">Maintenance</h1>
 
       {isLoading && <p className="text-gray-600">Loading...</p>}
       {error && <p className="text-red-600">{error}</p>}
 
       {!isLoading && !error && (
         <>
-          <section className="w-full max-w-2xl rounded-2xl bg-white p-5 sm:p-6 shadow-sm">
+          <section className="card w-full max-w-2xl p-5 sm:p-6">
             <h3 className="mb-4 text-lg font-semibold text-gray-900">Report a problem</h3>
 
             {tenancies.length === 0 ? (
@@ -166,7 +166,7 @@ export default function MaintenancePage() {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="rounded-xl bg-teal-600 px-4 py-3 font-semibold text-white hover:bg-teal-700 disabled:opacity-60"
+                  className="btn-primary w-full"
                 >
                   {isSubmitting ? "Sending..." : "Send request"}
                 </button>
@@ -181,7 +181,7 @@ export default function MaintenancePage() {
             ) : (
               <ul className="flex flex-col gap-3">
                 {requests.map((request) => (
-                  <li key={request.id} className="rounded-2xl bg-white p-4 shadow-sm">
+                  <li key={request.id} className="card p-4">
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
                         <p className="font-semibold text-gray-900 break-words">{request.title}</p>

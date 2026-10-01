@@ -42,12 +42,12 @@ export function Tile({ hostel = {}, unit = {} }) {
     <div>
       <div
         onClick={unit.availability ? handleClick : undefined}
-        className={`block bg-white rounded-2xl overflow-hidden shadow-md h-full ${
-          unit.availability ? "card-hover cursor-pointer hover:shadow-lg" : ""
+        className={`card flex h-full flex-col overflow-hidden ${
+          unit.availability ? "card-hover cursor-pointer" : ""
         }`}
       >
         {/* Image Container */}
-        <div className="relative transition-all duration-500 rounded-lg overflow-hidden aspect-video sm:aspect-square">
+        <div className="relative aspect-[4/3] overflow-hidden bg-slate-100">
           <img
             src={images[imageIndex]}
             alt={`Room ${unit.id} photo ${imageIndex + 1}`}
@@ -102,7 +102,7 @@ export function Tile({ hostel = {}, unit = {} }) {
         </div>
 
         {/* Content Section */}
-        <div className="p-5 sm:p-6 flex flex-col gap-4 flex-1">
+        <div className="flex flex-1 flex-col gap-3 p-4 sm:p-5">
           {/* Room Type/Number */}
           <div>
             <p className="text-sm font-semibold text-gray-700">
@@ -113,14 +113,14 @@ export function Tile({ hostel = {}, unit = {} }) {
 
           {/* Price Section */}
           <div className="flex items-baseline gap-2">
-            <span className="text-2xl sm:text-3xl font-bold text-gray-900">
+            <span className="text-2xl font-extrabold text-ink">
               GH₵{unit.cost}
             </span>
             <span className="text-sm text-gray-600 font-medium">/year</span>
           </div>
 
           {/* Bottom Section */}
-          <div className="mt-auto flex items-center justify-between pt-5">
+          <div className="mt-auto flex items-center justify-between gap-3 border-t border-slate-100 pt-4">
             {/* Status Pill */}
             <span
               className={`px-3 py-1 rounded-full text-xs font-semibold ${
@@ -142,10 +142,10 @@ export function Tile({ hostel = {}, unit = {} }) {
             <button
               onClick={handleClick}
               disabled={!unit.availability}
-              className={`px-6 py-3 rounded-xl text-sm font-semibold transition-all duration-200 ${
+              className={`min-h-11 rounded-full px-5 text-sm font-semibold transition-all duration-200 active:scale-95 ${
                 unit.availability
-                  ? "bg-primary-teal text-white hover:bg-teal-600 hover:shadow-sm"
-                  : "border border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed"
+                  ? "bg-ink text-white hover:bg-slate-800"
+                  : "border border-slate-200 bg-slate-100 text-slate-400 cursor-not-allowed"
               }`}
             >
               Book room ↗

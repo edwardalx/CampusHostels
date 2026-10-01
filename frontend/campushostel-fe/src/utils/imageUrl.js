@@ -8,8 +8,13 @@ const imageBaseUrl = (
 
 const storagePrefix = "/campus-hostels/";
 
+// Older images live on the legacy image server, which nginx serves under /image-files/. The new
+// image server (/image-service/) does not hold them, so those URLs must be used exactly as stored.
+const legacyPrefix = "/image-files/";
+
 export function resolveImageUrl(url) {
   if (!url) return url;
+  if (url.includes(legacyPrefix)) return url;
   const index = url.indexOf(storagePrefix);
   if (index === -1) return url;
   return `${imageBaseUrl}${url.slice(index)}`;

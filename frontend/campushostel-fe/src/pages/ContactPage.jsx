@@ -2,8 +2,8 @@ import React from "react";
 
 export default function ContactPage() {
   return (
-    <div className="w-full min-h-screen flex items-center justify-center bg-gradient-to-br from-teal-600 to-teal-800 px-4 py-12">
-      <div className="max-w-4xl w-full bg-white rounded-2xl shadow-xl p-6 sm:p-10">
+    <div className="w-full flex-1 flex items-center justify-center bg-gradient-to-b from-ink via-slate-900 to-teal-950 px-4 py-12">
+      <div className="max-w-4xl w-full bg-white rounded-3xl shadow-float p-6 sm:p-10">
         <h1 className="text-3xl font-bold text-center text-gray-900 mb-8">
           Contact Us
         </h1>
@@ -42,7 +42,7 @@ export default function ContactPage() {
               </label>
               <input
                 type="text"
-                className="w-full mt-1 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none"
+                className="w-full mt-1 p-3 border border-gray-300 rounded-2xl min-h-12 focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none"
                 placeholder="Your name"
               />
             </div>
@@ -53,7 +53,7 @@ export default function ContactPage() {
               </label>
               <input
                 type="email"
-                className="w-full mt-1 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none"
+                className="w-full mt-1 p-3 border border-gray-300 rounded-2xl min-h-12 focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none"
                 placeholder="Your email"
               />
             </div>
@@ -64,14 +64,14 @@ export default function ContactPage() {
               </label>
               <textarea
                 rows="4"
-                className="w-full mt-1 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none"
+                className="w-full mt-1 p-3 border border-gray-300 rounded-2xl min-h-12 focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none"
                 placeholder="Write your message..."
               ></textarea>
             </div>
 
             <button
               type="submit"
-              className="w-full bg-primary-teal text-white rounded-lg font-semibold hover:bg-teal-600 py-3 transition-colors"
+              className="w-full bg-ink text-white rounded-full min-h-12 font-semibold hover:bg-slate-800 py-3 transition-colors"
             >
               Send Message
             </button>

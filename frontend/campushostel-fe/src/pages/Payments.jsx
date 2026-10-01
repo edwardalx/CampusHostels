@@ -155,15 +155,15 @@ export default function Payments() {
       {pageloading && <LoadingSpinner />}
 
       {paymentloading && (
-        <div className="fixed inset-0 bg-teal-900/70  flex items-center justify-center z-50">
-          <div className="bg-teal-800 p-6 rounded-xl shadow-lg flex flex-col items-center gap-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/70 backdrop-blur-sm">
+          <div className="flex flex-col items-center gap-4 rounded-3xl bg-slate-800 p-6 shadow-float">
             <div className="animate-spin h-10 w-10 border-4 border-teal-400 border-t-transparent rounded-full"></div>
             <p className="text-gray-200 font-medium">Processing payment...</p>
           </div>
         </div>
       )}
       {/* Right Side - Login Form */}
-      <div className=" flex min-h-screen w-full  mx-auto flex-col items-center justify-center bg-gradient-to-br from-teal-800 to-teal-900 dark:bg-gray-900">
+      <div className="flex min-h-[100svh] w-full flex-col items-center justify-center bg-gradient-to-b from-ink via-slate-900 to-teal-950 px-5 py-8 pb-[calc(2rem+env(safe-area-inset-bottom))]">
         <div className="w-full max-w-md flex flex-col">
           {/* Header */}
           <div className="mb-12 flex flex-col items-center">
@@ -211,7 +211,7 @@ export default function Payments() {
                 value={selectedHostel ? selectedHostel.propertyName : property}
                 onChange={(e) => setProperty(e.target.value)}
                 placeholder="select property"
-                className="w-full h-10 px-4 py-5 bg-teal-700/50 border border-teal-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-transparent text-center"
+                className="h-14 w-full rounded-2xl border border-white/15 bg-white/10 px-4 text-white placeholder:text-slate-400 focus:border-teal-300 focus:ring-4 focus:ring-teal-400/20 focus:outline-none text-center"
               />
             </div>
             {/* Unit Input */}
@@ -235,7 +235,7 @@ export default function Payments() {
                 value={selectedHostel ? selectedHostel.roomNumber : unit}
                 onChange={(e) => setUnit(e.target.value)}
                 placeholder="Select unit"
-                className="w-full h-10 px-4 py-5 bg-teal-700/50 border border-teal-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-transparent text-center"
+                className="h-14 w-full rounded-2xl border border-white/15 bg-white/10 px-4 text-white placeholder:text-slate-400 focus:border-teal-300 focus:ring-4 focus:ring-teal-400/20 focus:outline-none text-center"
               />
             </div>
             {/* Email Input */}
@@ -259,7 +259,7 @@ export default function Payments() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="youname@email.com "
-                className="w-full h-10 px-4 py-5 bg-teal-700/50 border border-teal-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-transparent text-center"
+                className="h-14 w-full rounded-2xl border border-white/15 bg-white/10 px-4 text-white placeholder:text-slate-400 focus:border-teal-300 focus:ring-4 focus:ring-teal-400/20 focus:outline-none text-center"
               />
             </div>
 
@@ -285,7 +285,7 @@ export default function Payments() {
                   value={phonenumber}
                   onChange={(e) => setPhonenumber(e.target.value)}
                   placeholder="+233 123 456 7890"
-                  className="w-full h-10 px-4 py-5 bg-teal-700/50 border border-teal-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-transparent pr-12 text-center"
+                  className="h-14 w-full rounded-2xl border border-white/15 bg-white/10 px-4 text-white placeholder:text-slate-400 focus:border-teal-300 focus:ring-4 focus:ring-teal-400/20 focus:outline-none pr-12 text-center"
                 />
               </div>
             </div>
@@ -310,18 +310,12 @@ export default function Payments() {
                   id="duration"
                   value={duration}
                   onChange={(e) => setDuration(e.target.value)}
-                  className="w-full h-10 px-4 pr-10
-               bg-teal-700/50 border border-teal-600
-               rounded-lg text-white text-center
-               appearance-none
-               [text-align-last:center]
-               focus:outline-none focus:ring-2
-               focus:ring-cyan-400 focus:border-transparent"
+                  className="h-14 w-full appearance-none rounded-2xl border border-white/15 bg-white/10 px-4 pr-10 text-center text-white [text-align-last:center] focus:border-teal-300 focus:ring-4 focus:ring-teal-400/20 focus:outline-none"
                 >
-                  <option value="">Select Duration</option>
-                  <option value="6">6 Months</option>
-                  <option value="12">12 Months</option>
-                  <option value="24">24 Months</option>
+                  <option value="" className="text-ink">Select Duration</option>
+                  <option value="6" className="text-ink">6 Months</option>
+                  <option value="12" className="text-ink">12 Months</option>
+                  <option value="24" className="text-ink">24 Months</option>
                 </select>
 
                 {/* Custom Arrow */}
@@ -352,14 +346,14 @@ export default function Payments() {
                 value={selectedHostel ? cost : amount}
                 onChange={(e) => setAmount(e.target.value)}
                 placeholder="Enter amount to pay in GH₵"
-                className="w-full h-10 px-4 py-5 bg-teal-700/50 border border-teal-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-transparent text-center"
+                className="h-14 w-full rounded-2xl border border-white/15 bg-white/10 px-4 text-white placeholder:text-slate-400 focus:border-teal-300 focus:ring-4 focus:ring-teal-400/20 focus:outline-none text-center"
               />
             </div>
 
             {/* Login Button */}
             <button
               type="submit"
-              className="w-full py-4 bg-white text-teal-900 rounded-lg font-semibold hover:bg-gray-100 transition-colors duration-200 shadow-lg mt-6 disabled:opacity-60 disabled:cursor-not-allowed"
+              className="mt-6 h-14 w-full rounded-full bg-white font-bold text-ink transition-transform hover:bg-slate-100 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
               disabled={paymentloading}
             >
               {paymentloading ? "Processing..." : "Pay Now"}

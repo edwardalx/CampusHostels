@@ -4,8 +4,8 @@ import { Home, SearchX } from "lucide-react";
 
 export default function NotFoundPage() {
   return (
-    <div className="flex flex-col items-center justify-center flex-grow min-h-[60vh] bg-secondary-light-gray px-4 py-16 text-center">
-      <div className="bg-teal-50 p-4 rounded-full mb-6">
+    <div className="flex flex-1 flex-col items-center justify-center bg-secondary-light-gray px-5 py-16 text-center">
+      <div className="mb-6 rounded-full bg-teal-50 p-5">
         <SearchX className="w-10 h-10 text-primary-teal" />
       </div>
       <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-2">
@@ -16,7 +16,7 @@ export default function NotFoundPage() {
       </p>
       <Link
         to="/"
-        className="inline-flex items-center gap-2 px-6 py-3 bg-primary-teal text-white font-semibold rounded-full hover:bg-teal-600 transition-colors"
+        className="btn-primary"
       >
         <Home size={18} />
         Back to Home

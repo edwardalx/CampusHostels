@@ -1,14 +1,11 @@
-
-export  function SkeletonCard() {
+export function SkeletonCard() {
   return (
-    <div>
-      <div className="bg-white rounded-2xl overflow-hidden shadow-md animate-pulse flex flex-col h-full">
-        <div className="aspect-video sm:aspect-square bg-gray-300"></div>
-        <div className="p-4 sm:p-5 space-y-3">
-          <div className="h-4 bg-gray-300 rounded w-3/4"></div>
-          <div className="h-3 bg-gray-300 rounded w-1/2"></div>
-          <div className="h-3 bg-gray-300 rounded w-1/3"></div>
-        </div>
+    <div className="card flex h-full animate-pulse flex-col overflow-hidden">
+      <div className="aspect-[4/3] bg-slate-200"></div>
+      <div className="space-y-3 p-4 sm:p-5">
+        <div className="h-4 w-3/4 rounded-full bg-slate-200"></div>
+        <div className="h-3 w-1/2 rounded-full bg-slate-200"></div>
+        <div className="h-3 w-1/3 rounded-full bg-slate-200"></div>
       </div>
     </div>
   );
@@ -16,10 +13,9 @@ export  function SkeletonCard() {
 
 export function LoadingSpinner() {
   return (
-    <div className="fixed inset-0 bg-teal-900/70  flex items-center justify-center z-50">
-      <div className="bg-teal-800 p-6 rounded-xl shadow-lg flex flex-col items-center gap-4">
-        <div className="animate-spin h-10 w-10 border-4 border-teal-400 border-t-transparent rounded-full"></div>
-        {/* <p className="text-gray-200 font-medium">Loading payment details...</p> */}
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/60 backdrop-blur-sm">
+      <div className="flex flex-col items-center gap-4 rounded-3xl bg-white p-6 shadow-float">
+        <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary-teal border-t-transparent"></div>
       </div>
     </div>
   );

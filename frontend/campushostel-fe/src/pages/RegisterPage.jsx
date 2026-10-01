@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Eye, EyeOff, Briefcase } from "lucide-react";
+import { Eye, EyeOff } from "lucide-react";
 import { Link } from "react-router-dom";
 import { RegisterApi, RegisterAjax } from "../services/AuthServices";
 import RegSuccessModel from "../components/RegSuccessModel";
@@ -31,26 +31,26 @@ const SPACING = {
 
 // Input field constants
 const INPUT = {
-  HEIGHT: "h-12",
+  HEIGHT: "h-14",
   PADDING: "px-4",
-  PADDING_RIGHT: "pr-12",
-  BORDER_RADIUS: "rounded-lg",
-  BORDER_COLOR: "border-gray-700",
-  BG_COLOR: "bg-teal-700/50",
+  PADDING_RIGHT: "pr-14",
+  BORDER_RADIUS: "rounded-2xl",
+  BORDER_COLOR: "border-white/15",
+  BG_COLOR: "bg-white/10",
   TEXT_COLOR: "text-white",
-  PLACEHOLDER_COLOR: "placeholder:text-gray-500",
-  FOCUS_RING: "focus:ring-2 focus:ring-cyan-500/50",
+  PLACEHOLDER_COLOR: "placeholder:text-slate-400",
+  FOCUS_RING: "focus:ring-4 focus:ring-teal-400/20",
 };
 
 // Button constants
 const BUTTON = {
   PRIMARY: {
     BG: "bg-white",
-    TEXT: "text-teal-900",
-    HOVER: "hover:bg-cyan-600",
-    HEIGHT: "h-12",
-    PADDING: "px-4",
-    BORDER_RADIUS: "rounded-lg",
+    TEXT: "text-ink",
+    HOVER: "hover:bg-slate-100",
+    HEIGHT: "h-14",
+    PADDING: "px-6",
+    BORDER_RADIUS: "rounded-full",
     FONT_WEIGHT: "font-bold",
   },
   SECONDARY: {
@@ -58,13 +58,12 @@ const BUTTON = {
     TEXT: "text-gray-900 dark:text-white",
     BORDER: "border border-gray-300 dark:border-gray-700",
     HOVER: "hover:bg-gray-50 dark:hover:bg-gray-700",
-    HEIGHT: "h-12",
+    HEIGHT: "h-14",
   },
 };
 
 // Icon constants
 const ICON = {
-  LOGO_SIZE: "bg-cyan-400 p-2 rounded-lg",
   PASSWORD_TOGGLE_SIZE: 20,
   SOCIAL_ICON_SIZE: "h-6 w-6",
 };
@@ -115,7 +114,6 @@ export default function RegisterPage() {
     password: "",
     passwordConfirm: "",
   });
-  const [resData, setResData] = useState(null);
   const [storedToken, setStoredToken] = useState(null);
   let response;
   const handleChange = (e) => {
@@ -167,11 +165,8 @@ export default function RegisterPage() {
       password: "",
       passwordConfirm: "",
     });
-    setResData(null);
     try {
       response = await RegisterApi(mapppedData);
-      setResData(response);
-      console.log("Registration data:", response);
     } catch (error) {
       console.warn("Registration error:", error);
 
@@ -207,9 +202,6 @@ export default function RegisterPage() {
       }
     }
     setCheckToken(!storedToken);
-    console.log("Form submitted:", mapppedData);
-    console.log("Response:", resData?.email);
-    // TODO: Handle registration logic
   };
   const handleGoogleRegisterSuccess = async (response) => {
     const accessToken = response.access_token;
@@ -256,7 +248,7 @@ export default function RegisterPage() {
   return storedToken ? (
     <RegSuccessModel />
   ) : (
-    <div className="relative flex min-h-screen w-full flex-col bg-gradient-to-br from-teal-800 to-teal-900 dark:bg-gray-900">
+    <div className="relative flex min-h-screen w-full flex-col bg-gradient-to-b from-ink via-slate-900 to-teal-950">
       <div className="flex flex-1">
         <div
           className={`flex w-full flex-col ${LAYOUT.DESKTOP_SPLIT}:flex-row`}
@@ -270,21 +262,16 @@ export default function RegisterPage() {
               <header
                 className={`${SPACING.HEADER_BOTTOM} flex w-full items-center justify-between`}
               >
-                <Link to="/">
-                  <div className="flex items-center gap-3">
-                    <div className={`${ICON.LOGO_SIZE}`}>
-                      <Briefcase className="w-6 h-6 text-teal-900" />
-                    </div>
-                    <h2 className="text-xl font-bold text-white">RentIn</h2>
-                  </div>
+                <Link to="/" aria-label="Rentin home" className="text-2xl font-extrabold tracking-tight text-white">
+                  Rent<span className="text-primary-orange">in</span>
                 </Link>
                 <div className="flex items-center gap-2">
-                  <p className={`${TYPOGRAPHY.CAPTION} text-gray-400`}>
+                  <p className={`hidden sm:block ${TYPOGRAPHY.CAPTION} text-gray-400`}>
                     Already a member?
                   </p>
                   <Link
                     to="/login"
-                    className={`flex min-w-[84px] cursor-pointer items-center justify-center overflow-hidden ${BUTTON.PRIMARY.BORDER_RADIUS} ${BUTTON.PRIMARY.HEIGHT} ${BUTTON.PRIMARY.PADDING} ${BUTTON.PRIMARY.TEXT} ${TYPOGRAPHY.CAPTION} ${BUTTON.PRIMARY.FONT_WEIGHT} transition-colors`}
+                    className={`flex min-w-[84px] cursor-pointer items-center justify-center overflow-hidden h-11 px-5 rounded-full bg-white ${BUTTON.PRIMARY.TEXT} ${TYPOGRAPHY.CAPTION} ${BUTTON.PRIMARY.FONT_WEIGHT} transition-colors`}
                   >
                     <span className="truncate">Log In</span>
                   </Link>
@@ -419,7 +406,7 @@ export default function RegisterPage() {
                     <div
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-4 cursor-pointer text-gray-500 dark:text-gray-400 hover:text-white transition-colors"
+                      className="absolute right-4 cursor-pointer text-gray-500 dark:text-gray-400 hover:text-white transition-colors p-2"
                     >
                       {showPassword ? (
                         <EyeOff size={ICON.PASSWORD_TOGGLE_SIZE} />
@@ -535,7 +522,7 @@ export default function RegisterPage() {
                   fallback={
                     <div
                       title="Google sign-up is unavailable right now"
-                      className={`flex ${BUTTON.SECONDARY.HEIGHT} flex-1 items-center justify-center gap-3 rounded-lg border border-gray-700 bg-gray-800/50 text-gray-500 cursor-not-allowed`}
+                      className={`flex ${BUTTON.SECONDARY.HEIGHT} flex-1 items-center justify-center gap-3 rounded-full border border-white/10 bg-white/5 text-gray-500 cursor-not-allowed`}
                     >
                       <span>Google unavailable</span>
                     </div>
@@ -543,7 +530,7 @@ export default function RegisterPage() {
                 >
                   <GoogleLoginButton
                     onSuccess={handleGoogleRegisterSuccess}
-                    className={`flex ${BUTTON.SECONDARY.HEIGHT} flex-1 items-center justify-center gap-3 rounded-lg border border-gray-700 bg-gray-800 text-white transition-colors hover:bg-gray-700`}
+                    className={`flex ${BUTTON.SECONDARY.HEIGHT} flex-1 items-center justify-center gap-3 rounded-full border border-white/15 bg-white/10 text-white transition-colors hover:bg-white/15`}
                   >
                     <svg
                       className={ICON.SOCIAL_ICON_SIZE}
@@ -575,7 +562,7 @@ export default function RegisterPage() {
                 {/* Facebook Button */}
                 <button
                   type="button"
-                  className={`flex ${BUTTON.SECONDARY.HEIGHT} flex-1 items-center justify-center gap-3 rounded-lg border border-gray-700 bg-gray-800 text-white transition-colors hover:bg-gray-700`}
+                  className={`flex ${BUTTON.SECONDARY.HEIGHT} flex-1 items-center justify-center gap-3 rounded-full border border-white/15 bg-white/10 text-white transition-colors hover:bg-white/15`}
                   onClick={handleFacebookLogin}
                 >
                   <svg
@@ -621,7 +608,7 @@ export default function RegisterPage() {
       </div>
 
       {/* Footer */}
-      <footer className="w-full bg-gray-950 p-4 text-center ${TYPOGRAPHY.CAPTION} text-gray-400">
+      <footer className="w-full bg-black/30 p-4 text-center text-sm text-gray-400">
         © 2025 RentIn. All rights reserved. |{" "}
         <a href="#" className="hover:text-cyan-500">
           About Us

@@ -32,7 +32,7 @@ export default function PaymentReceipt() {
 
   if (!payment && !loading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-secondary-light-gray p-6 gap-4">
+      <div className="flex flex-col items-center justify-center flex-1 bg-secondary-light-gray p-6 gap-4">
         <h1 className="text-2xl font-bold text-gray-900">Payment Receipt</h1>
         <p className="text-lg text-gray-600">
           {error || "No payment data available."}
@@ -62,11 +62,11 @@ export default function PaymentReceipt() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center bg-secondary-light-gray p-6 gap-6 min-h-screen">
+    <div className="flex flex-col items-center justify-center bg-secondary-light-gray p-6 gap-6 flex-1">
       {/* Loading Overlay */}
       {loading && (
-        <div className="fixed inset-0 bg-teal-900/70 flex items-center justify-center z-50">
-          <div className="bg-teal-800 p-6 rounded-xl shadow-lg flex flex-col items-center gap-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/70 backdrop-blur-sm">
+          <div className="flex flex-col items-center gap-4 rounded-3xl bg-slate-800 p-6 shadow-float">
             <div className="animate-spin h-10 w-10 border-4 border-teal-400 border-t-transparent rounded-full"></div>
             <p className="text-gray-200 font-medium">Verifying payment status...</p>
           </div>
@@ -122,7 +122,7 @@ export default function PaymentReceipt() {
 
           <button
             onClick={() => navigate("/")}
-            className="w-full bg-primary-teal text-white rounded-lg py-3 font-semibold hover:bg-teal-600 transition-colors"
+            className="min-h-12 w-full rounded-full bg-ink py-3 font-semibold text-white transition-colors hover:bg-slate-800"
           >
             Back to Home
           </button>

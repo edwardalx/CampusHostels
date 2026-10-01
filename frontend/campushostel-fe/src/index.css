@@ -1,159 +1,215 @@
 @import "tailwindcss";
 
-:root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
+/*
+ * Design tokens (Tailwind v4 reads these from CSS; tailwind.config.js is not loaded in v4).
+ * The legacy names (primary-teal, secondary-gray, ...) are kept so existing classes keep working.
+ */
+@theme {
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+  --color-ink: #0f172a;
+  --color-primary-teal: #0d9488;
+  --color-primary-teal-dark: #0f766e;
+  --color-primary-orange: #ff5a4f;
+  --color-accent-gold: #f1c40f;
+  --color-secondary-gray: #64748b;
+  --color-secondary-dark-gray: #1e293b;
+  --color-secondary-light-gray: #f4f6fa;
 
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  -webkit-text-size-adjust: 100%;
-}
+  --radius-hero: 40px;
+  --background-image-hero-gradient: linear-gradient(145deg, #0f172a 0%, #0f766e 58%, #14b8a6 100%);
 
-* {
-  /* margin: 0; */
-  padding: 0;
-  box-sizing: border-box;
-}
+  --shadow-card: 0 1px 2px rgba(15, 23, 42, 0.04), 0 8px 24px rgba(15, 23, 42, 0.06);
+  --shadow-float: 0 10px 40px rgba(15, 23, 42, 0.18);
 
-html {
-  width: 100%;
-  height: 100%;
-}
+  --animate-fade-in: fade-in 0.4s ease-out both;
+  --animate-sheet-up: sheet-up 0.28s cubic-bezier(0.2, 0.8, 0.2, 1) both;
 
-body {
-  margin: 0;
-  width: 100%;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  overflow-x: hidden;
-}
-
-#root {
-  width: 100%;
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-}
-
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-  transition: color 0.25s;
-}
-a:hover {
-  color: #535bf2;
-}
-
-h1, h2, h3, h4, h5, h6 {
-  margin: 0;
-}
-
-h1 {
-  font-size: clamp(1.5rem, 5vw, 3.2rem);
-  line-height: 1.1;
-}
-
-h2 {
-  font-size: clamp(1.3rem, 4vw, 2.4rem);
-}
-
-h3 {
-  font-size: clamp(1.1rem, 3vw, 1.8rem);
-}
-
-button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  /* background-color: #1a1a1a; */
-  cursor: pointer;
-  transition: border-color 0.25s, background-color 0.25s;
-}
-
-button:hover {
-  border-color: #646cff;
-  background-color: #2a2a2a;
-}
-
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
-}
-
-/* Responsive images and media */
-img, video, picture {
-  max-width: 100%;
-  height: auto;
-  display: block;
-}
-/* Hide the up/down arrows for WebKit browsers (Chrome, Safari, etc.) */
-input[type="number"]::-webkit-outer-spin-button,
-input[type="number"]::-webkit-inner-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
-}
-
-/* Hide the number input arrows in WebKit (Chrome, Safari, etc.), Firefox, and standard browsers */
-input[type="number"] {
-  -webkit-appearance: none; /* For WebKit browsers (Chrome, Safari, etc.) */
-  -moz-appearance: textfield; /* For Firefox */
-  appearance: none; /* Standard, unprefixed version */
-}
-
-
-/* Responsive breakpoints */
-@media (max-width: 768px) {
-  h1 {
-    font-size: clamp(1.3rem, 4vw, 2.2rem);
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+      transform: translateY(12px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
-  
-  button {
-    padding: 0.5em 1em;
-    font-size: 0.9em;
+
+  @keyframes sheet-up {
+    from {
+      opacity: 0.6;
+      transform: translateY(32px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 }
 
-@media (prefers-color-scheme: light) {
+/*
+ * Base styles live in @layer base so Tailwind utilities can override them. Previously these were
+ * unlayered, which made `* { padding: 0 }` and `a { color }` beat every padding/colour utility.
+ */
+@layer base {
   :root {
-    color: #213547;
-    background-color: #ffffff;
+    color-scheme: light;
+    -webkit-text-size-adjust: 100%;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
   }
-  a:hover {
-    color: #747bff;
+
+  html {
+    scroll-behavior: smooth;
   }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    min-height: 100dvh;
+    overflow-x: hidden;
+    background-color: var(--color-secondary-light-gray);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    line-height: 1.5;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  #root {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    min-height: 100vh;
+    min-height: 100dvh;
+  }
+
+  button,
+  [role="button"],
+  a {
+    touch-action: manipulation;
+  }
+
   button {
-    /* background-color: #f9f9f9; */
-    /* background-color: rgba(143, 225, 231, 0.87); */
-    /* background-color:turquoise; */
-    color: #213547;
+    cursor: pointer;
   }
-  button:hover {
-    background-color: #e2e2e2;
+
+  button:disabled {
+    cursor: not-allowed;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-primary-teal);
+    outline-offset: 2px;
+  }
+
+  /* 16px stops iOS Safari zooming the page when a field is focused */
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
+
+  @media (min-width: 768px) {
+    input,
+    select,
+    textarea {
+      font-size: inherit;
+    }
+  }
+
+  /* Hide number-input spinners */
+  input[type="number"]::-webkit-outer-spin-button,
+  input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  input[type="number"] {
+    -moz-appearance: textfield;
+    appearance: textfield;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      scroll-behavior: auto !important;
+      transition-duration: 0.01ms !important;
+    }
   }
 }
 
-/* Tablet and smaller screens */
-@media (max-width: 640px) {
-  body {
-    font-size: 14px;
+@layer components {
+  /* Shared form field: large, rounded, thumb-friendly */
+  .field {
+    width: 100%;
+    min-height: 3rem;
+    padding: 0.75rem 1rem;
+    border: 1px solid #dbe3ec;
+    border-radius: 1rem;
+    background: #fff;
+    color: var(--color-ink);
+    transition: border-color 0.15s, box-shadow 0.15s;
   }
-}
 
-/* Large screens */
-@media (min-width: 1400px) {
-  body {
-    font-size: 18px;
+  .field::placeholder {
+    color: #94a3b8;
+  }
+
+  .field:focus {
+    outline: none;
+    border-color: var(--color-primary-teal);
+    box-shadow: 0 0 0 4px rgba(13, 148, 136, 0.15);
+  }
+
+  /* Primary action: solid ink pill, full width on phones */
+  .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-height: 3rem;
+    padding: 0.75rem 1.5rem;
+    border-radius: 9999px;
+    background: var(--color-ink);
+    color: #fff;
+    font-weight: 600;
+    transition: background-color 0.15s, transform 0.1s;
+  }
+
+  .btn-primary:hover {
+    background: #1e293b;
+  }
+
+  .btn-primary:active {
+    transform: scale(0.98);
+  }
+
+  .btn-primary:disabled {
+    opacity: 0.55;
+  }
+
+  .btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-height: 3rem;
+    padding: 0.75rem 1.5rem;
+    border-radius: 9999px;
+    background: #fff;
+    border: 1px solid #dbe3ec;
+    color: var(--color-ink);
+    font-weight: 600;
+  }
+
+  .card {
+    background: #fff;
+    border-radius: 1.5rem;
+    box-shadow: var(--shadow-card);
   }
 }

@@ -26,14 +26,9 @@ export default function HostelGrid({
     onToggleReviewForm: () => {},
   },
 }) {
-  //  const handleViewDetails = () => {
-  //   localStorage.setItem("selectedHostel", hostel);
-  //   navigate(`/hostel/${hostel.id}`);
-  // };
-
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 lg:gap-6">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3 lg:gap-6 xl:grid-cols-4">
         {[...Array(8)].map((_, i) => (
           <SkeletonCard key={i} />
         ))}
@@ -43,8 +38,8 @@ export default function HostelGrid({
 
   if (isEmpty) {
     return (
-      <div className="text-center py-16 px-4">
-        <h3 className="text-xl sm:text-2xl font-bold text-secondary-dark-gray mb-2">
+      <div className="card mx-auto max-w-md px-6 py-14 text-center">
+        <h3 className="mb-2 text-xl font-bold text-ink sm:text-2xl">
           No hostels found
         </h3>
         <p className="text-secondary-gray">
@@ -55,7 +50,7 @@ export default function HostelGrid({
   }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 lg:gap-6">
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3 lg:gap-6 xl:grid-cols-4">
       {hostels.map((hostel) => (
         <HostelCard
           key={hostel.id}

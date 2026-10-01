@@ -21,11 +21,11 @@ import {
   likeProperty,
   unlikeProperty,
 } from "../services/AuthServices";
-import { HeroSection, SearchBar, HostelGrid, Footer } from "../components";
+import { HeroSection, HostelGrid, Footer } from "../components";
 import { SkeletonCard } from "../components/SkeletonCard";
 import { ReviewHostelPage } from "./ReviewHostelPage";
 import { PrivateRoute } from "../components/ProtectedRoute";
-import { Heart, Info } from "lucide-react";
+import { Info } from "lucide-react";
 import { AuthContext } from "../zu-store/AuthContextInstance";
 import { useContext } from "react";
 
@@ -91,7 +91,6 @@ export default function HomePage() {
   const handleFooterLink = (link) => {
     if (link === "Home") {
       navigate(`/`);
-      console.log("Navigating to Home");
     }
     if (link === "About") {
       navigate("/about");
@@ -108,7 +107,6 @@ export default function HomePage() {
   const handleLike = async (hostel) => {
     if (!storeUser && likeStatus) {
       setErrorMessage("");
-      console.log("Like status is true, resetting to false");
       setLikeStatus(false);
       return;
     }
@@ -146,60 +144,36 @@ export default function HomePage() {
   }, [selectedHostel, showReviewForm]);
 
   return (
-    <div className="flex flex-col min-h-screen bg-secondary-light-gray">
-      {/* Header */}
-
-      {/* Main Content */}
+    <div className="flex flex-1 flex-col bg-secondary-light-gray">
       <main className="flex-grow">
-        {/* Hero Section with Search Bar */}
         <HeroSection
-          title="EXPLORE HOSTELS & CO-LIVING"
-          subtitle="Find your perfect student accommodation"
-        >
-          {/* <SearchBar
-            onSearch={handleSearch}
-            onFilterClick={handleFilterClick}
-          /> */}
-        </HeroSection>
+          eyebrow={storeUser?.fname ? `Hi ${storeUser.fname} 👋` : ""}
+          title="Find your perfect student home"
+          subtitle="Browse verified hostels and co-living spaces near campus."
+        />
 
-        {/* Hostel Grid Section */}
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 lg:py-20">
-          {/* Section Subtitle with Property Count */}
-          <div className="mb-8 sm:mb-10 lg:mb-12">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              {/* Left Section */}
-              <div className="flex items-center justify-between gap-3 w-full">
-                {/* Spans */}
-                <div className="flex justify-between w-full">
-                  <span className="inline-flex items-center bg-secondary-light-gray px-3 py-1.5 rounded-full text-sm font-bold text-secondary-dark-gray">
-                    {!isLoading && "Available properties"}
-                  </span>
-                  {/* Error Message */}
-                  {!storeUser && errorMessage && (
-                    <div className="flex items-center gap-1.5 text-sm font-medium text-amber-600">
-                      <Info size={16} />
-                      <p>{errorMessage}</p>
-                    </div>
-                  )}
-                  <span className="inline-flex items-center bg-teal-50 px-3 py-1.5 rounded-full text-sm font-semibold text-teal-700">
-                    {!isLoading && `${hostels.length} Listings`}
-                  </span>
-                </div>
-              </div>
-
-              {/* Right Section */}
-              {storeUser && (
-                <p className="text-secondary-gray text-sm">
-                  Welcome,{" "}
-                  <span className="font-bold text-gray-900">
-                    {storeUser.fname}
-                  </span>
-                  !
-                </p>
-              )}
-            </div>
+        <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-14 lg:px-8">
+          <div className="mb-5 flex items-end justify-between gap-3 sm:mb-8">
+            <h2 className="text-xl font-extrabold tracking-tight text-ink sm:text-3xl">
+              Available properties
+            </h2>
+            {!isLoading && (
+              <span className="shrink-0 rounded-full bg-teal-50 px-3 py-1.5 text-xs font-bold text-primary-teal-dark sm:text-sm">
+                {hostels.length} {hostels.length === 1 ? "listing" : "listings"}
+              </span>
+            )}
           </div>
-          {/* Grid */}
+
+          {!storeUser && errorMessage && (
+            <div
+              role="status"
+              className="mb-5 flex items-center gap-2 rounded-2xl bg-amber-50 px-4 py-3 text-sm font-medium text-amber-700"
+            >
+              <Info size={18} className="shrink-0" />
+              <p>{errorMessage}</p>
+            </div>
+          )}
+
           {!isLoading ? (
             <HostelGrid
               hostels={hostels}
@@ -217,31 +191,23 @@ export default function HomePage() {
               }}
             />
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 lg:gap-6">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3 lg:gap-6 xl:grid-cols-4">
               {[...Array(8)].map((_, i) => (
                 <SkeletonCard key={i} />
               ))}
             </div>
           )}
         </section>
+
         {showReviewForm && selectedHostel && (
           <div
-            className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+            className="fixed inset-0 z-50 flex items-end justify-center bg-ink/60 backdrop-blur-sm sm:items-center sm:p-4"
             onClick={handleCloseReviewPage}
           >
             <div
-              className="bg-white rounded-2xl shadow-xl w-full max-w-4xl p-6 relative max-h-[90vh] overflow-y-auto"
+              className="relative max-h-[92vh] w-full max-w-4xl animate-sheet-up overflow-y-auto rounded-t-[2rem] bg-white p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] shadow-float sm:rounded-[2rem] sm:p-6"
               onClick={(e) => e.stopPropagation()}
             >
-              {/* <button
-                onClick={() => {
-                  setShowReviewForm(false);
-                  setSelectedHostel(null);
-                }}
-                className="absolute top-4 right-4 text-2xl font-bold bg-gray-200 rounded-full w-10 h-10 flex items-center justify-center hover:bg-gray-300 transition-colors"
-              >
-                ×
-              </button> */}
               <PrivateRoute>
                 <ReviewHostelPage
                   hostel={selectedHostel}
@@ -253,7 +219,6 @@ export default function HomePage() {
         )}
       </main>
 
-      {/* Footer */}
       <Footer
         links={links}
         onLinkClick={handleFooterLink}

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Eye, EyeOff, Home, Facebook } from "lucide-react";
+import { Eye, EyeOff, Facebook } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { FcGoogle } from "react-icons/fc";
 import { LoadingSpinner } from "../components/SkeletonCard";
@@ -38,12 +38,8 @@ export default function LoginPage() {
       setLoading(true);
       setErrorMsg({ email: "", password: "", general: "" });
       response = await LoginApi({ loginData });
-
-      console.log("Response:", response);
     } catch (error) {
-      console.error("Login error:", error);
-      // setErrorMsg({ email: "", password: "", general: "" });
-      if (error.error.includes("password")) {
+      if (error?.error?.includes("password")) {
         setErrorMsg((prev) => ({
           ...prev,
           password: error.error,
@@ -52,7 +48,7 @@ export default function LoginPage() {
         setErrorMsg((prev) => ({
           ...prev,
           general:
-            error.error ||
+            error?.error ||
             "Login failed. Please check your credentials and try again.",
         }));
       }
@@ -61,13 +57,9 @@ export default function LoginPage() {
       if (response && response.token) {
         setEmail("");
         setPassword("");
-        // localStorage.setItem("token", response.token);
-        // localStorage.setItem("user", JSON.stringify(response.phoneNumber));
         navigate("/");
       }
     }
-    console.log("Login attempted", errorMsg);
-    // TODO: Handle login logic
   };
 
   const handleGoogleSuccess = async (response) => {
@@ -78,17 +70,13 @@ export default function LoginPage() {
       data.token
         ? navigate("/")
         : setErrorMsg({ general: "Google login failed. Please try again." });
-    } catch (err) {
-      console.error("Google login error:", err);
+    } catch {
+      setErrorMsg({ general: "Google login failed. Please try again." });
     }
   };
   const handleFacebookLogin = () => {
     setErrorMsg({ general: "Facebook login failed. Please try a different method." });
-    console.log("Continue with Facebook");
   };
-  // const handleForgotPass = ()=>{
-  //   navigate("/password-reset")
-  // }
   if (loading) {
     return (
       <div>
@@ -98,164 +86,122 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-[100svh] flex">
-      {/* Left Side - Image */}
-      <div className="hidden lg:block lg:w-1/2 relative">
+    <div className="flex min-h-[100svh]">
+      {/* Image panel (large screens only) */}
+      <div className="relative hidden lg:block lg:w-1/2">
         <img
           src="https://images.unsplash.com/photo-1493857671505-72967e2e2760?w=1200&h=1400&fit=crop"
           alt="Cozy hostel common area"
-          className="w-full h-full object-cover"
+          className="h-full w-full object-cover"
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-transparent to-teal-900/20"></div>
+        <div className="absolute inset-0 bg-gradient-to-t from-ink/70 via-ink/20 to-transparent"></div>
+        <p className="absolute right-12 bottom-12 left-12 text-3xl font-extrabold text-white">
+          Your next home, a few taps away.
+        </p>
       </div>
 
-      {/* Right Side - Login Form */}
-      <div className=" flex min-h-[100svh]  w-full lg:w-1/2 flex-col items-center justify-center bg-gradient-to-br from-teal-800 to-teal-900 dark:bg-gray-900">
-        <div className="w-full max-w-md flex flex-col">
-          {/* Header */}
-          <div className="mb-12 mx-2 md:mx-0">
-            <div className="flex items-center justify-between mb-12 mt-2">
-              <Link to="/">
-                <div className="flex items-center space-x-3">
-                  <div className="bg-cyan-400 p-2 rounded-lg">
-                    <Home className="w-6 h-6 text-teal-900" />
-                  </div>
-                  <span className="text-3xl font-bold text-white">RentIn</span>
-                </div>
-              </Link>
-              <div className="text-sm text-gray-300">
-                Don't have an account?{" "}
-                <Link
-                  to="/register"
-                  className="text-cyan-400 font-semibold hover:underline"
-                >
-                  SignUp
-                </Link>
-              </div>
-            </div>
-
-            <h1 className="text-5xl font-bold text-white mb-4">
-              Welcome Back!
-            </h1>
-            <p className="text-gray-300 text-lg mb-4">
-              Log in to continue your adventure.
-            </p>
+      {/* Form */}
+      <div className="flex w-full flex-col bg-gradient-to-b from-ink via-slate-900 to-teal-950 px-5 pt-[calc(1.5rem+env(safe-area-inset-top))] pb-[calc(2rem+env(safe-area-inset-bottom))] lg:w-1/2 lg:items-center lg:justify-center lg:px-12">
+        <div className="mx-auto flex w-full max-w-md flex-1 flex-col lg:flex-none">
+          <div className="mb-10 flex items-center justify-between">
+            <Link to="/" aria-label="Rentin home" className="text-2xl font-extrabold tracking-tight text-white">
+              Rent<span className="text-primary-orange">in</span>
+            </Link>
+            <Link to="/register" className="rounded-full bg-white/10 px-4 py-2 text-sm font-semibold text-white hover:bg-white/20">
+              Sign up
+            </Link>
           </div>
 
-          {/* Login Form */}
-          <form
-            onSubmit={handleLogin}
-            className="flex flex-col  md:items-stretch gap-10 m-2 md:mx-0"
-          >
-            {/* Email Input */}
+          <h1 className="text-4xl font-extrabold tracking-tight text-white">Welcome back</h1>
+          <p className="mt-2 mb-8 text-base text-slate-300">Log in to manage your stay.</p>
+
+          <form onSubmit={handleLogin} className="flex flex-col gap-5" noValidate>
+            {errorMsg.general && (
+              <p role="alert" className="rounded-2xl bg-red-500/15 px-4 py-3 text-sm text-red-200">
+                {errorMsg.general}
+              </p>
+            )}
+
             <div>
-              <label
-                htmlFor="email"
-                className="block text-white font-medium mb-3 mx-auto"
-              >
-                Email or Phone Number
+              <label htmlFor="email" className="mb-2 block text-sm font-semibold text-slate-200">
+                Email or phone number
               </label>
-              <div>
-                {errorMsg.general && (
-                  <span
-                    className={`text-red-400 text-base font-normal leading-normal mt-2`}
-                  >
-                    {errorMsg.general}
-                  </span>
-                )}
-              </div>
               <input
                 type="text"
                 id="email"
+                autoComplete="username"
+                inputMode="email"
                 value={email_phoneNumber}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="youname@email.com   or +233 123 456 7890"
-                className="w-full h-10 px-4 py-5 bg-teal-700/50 border border-teal-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-transparent"
+                placeholder="you@email.com or +233 12 345 6789"
+                className="h-14 w-full rounded-2xl border border-white/15 bg-white/10 px-4 text-white placeholder:text-slate-400 focus:border-teal-300 focus:ring-4 focus:ring-teal-400/20 focus:outline-none"
               />
             </div>
 
-            {/* Password Input */}
             <div>
-              <label
-                htmlFor="password"
-                className="block text-white font-medium mb-3 mx-auto"
-              >
+              <label htmlFor="password" className="mb-2 block text-sm font-semibold text-slate-200">
                 Password
               </label>
-              <div>
-                {errorMsg.password && (
-                  <span
-                    className={`text-red-400 text-base font-normal leading-normal mt-2`}
-                  >
-                    {errorMsg.password}
-                  </span>
-                )}
-              </div>
               <div className="relative">
                 <input
                   type={showPassword ? "text" : "password"}
                   id="password"
+                  autoComplete="current-password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Enter your password"
-                  className="w-full h-10 px-4 py-5 bg-teal-700/50 border border-teal-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-transparent pr-12"
+                  className="h-14 w-full rounded-2xl border border-white/15 bg-white/10 pr-14 pl-4 text-white placeholder:text-slate-400 focus:border-teal-300 focus:ring-4 focus:ring-teal-400/20 focus:outline-none"
                 />
-                <div
+                <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors  p-1"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  className="absolute top-1/2 right-2 grid h-11 w-11 -translate-y-1/2 place-items-center rounded-full text-slate-300 hover:text-white"
                 >
-                  {showPassword ? (
-                    <EyeOff className="w-5 h-5" />
-                  ) : (
-                    <Eye className="w-5 h-5" />
-                  )}
-                </div>
+                  {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                </button>
               </div>
-              <div className="text-right mt-3">
-                <Link
-                  to="/request/password-reset"
-                  className="text-cyan-400 text-sm hover:underline"
-                >
-                  Forgot Password?
+              {errorMsg.password && (
+                <p role="alert" className="mt-2 text-sm text-red-300">{errorMsg.password}</p>
+              )}
+              <div className="mt-3 text-right">
+                <Link to="/request/password-reset" className="text-sm font-semibold text-teal-300 hover:underline">
+                  Forgot password?
                 </Link>
               </div>
             </div>
 
-            {/* Login Button */}
             <button
               type="submit"
-              className="w-full  px-4 py-3 bg-white text-teal-900 rounded-lg font-semibold hover:bg-gray-100 transition-colors duration-200 shadow-lg mt-6 mx-auto"
+              className="mt-1 h-14 w-full rounded-full bg-white text-base font-bold text-ink transition-transform hover:bg-slate-100 active:scale-[0.98]"
             >
-              Log In
+              Log in
             </button>
           </form>
 
-          {/* Divider */}
-          <div className="flex items-center my-10">
-            <div className="flex-1 border-t border-teal-600"></div>
-            <span className="px-4 text-gray-300 text-sm">OR</span>
-            <div className="flex-1 border-t border-teal-600"></div>
+          <div className="my-8 flex items-center gap-4">
+            <div className="h-px flex-1 bg-white/15"></div>
+            <span className="text-xs font-semibold tracking-widest text-slate-400">OR</span>
+            <div className="h-px flex-1 bg-white/15"></div>
           </div>
 
-          {/* Social Login Buttons */}
-          <div className="flex flex-col gap-5">
+          <div className="flex flex-col gap-3">
             <ErrorBoundary
               fallback={
                 <div
                   title="Google sign-in is unavailable right now"
-                  className="w-full py-4 gap-2 bg-gray-800/50 text-gray-500 rounded-lg font-medium flex items-center justify-center space-x-3 shadow-md cursor-not-allowed"
+                  className="flex h-14 w-full cursor-not-allowed items-center justify-center gap-3 rounded-full border border-white/10 bg-white/5 font-semibold text-slate-500"
                 >
-                  <FcGoogle className="w-5 h-5 opacity-50" />
+                  <FcGoogle className="h-5 w-5 opacity-50" />
                   <span>Google sign-in unavailable</span>
                 </div>
               }
             >
               <GoogleLoginButton
                 onSuccess={handleGoogleSuccess}
-                className="w-full py-4 gap-2 bg-gray-800 text-gray-700 rounded-lg font-medium hover:bg-gray-100 transition-colors duration-200 flex items-center justify-center space-x-3 shadow-md"
+                className="flex h-14 w-full items-center justify-center gap-3 rounded-full border border-white/15 bg-white/10 font-semibold text-white hover:bg-white/15"
               >
-                <FcGoogle className="w-5 h-5" />
+                <FcGoogle className="h-5 w-5" />
                 <span>Continue with Google</span>
               </GoogleLoginButton>
             </ErrorBoundary>
@@ -263,23 +209,19 @@ export default function LoginPage() {
             <button
               type="button"
               onClick={handleFacebookLogin}
-              className="w-full py-4 gap-2 bg-gray-800 text-gray-700 rounded-lg font-medium hover:bg-gray-100 transition-colors duration-200 flex items-center justify-center space-x-3 shadow-md"
+              className="flex h-14 w-full items-center justify-center gap-3 rounded-full border border-white/15 bg-white/10 font-semibold text-white hover:bg-white/15"
             >
-              <Facebook className="w-5 h-5 text-[#1877F2]" />
+              <Facebook className="h-5 w-5 text-[#6aa5ff]" />
               <span>Continue with Facebook</span>
             </button>
           </div>
 
-          {/* Bottom Link */}
-          <div className="text-center mt-10">
-            <span className="text-gray-300">Don't have an account? </span>
-            <Link
-              to="/register"
-              className="text-cyan-400 font-semibold hover:underline"
-            >
-              SignUp
+          <p className="mt-auto pt-10 text-center text-sm text-slate-400">
+            New here?{" "}
+            <Link to="/register" className="font-semibold text-teal-300 hover:underline">
+              Create an account
             </Link>
-          </div>
+          </p>
         </div>
       </div>
     </div>

@@ -34,8 +34,8 @@ export default function RequestPasswordResetPage() {
   };
 
   return (
-    <div className="w-full min-h-screen bg-gradient-to-br from-teal-700 to-teal-800 flex items-center justify-center px-4 py-12">
-      <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8">
+    <div className="w-full flex-1 bg-gradient-to-b from-ink via-slate-900 to-teal-950 flex items-center justify-center px-4 py-12">
+      <div className="max-w-md w-full bg-white rounded-3xl shadow-float p-8">
         <div className="flex flex-col items-center gap-4 mb-6">
           <div className="bg-teal-50 p-3 rounded-full">
             <KeyRound className="w-6 h-6 text-primary-teal" />
@@ -79,13 +79,13 @@ export default function RequestPasswordResetPage() {
                 setEmail(e.target.value);
               }}
               placeholder="Enter your email"
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none"
+              className="w-full px-4 py-3 border border-gray-300 rounded-2xl min-h-12 focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none"
             />
           </div>
 
           <button
             type="submit"
-            className="w-full bg-primary-teal text-white rounded-lg font-semibold hover:bg-teal-600 py-3 transition-colors"
+            className="w-full bg-ink text-white rounded-full min-h-12 font-semibold hover:bg-slate-800 py-3 transition-colors"
           >
             Send Reset Link
           </button>
