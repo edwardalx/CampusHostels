@@ -19,6 +19,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<Message> Messages { get; set; }
     public DbSet<PasswordResetToken> PasswordResetTokens { get; set; }
     public DbSet<Rating> Ratings { get; set; }
+    public DbSet<MaintenanceRequest> MaintenanceRequests { get; set; }
     // public DbSet<Review> Reviews { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -115,6 +116,22 @@ public class ApplicationDbContext : DbContext
             // map one-to-many with payments
             entity.HasMany(e => e.Payments).WithOne(p => p.TenancyAgreement).HasForeignKey(p => p.TenancyAgreementId).OnDelete(DeleteBehavior.SetNull);
             entity.HasOne(e => e.User).WithMany().HasForeignKey(e => e.TenantId).HasPrincipalKey(u => u.TenantId).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // MaintenanceRequest configuration
+        modelBuilder.Entity<MaintenanceRequest>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Category).HasConversion<string>().HasMaxLength(30);
+            entity.Property(e => e.Status).HasConversion<string>().HasMaxLength(30);
+            entity.Property(e => e.Title).HasMaxLength(120).IsRequired();
+            entity.Property(e => e.Description).HasMaxLength(2000).IsRequired();
+            entity.HasOne(e => e.User).WithMany().HasForeignKey(e => e.TenantId).HasPrincipalKey(u => u.TenantId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(e => e.TenancyAgreement).WithMany().HasForeignKey(e => e.TenancyAgreementId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(e => e.Property).WithMany().HasForeignKey(e => e.PropertyId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(e => e.Unit).WithMany().HasForeignKey(e => e.UnitId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasIndex(e => new { e.PropertyId, e.Status });
+            entity.HasIndex(e => e.CreatedAt);
         });
 
         // Payment configuration

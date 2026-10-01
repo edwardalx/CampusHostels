@@ -1,7 +1,9 @@
+import { useEffect, useSyncExternalStore } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { useDashboard } from '../context/DashboardContext'
 import { FunctionType, type FunctionType as FunctionTypeValue } from '../type/manager'
 import { useLocation, useNavigate } from 'react-router-dom'
+import { getAlertCounts, startAlertPolling, subscribeToAlerts } from '../services/alertsStore'
 
 interface NavItem {
   label: string
@@ -15,8 +17,8 @@ const navItems: NavItem[] = [
   { label: 'Properties', icon: '🏢', path: '/properties', requiredFunction: FunctionType.ManageProperties },
   { label: 'Tenants', icon: '👥', path: '/tenants', requiredFunction: FunctionType.ManageUsers },
   { label: 'Payments', icon: '💳', path: '/payments' },
-  { label: 'Maintenance', icon: '🛠️' },
-  { label: 'Reports', icon: '📊', requiredFunction: FunctionType.ViewReports },
+  { label: 'Maintenance', icon: '🛠️', path: '/maintenance' },
+  { label: 'Reports', icon: '📊', path: '/reports' },
 ]
 
 export function Sidebar() {
@@ -24,6 +26,17 @@ export function Sidebar() {
   const { summary } = useDashboard()
   const location = useLocation()
   const navigate = useNavigate()
+  const alerts = useSyncExternalStore(subscribeToAlerts, getAlertCounts)
+  const managerId = manager?.managerId
+
+  useEffect(() => {
+    if (!managerId) return
+    return startAlertPolling(managerId)
+  }, [managerId])
+
+  // Reports flags activity since it was last opened; Maintenance flags requests still open.
+  const badgeFor = (label: string) =>
+    label === 'Reports' ? alerts.newActivity : label === 'Maintenance' ? alerts.openMaintenance : 0
 
   const visibleNavItems = navItems.filter(
     (item) =>
@@ -52,6 +65,11 @@ export function Sidebar() {
           >
             <span aria-hidden="true" className="nav-icon">{item.icon}</span>
             <span className="nav-label">{item.label}</span>
+            {badgeFor(item.label) > 0 && (
+              <span aria-label={`${badgeFor(item.label)} new`} className="nav-badge">
+                {badgeFor(item.label) > 99 ? '99+' : badgeFor(item.label)}
+              </span>
+            )}
           </button>
         ))}
       </nav>

@@ -20,6 +20,14 @@ export interface Property {
   availability?: boolean
 }
 
+export interface ManagedPropertiesPage {
+  items: ManagedProperty[]
+  page: number
+  pageSize: number
+  totalCount: number
+  totalPages: number
+}
+
 export interface ManagedProperty extends Property {
   noOfUnits: number
   occupiedRooms: number

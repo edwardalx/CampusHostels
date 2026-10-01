@@ -12,6 +12,7 @@ import ContactPage from "./pages/ContactPage";
 import RequestPasswordResetPage from "./pages/RequestPasswordResetPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 import AboutPage from "./pages/AboutPage";
+import MaintenancePage from "./pages/MaintenancePage";
 import NotFoundPage from "./pages/NotFoundPage";
 import { LogoutApi } from "./services/AuthServices";
 import {
@@ -72,6 +73,14 @@ function App() {
             element={
               <PrivateRoute>
                 <TenancyAgreement />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/maintenance"
+            element={
+              <PrivateRoute>
+                <MaintenancePage />
               </PrivateRoute>
             }
           />

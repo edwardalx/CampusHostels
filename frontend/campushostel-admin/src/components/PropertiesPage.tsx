@@ -2,13 +2,16 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { fetchManagerOwnerOptions } from '../services/ManagerAuthService'
-import { fetchManagedProperties } from '../services/PropertyService'
+import { fetchManagedPropertiesPage } from '../services/PropertyService'
 import { FunctionType } from '../type/manager'
 import type { ManagerOwnerOption } from '../type/manager'
-import type { ManagedProperty } from '../type/property'
+import type { ManagedPropertiesPage } from '../type/property'
 import { useDashboard } from '../context/DashboardContext'
 import { DashboardSummaryCards } from './DashboardSummaryCards'
+import { Pagination } from './Pagination'
 import { Sidebar } from './Sidebar'
+
+const PAGE_SIZE = 10
 
 function formatStartingPrice(price?: number | null) {
   if (price == null) return 'Price not set'
@@ -23,13 +26,15 @@ export function PropertiesPage() {
   const { manager } = useAuth()
   const { selectedPropertyIds, togglePropertySelection, ownerFilter, setOwnerFilter } = useDashboard()
   const navigate = useNavigate()
-  const [properties, setProperties] = useState<ManagedProperty[]>([])
+  const [pageData, setPageData] = useState<ManagedPropertiesPage | null>(null)
+  const [page, setPage] = useState(1)
   const [isLoading, setIsLoading] = useState(true)
   const [hasLoaded, setHasLoaded] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [owners, setOwners] = useState<ManagerOwnerOption[]>([])
   const [occupancySort, setOccupancySort] = useState<'none' | 'asc' | 'desc'>('none')
   const isSuper = manager?.tier === 'Super'
+  const properties = pageData?.items ?? []
   const canManageProperties =
     isSuper || manager?.functions.includes(FunctionType.ManageProperties)
 
@@ -44,12 +49,14 @@ export function PropertiesPage() {
   useEffect(() => {
     const controller = new AbortController()
     setError(null)
-    fetchManagedProperties(controller.signal, {
+    fetchManagedPropertiesPage(controller.signal, {
       ownerId: ownerFilter || undefined,
       sortOccupancy: occupancySort === 'none' ? undefined : occupancySort,
+      page,
+      pageSize: PAGE_SIZE,
     })
       .then((result) => {
-        setProperties(result)
+        setPageData(result)
         setHasLoaded(true)
       })
       .catch((requestError: unknown) => {
@@ -62,7 +69,7 @@ export function PropertiesPage() {
       })
 
     return () => controller.abort()
-  }, [ownerFilter, occupancySort])
+  }, [ownerFilter, occupancySort, page])
 
   return (
     <div className="dashboard-shell">
@@ -108,7 +115,10 @@ export function PropertiesPage() {
             {isSuper && (
               <label>
                 Owner{' '}
-                <select value={ownerFilter} onChange={(e) => setOwnerFilter(e.target.value)}>
+                <select value={ownerFilter} onChange={(e) => {
+                  setOwnerFilter(e.target.value)
+                  setPage(1)
+                }}>
                   <option value="">All owners</option>
                   {owners.map((owner) => (
                     <option key={owner.managerId} value={owner.managerId}>
@@ -122,7 +132,10 @@ export function PropertiesPage() {
               Sort by occupancy{' '}
               <select
                 value={occupancySort}
-                onChange={(e) => setOccupancySort(e.target.value as 'none' | 'asc' | 'desc')}
+                onChange={(e) => {
+                  setOccupancySort(e.target.value as 'none' | 'asc' | 'desc')
+                  setPage(1)
+                }}
               >
                 <option value="none">Default</option>
                 <option value="asc">Lowest first</option>
@@ -162,6 +175,15 @@ export function PropertiesPage() {
               </button>
             ))}
           </section>
+        )}
+
+        {!isLoading && !error && pageData && (
+          <Pagination
+            page={pageData.page}
+            totalPages={pageData.totalPages}
+            totalCount={pageData.totalCount}
+            onPageChange={setPage}
+          />
         )}
       </main>
     </div>

@@ -5,6 +5,9 @@ namespace CampusHostels.API.Domain.Entities;
 public class TenancyAgreement
 {
     public int Id { get; set; }
+
+    /// <summary>When the booking was made (distinct from when the contract starts).</summary>
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime ContractStartDate { get; set; }
     public int ContractDurationMonths { get; set; }
     public DateTime? ContractEndDate { get; set; }

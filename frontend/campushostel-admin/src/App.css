@@ -885,3 +885,46 @@ th {
     padding: 24px;
   }
 }
+
+/* ---- Alert badges ---- */
+
+.nav-item {
+  position: relative;
+}
+
+.nav-badge {
+  margin-left: auto;
+  min-width: 20px;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: #ef4444;
+  color: white;
+  font-size: 0.68rem;
+  font-weight: 700;
+  line-height: 1.3;
+  text-align: center;
+}
+
+.new-tag {
+  margin-left: 8px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #fee2e2;
+  color: #991b1b;
+  font-size: 0.65rem;
+  font-weight: 700;
+  vertical-align: middle;
+}
+
+@media (max-width: 768px) {
+  /* On the tab bar the badge sits on the icon's corner instead of the end of a row */
+  .nav .nav-badge {
+    position: absolute;
+    top: 2px;
+    left: 50%;
+    margin-left: 6px;
+    min-width: 18px;
+    padding: 1px 5px;
+    font-size: 0.62rem;
+  }
+}

@@ -1,4 +1,8 @@
+import { useState } from 'react'
 import type { ManagedProperty } from '../type/property'
+import { Pagination } from './Pagination'
+
+const PAGE_SIZE = 4
 
 type PropertyHealthPanelProps = {
   properties: ManagedProperty[]
@@ -28,6 +32,13 @@ function formatRevenue(revenueByCurrency: Record<string, number>) {
 }
 
 export function PropertyHealthPanel({ properties, isLoading, error }: PropertyHealthPanelProps) {
+  const [page, setPage] = useState(1)
+
+  // Only the list is paged; the revenue total below always covers every property passed in.
+  const totalPages = Math.max(Math.ceil(properties.length / PAGE_SIZE), 1)
+  const currentPage = Math.min(page, totalPages)
+  const pageProperties = properties.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE)
+
   const revenueByCurrency = properties.reduce<Record<string, number>>((totals, property) => {
     Object.entries(property.revenueByCurrency).forEach(([currency, amount]) => {
       totals[currency] = (totals[currency] ?? 0) + amount
@@ -52,7 +63,7 @@ export function PropertyHealthPanel({ properties, isLoading, error }: PropertyHe
         ) : properties.length === 0 ? (
           <p className="properties-message">No properties to show.</p>
         ) : (
-          properties.map((property) => {
+          pageProperties.map((property) => {
             const status = getHealthStatus(property.occupancyPercentage)
             return (
               <div key={property.id} className="property-item">
@@ -66,6 +77,15 @@ export function PropertyHealthPanel({ properties, isLoading, error }: PropertyHe
           })
         )}
       </div>
+
+      {!error && !isLoading && properties.length > PAGE_SIZE && (
+        <Pagination
+          page={currentPage}
+          totalPages={totalPages}
+          totalCount={properties.length}
+          onPageChange={setPage}
+        />
+      )}
 
       <div className="revenue-card">
         <p>Revenue YTD</p>

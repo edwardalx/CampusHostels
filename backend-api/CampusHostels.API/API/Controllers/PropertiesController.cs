@@ -39,10 +39,24 @@ public class PropertiesController : ControllerBase
         return Ok(dtos);
     }
 
+    /// <summary>
+    /// Properties for the signed-in manager. Without <paramref name="page"/> the full list is
+    /// returned as an array (the dashboard and unit form need every property); with it, a single
+    /// page is returned as { items, page, pageSize, totalCount, totalPages }.
+    /// </summary>
     [Authorize(Policy = "RequireManager")]
     [HttpGet("managed")]
-    public async Task<IActionResult> GetManaged([FromQuery] Guid? ownerId = null, [FromQuery] string? sortOccupancy = null)
+    public async Task<IActionResult> GetManaged(
+        [FromQuery] Guid? ownerId = null,
+        [FromQuery] string? sortOccupancy = null,
+        [FromQuery] int? page = null,
+        [FromQuery] int pageSize = Paging.DefaultPageSize)
     {
+        if (page is < 1 || pageSize < 1 || pageSize > Paging.MaxPageSize)
+        {
+            return BadRequest(new { error = $"page must be at least 1 and pageSize between 1 and {Paging.MaxPageSize}." });
+        }
+
         if (!Guid.TryParse(User.FindFirst("managerId")?.Value, out var managerId))
         {
             return Unauthorized();
@@ -141,7 +155,20 @@ public class PropertiesController : ControllerBase
                 : dtos.OrderByDescending(dto => dto.OccupancyPercentage).ThenBy(dto => dto.Name);
         }
 
-        return Ok(dtos.ToList());
+        var all = dtos.ToList();
+        if (page is null)
+        {
+            return Ok(all);
+        }
+
+        // Sorting by occupancy needs every property's occupancy, so the page is cut after sorting.
+        return Ok(new ManagedPropertiesResponseDto
+        {
+            Items = all.Skip((page.Value - 1) * pageSize).Take(pageSize).ToList(),
+            Page = page.Value,
+            PageSize = pageSize,
+            TotalCount = all.Count
+        });
     }
 
     [HttpGet("{id:int}")]

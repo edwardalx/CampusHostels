@@ -24,7 +24,7 @@ export default function Header() {
   const [token, setToken] = useState(localStorage.getItem("token"));
   let navLinks;
   token
-    ? (navLinks = ["HOME", "HISTORY", "TENANCY"])
+    ? (navLinks = ["HOME", "HISTORY", "TENANCY", "MAINTENANCE"])
     : (navLinks = ["HOME", "ABOUT", "CONTACT"]);
   const { setStoreUser } = useContext(AuthContext);
   const navigate = useNavigate();
@@ -52,6 +52,9 @@ export default function Header() {
     }
     if (link === "TENANCY") {
       navigate(`/tenancy`);
+    }
+    if (link === "MAINTENANCE") {
+      navigate(`/maintenance`);
     }
     if (link === "ABOUT") {
       navigate("/about");

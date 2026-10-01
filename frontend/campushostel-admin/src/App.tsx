@@ -10,6 +10,8 @@ import { CreateUnitPage } from './components/CreateUnitPage'
 import { PropertiesPage } from './components/PropertiesPage'
 import { TenantsPage } from './components/TenantsPage'
 import { PaymentsPage } from './components/PaymentsPage'
+import { ReportsPage } from './components/ReportsPage'
+import { MaintenancePage } from './components/MaintenancePage'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import { DashboardProvider } from './context/DashboardContext'
 import { FunctionType } from './type/manager'
@@ -77,6 +79,26 @@ function App() {
           <ProtectedRoute>
             <DashboardProvider>
               <PaymentsPage />
+            </DashboardProvider>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/maintenance"
+        element={
+          <ProtectedRoute>
+            <DashboardProvider>
+              <MaintenancePage />
+            </DashboardProvider>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/reports"
+        element={
+          <ProtectedRoute>
+            <DashboardProvider>
+              <ReportsPage />
             </DashboardProvider>
           </ProtectedRoute>
         }

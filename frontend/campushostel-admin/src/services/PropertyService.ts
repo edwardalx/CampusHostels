@@ -1,5 +1,5 @@
 import { getStoredManagerToken } from './ManagerAuthService'
-import type { ManagedProperty, Property, PropertyCreatePayload } from '../type/property'
+import type { ManagedPropertiesPage, ManagedProperty, Property, PropertyCreatePayload } from '../type/property'
 
 const baseUrl = '/api/Properties'
 
@@ -47,4 +47,33 @@ export async function fetchManagedProperties(
   }
 
   return data as ManagedProperty[]
+}
+
+export interface ManagedPropertyPageQuery extends ManagedPropertyQuery {
+  page: number
+  pageSize: number
+}
+
+// One page of the managed list; sorting and filtering are applied before the page is cut.
+export async function fetchManagedPropertiesPage(
+  signal: AbortSignal | undefined,
+  query: ManagedPropertyPageQuery,
+): Promise<ManagedPropertiesPage> {
+  const token = getStoredManagerToken()
+  const params = new URLSearchParams()
+  if (query.ownerId) params.set('ownerId', query.ownerId)
+  if (query.sortOccupancy) params.set('sortOccupancy', query.sortOccupancy)
+  params.set('page', String(query.page))
+  params.set('pageSize', String(query.pageSize))
+  const response = await fetch(`${baseUrl}/managed?${params.toString()}`, {
+    headers: { Authorization: `Bearer ${token}` },
+    signal,
+  })
+
+  const data = await response.json().catch(() => null)
+  if (!response.ok) {
+    throw new Error(data?.error ?? 'Unable to load properties')
+  }
+
+  return data as ManagedPropertiesPage
 }

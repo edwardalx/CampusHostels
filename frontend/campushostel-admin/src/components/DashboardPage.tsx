@@ -1,19 +1,13 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useDashboard } from "../context/DashboardContext";
-import {
-  activityFeed,
-  recentReservations,
-} from "../data/dashboardData";
 import { fetchManagedProperties } from "../services/PropertyService";
 import { FunctionType } from "../type/manager";
 import type { ManagedProperty } from "../type/property";
-import { ActivityFeed } from "./ActivityFeed";
 import { DashboardSummaryCards } from "./DashboardSummaryCards";
 import { DashboardHeader } from "./DashboardHeader";
 import { OccupancyChart } from "./OccupancyChart";
 import { PropertyHealthPanel } from "./PropertyHealthPanel";
-import { RecentReservationsTable } from "./RecentReservationsTable";
 import { Sidebar } from "./Sidebar";
 
 export function DashboardPage() {
@@ -69,11 +63,6 @@ export function DashboardPage() {
               properties={visibleProperties}
             />
           )}
-        </section>
-
-        <section className="bottom-grid">
-          <RecentReservationsTable reservations={recentReservations} />
-          <ActivityFeed items={activityFeed} />
         </section>
       </main>
     </div>

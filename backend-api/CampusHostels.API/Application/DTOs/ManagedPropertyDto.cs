@@ -1,5 +1,10 @@
 namespace CampusHostels.API.Application.DTOs;
 
+public class ManagedPropertiesResponseDto : PagedResponseDto
+{
+    public List<ManagedPropertyDto> Items { get; set; } = [];
+}
+
 public class ManagedPropertyDto
 {
     public int Id { get; set; }

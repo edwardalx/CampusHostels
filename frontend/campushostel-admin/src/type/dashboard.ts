@@ -29,10 +29,3 @@ export interface OccupancyTrendPoint {
   occupancyPercentage: number
 }
 
-export type ActivityItem = {
-  title: string
-  detail: string
-  time: string
-}
-
-export type ReservationStatus = 'Confirmed' | 'Pending' | 'Checked in'
