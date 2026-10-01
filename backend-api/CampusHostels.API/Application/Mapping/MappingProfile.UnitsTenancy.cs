@@ -10,7 +10,8 @@ public partial class MappingProfile
     {
         // Unit mappings
         CreateMap<Unit, UnitDto>()
-            .ForMember(d => d.UnitType, opt => opt.MapFrom(s => s.UnitType.ToString()));
+            .ForMember(d => d.UnitType, opt => opt.MapFrom(s => s.UnitType.ToString()))
+            .ForMember(d => d.ImageUrls, opt => opt.MapFrom(s => s.Images.Where(i => i.PhotoUrl != null).Select(i => i.PhotoUrl!)));
         CreateMap<UnitCreateDto, Unit>()
             .ForMember(d => d.UnitType, opt => opt.MapFrom(s => Enum.Parse<UnitType>(s.UnitType)));
 

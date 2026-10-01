@@ -6,6 +6,7 @@ public class UnitCreateDto
     public int Floor { get; set; }
     public string? RoomNumber { get; set; }
     public string? ImageUrl { get; set; }
+    public List<string>? ImageUrls { get; set; }
     public decimal? Cost { get; set; }
     public int? MaxNoOfPeople { get; set; }
     public string UnitType { get; set; } = "Single";

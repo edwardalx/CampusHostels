@@ -53,9 +53,24 @@ export function PropertiesPage() {
             <h1>Properties</h1>
           </div>
           {canManageProperties && (
-            <button className="primary-button" onClick={() => navigate('/properties/new')} type="button">
-              Add property
-            </button>
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <button className="secondary-button" onClick={() => navigate('/properties/new')} type="button">
+                ➕ Add Property
+              </button>
+              <button
+                className="primary-button"
+                onClick={() =>
+                  navigate(
+                    selectedPropertyIds.length === 1
+                      ? `/properties/units/new?propertyId=${selectedPropertyIds[0]}`
+                      : '/properties/units/new',
+                  )
+                }
+                type="button"
+              >
+                ➕ Add Unit
+              </button>
+            </div>
           )}
         </header>
 

@@ -63,7 +63,7 @@ export function CreatePropertyPage() {
 
       if (imageFile) {
         setStatus("uploading");
-        imageUrl = await uploadPropertyImage(imageFile);
+        imageUrl = await uploadPropertyImage(imageFile, name);
       }
 
       setStatus("saving");

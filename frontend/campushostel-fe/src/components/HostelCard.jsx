@@ -22,6 +22,7 @@ import React from "react";
 import { Heart, MapPin } from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
 import { ShowRate } from "./RateReview/Rate";
+import { resolveImageUrl } from "../utils/imageUrl";
 
 export default function HostelCard({
   hostel = {
@@ -49,7 +50,7 @@ export default function HostelCard({
       <div className="relative overflow-hidden aspect-video sm:aspect-square">
         <Link to={`/hostel/${hostel.id}`}>
           <img
-            src={hostel.imageUrl}
+            src={resolveImageUrl(hostel.imageUrl)}
             alt={hostel.name}
             className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
             loading="lazy"

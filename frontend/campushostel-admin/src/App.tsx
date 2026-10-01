@@ -6,6 +6,7 @@ import { ChangePasswordPage } from './components/ChangePasswordPage'
 import { CreateManagerPage } from './components/CreateManagerPage'
 import { ManagersListPage } from './components/ManagersListPage'
 import { CreatePropertyPage } from './components/CreatePropertyPage'
+import { CreateUnitPage } from './components/CreateUnitPage'
 import { PropertiesPage } from './components/PropertiesPage'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import { DashboardProvider } from './context/DashboardContext'
@@ -47,6 +48,14 @@ function App() {
         element={
           <ProtectedRoute>
             <CreatePropertyPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/properties/units/new"
+        element={
+          <ProtectedRoute>
+            <CreateUnitPage />
           </ProtectedRoute>
         }
       />

@@ -10,6 +10,7 @@ public class UnitDto
     public int Floor { get; set; }
     public string? RoomNumber { get; set; }
     public string? ImageUrl { get; set; }
+    public List<string> ImageUrls { get; set; } = [];
     public decimal? Cost { get; set; }
     public int? MaxNoOfPeople { get; set; }
     public bool Availability { get; set; }

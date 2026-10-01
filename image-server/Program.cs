@@ -114,17 +114,62 @@ app.MapPost("/campus-hostels/{category}/upload", async (string category, HttpReq
         return Results.BadRequest(new { error = $"Unsupported file type '{extension}'. Allowed: {string.Join(", ", allowedExtensions)}" });
     }
 
-    var fileName = $"{Guid.NewGuid():N}{extension.ToLowerInvariant()}";
-    var filePath = Path.Combine(storageRoot, category, fileName);
+    // Optional "name" form field (e.g. "Chiss Towers" or "Chiss Towers room 12") makes the
+    // stored file identifiable: chiss-towers-room-12-1.jpg, -2.jpg, ... Falls back to a GUID.
+    var slug = Slugify(form["name"].ToString());
+    var extensionLower = extension.ToLowerInvariant();
+    string fileName;
+    FileStream? stream = null;
 
-    await using (var stream = File.Create(filePath))
+    if (slug.Length == 0)
+    {
+        fileName = $"{Guid.NewGuid():N}{extensionLower}";
+        stream = new FileStream(Path.Combine(storageRoot, category, fileName), FileMode.CreateNew);
+    }
+    else
+    {
+        // CreateNew is atomic, so concurrent uploads can't claim the same number.
+        for (var n = 1; stream is null; n++)
+        {
+            fileName = $"{slug}-{n}{extensionLower}";
+            try
+            {
+                stream = new FileStream(Path.Combine(storageRoot, category, fileName), FileMode.CreateNew);
+            }
+            catch (IOException) when (File.Exists(Path.Combine(storageRoot, category, $"{slug}-{n}{extensionLower}")))
+            {
+                // Number taken; try the next one.
+            }
+        }
+        fileName = Path.GetFileName(stream.Name);
+    }
+
+    await using (stream)
     {
         await file.CopyToAsync(stream);
     }
 
-    return Results.Ok(new { url = $"{publicBaseUrl}/{category}/{fileName}" });
+    // "path" is environment-independent; clients should store it and prefix their own image host.
+    return Results.Ok(new
+    {
+        url = $"{publicBaseUrl}/{category}/{fileName}",
+        path = $"/campus-hostels/{category}/{fileName}"
+    });
 }).RequireAuthorization("RequireManager");
 
 app.MapGet("/health", () => Results.Ok(new { status = "ok" }));
+
+static string Slugify(string? value)
+{
+    if (string.IsNullOrWhiteSpace(value)) return "";
+    var sb = new StringBuilder();
+    foreach (var c in value.Trim().ToLowerInvariant())
+    {
+        if (c is >= 'a' and <= 'z' or >= '0' and <= '9') sb.Append(c);
+        else if (sb.Length > 0 && sb[^1] != '-') sb.Append('-');
+    }
+    var slug = sb.ToString().Trim('-');
+    return slug.Length > 80 ? slug[..80].Trim('-') : slug;
+}
 
 app.Run();

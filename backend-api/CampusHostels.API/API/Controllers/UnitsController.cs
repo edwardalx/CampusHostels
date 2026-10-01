@@ -42,6 +42,7 @@ public class UnitsController : ControllerBase
 
     // POST api/properties/{propertyId}/units
     [HttpPost]
+    [Microsoft.AspNetCore.Authorization.Authorize(Policy = "RequireManager")]
     public async Task<IActionResult> Create(int propertyId, [FromBody] UnitCreateDto dto)
     {
         // Validate DTO
@@ -57,8 +58,15 @@ public class UnitsController : ControllerBase
 
         var unit = _mapper.Map<Domain.Entities.Unit>(dto);
         unit.PropertyId = propertyId;
+        var imageUrls = (dto.ImageUrls ?? []).Where(u => !string.IsNullOrWhiteSpace(u)).ToList();
+        foreach (var url in imageUrls)
+        {
+            unit.Images.Add(new Domain.Entities.Image { PhotoUrl = url });
+        }
+        // Keep the single ImageUrl (used as the thumbnail/fallback) in sync with the first image.
+        unit.ImageUrl ??= imageUrls.FirstOrDefault();
         await _repo.AddAsync(unit);
         await _repo.SaveChangesAsync();
-        return CreatedAtAction(nameof(Get), new { propertyId = propertyId, id = unit.Id }, _mapper.Map<UnitDto>(unit));
+        return CreatedAtAction(nameof(Get), new { propertyId = propertyId, unitId = unit.Id }, _mapper.Map<UnitDto>(unit));
     }
 }

@@ -1,8 +1,22 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { AlertCircle } from "lucide-react";
+import { resolveImageUrl } from "../utils/imageUrl";
+import { AlertCircle, ChevronLeft, ChevronRight } from "lucide-react";
 
 export function Tile({ hostel = {}, unit = {} }) {
   const navigate = useNavigate();
+  const [imageIndex, setImageIndex] = useState(0);
+
+  // Fall back to the single imageUrl for units created before multi-image support.
+  const images = (
+    unit.imageUrls?.length ? unit.imageUrls : unit.imageUrl ? [unit.imageUrl] : []
+  ).map(resolveImageUrl);
+
+  const showImage = (e, step) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setImageIndex((current) => (current + step + images.length) % images.length);
+  };
   const handleClick = (e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -35,12 +49,41 @@ export function Tile({ hostel = {}, unit = {} }) {
         {/* Image Container */}
         <div className="relative transition-all duration-500 rounded-lg overflow-hidden aspect-video sm:aspect-square">
           <img
-            src={unit.imageUrl}
-            alt={`Room ${unit.id}`}
+            src={images[imageIndex]}
+            alt={`Room ${unit.id} photo ${imageIndex + 1}`}
             className={`w-full h-full object-cover transition-all duration-500 ${
               !unit.availability ? "opacity-50 grayscale" : ""
             }`}
           />
+
+          {images.length > 1 && (
+            <>
+              <button
+                type="button"
+                aria-label="Previous photo"
+                onClick={(e) => showImage(e, -1)}
+                className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-black/50 p-1.5 text-white hover:bg-black/70"
+              >
+                <ChevronLeft size={18} />
+              </button>
+              <button
+                type="button"
+                aria-label="Next photo"
+                onClick={(e) => showImage(e, 1)}
+                className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-black/50 p-1.5 text-white hover:bg-black/70"
+              >
+                <ChevronRight size={18} />
+              </button>
+              <div className="absolute bottom-2 left-1/2 flex -translate-x-1/2 gap-1.5">
+                {images.map((_, i) => (
+                  <span
+                    key={i}
+                    className={`h-1.5 w-1.5 rounded-full ${i === imageIndex ? "bg-white" : "bg-white/50"}`}
+                  />
+                ))}
+              </div>
+            </>
+          )}
 
           {/* Status Badge - Top Right */}
           <div

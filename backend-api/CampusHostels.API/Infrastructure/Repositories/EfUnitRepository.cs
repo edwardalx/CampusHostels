@@ -23,12 +23,13 @@ public class EfUnitRepository : IUnitRepository
 
     public async Task<Unit?> GetByIdAsync(int id)
     {
-        return await _db.Units.AsNoTracking().FirstOrDefaultAsync(unit => unit.Id == id);
+        return await _db.Units.Include(unit => unit.Images).AsNoTracking().FirstOrDefaultAsync(unit => unit.Id == id);
     }
 
     public async Task<IEnumerable<Unit>> GetByPropertyIdAsync(int propertyId)
     {
         return await _db.Units
+            .Include(unit => unit.Images)
             .Where(unit => unit.PropertyId == propertyId)
             .AsNoTracking()
             .ToListAsync();
