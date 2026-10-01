@@ -1,24 +1,27 @@
 import { useAuth } from '../context/AuthContext'
+import { useDashboard } from '../context/DashboardContext'
 import { FunctionType, type FunctionType as FunctionTypeValue } from '../type/manager'
 import { useLocation, useNavigate } from 'react-router-dom'
 
 interface NavItem {
   label: string
+  icon: string
   path?: string
   requiredFunction?: FunctionTypeValue
 }
 
 const navItems: NavItem[] = [
-  { label: 'Overview', path: '/' },
-  { label: 'Properties', path: '/properties', requiredFunction: FunctionType.ManageProperties },
-  { label: 'Tenants', requiredFunction: FunctionType.ManageUsers },
-  { label: 'Payments' },
-  { label: 'Maintenance' },
-  { label: 'Reports', requiredFunction: FunctionType.ViewReports },
+  { label: 'Overview', icon: '🏠', path: '/' },
+  { label: 'Properties', icon: '🏢', path: '/properties', requiredFunction: FunctionType.ManageProperties },
+  { label: 'Tenants', icon: '👥', path: '/tenants', requiredFunction: FunctionType.ManageUsers },
+  { label: 'Payments', icon: '💳', path: '/payments' },
+  { label: 'Maintenance', icon: '🛠️' },
+  { label: 'Reports', icon: '📊', requiredFunction: FunctionType.ViewReports },
 ]
 
 export function Sidebar() {
   const { manager, logout } = useAuth()
+  const { summary } = useDashboard()
   const location = useLocation()
   const navigate = useNavigate()
 
@@ -43,22 +46,29 @@ export function Sidebar() {
         {visibleNavItems.map((item) => (
           <button
             key={item.label}
-            className={`nav-item${item.path === location.pathname ? ' active' : ''}`}
+            className={`nav-item${item.path === location.pathname ? ' active' : ''}${item.path ? '' : ' nav-item-soon'}`}
             onClick={() => item.path && navigate(item.path)}
             type="button"
           >
-            {item.label}
+            <span aria-hidden="true" className="nav-icon">{item.icon}</span>
+            <span className="nav-label">{item.label}</span>
           </button>
         ))}
       </nav>
 
-      <div className="sidebar-card">
-        <p className="eyebrow">System health</p>
-        <strong>96.4%</strong>
-        <span>All services nominal</span>
+      <div className="sidebar-card rating-card">
+        <p className="eyebrow">Customer rating</p>
+        <strong>
+          {summary?.ratingPercentage != null ? `${summary.ratingPercentage}%` : '—'}
+        </strong>
+        <span>
+          {summary?.averageRating != null
+            ? `${summary.averageRating.toFixed(2)} / 5 average from ${summary.ratingCount ?? 0} ${summary.ratingCount === 1 ? 'rating' : 'ratings'}`
+            : 'No ratings yet'}
+        </span>
       </div>
 
-      <div className="sidebar-card">
+      <div className="sidebar-card account-card">
         <p className="eyebrow">Signed in as</p>
         <strong>{manager?.firstName} {manager?.lastName}</strong>
         <button className="nav-item" onClick={logout}>

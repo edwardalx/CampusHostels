@@ -19,10 +19,14 @@ public class DashboardController : ControllerBase
         _db = db;
     }
 
+    // Ratings are scored out of 5; the sidebar shows the average as a percentage of this.
+    private const double MaxRatingScore = 5;
+
     [HttpGet("summary")]
     public async Task<ActionResult<DashboardSummaryDto>> GetSummary(
         CancellationToken cancellationToken,
-        [FromQuery] int[]? selectedPropertyIds = null)
+        [FromQuery] int[]? selectedPropertyIds = null,
+        [FromQuery] Guid? ownerId = null)
     {
         if (!Guid.TryParse(User.FindFirst("managerId")?.Value, out var managerId))
         {
@@ -30,9 +34,15 @@ public class DashboardController : ControllerBase
         }
 
         var isSuperManager = User.HasClaim("managerTier", "Super");
+        if (ownerId.HasValue && !isSuperManager)
+        {
+            return Forbid();
+        }
+
         var propertyIds = _db.Properties
             .AsNoTracking()
             .Where(property => isSuperManager || property.OwnerManagerId == managerId)
+            .Where(property => ownerId == null || property.OwnerManagerId == ownerId)
             .Select(property => property.Id);
 
         if (selectedPropertyIds is { Length: > 0 })
@@ -100,8 +110,19 @@ public class DashboardController : ControllerBase
             select tenancy.Id)
             .CountAsync(cancellationToken);
 
+        var ratings = _db.Ratings
+            .AsNoTracking()
+            .Where(rating => propertyIds.Contains(rating.PropertyId));
+        var ratingCount = await ratings.CountAsync(cancellationToken);
+        // Nullable cast makes the average null (rather than throwing) when there are no ratings.
+        var rawAverage = await ratings.AverageAsync(rating => (double?)rating.Score, cancellationToken);
+        double? averageRating = rawAverage is null ? null : Math.Round(rawAverage.Value, 2);
+
         return Ok(new DashboardSummaryDto
         {
+            AverageRating = averageRating,
+            RatingCount = ratingCount,
+            RatingPercentage = averageRating is null ? null : Math.Round(averageRating.Value / MaxRatingScore * 100, 1),
             OccupiedRooms = occupiedRooms,
             TotalRooms = totalRooms,
             AvailableBeds = availableBeds,
@@ -116,7 +137,8 @@ public class DashboardController : ControllerBase
     [HttpGet("occupancy-trend")]
     public async Task<IActionResult> GetOccupancyTrend(
         [FromQuery] int[]? selectedPropertyIds,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        [FromQuery] Guid? ownerId = null)
     {
         if (!Guid.TryParse(User.FindFirst("managerId")?.Value, out var managerId))
         {
@@ -124,9 +146,15 @@ public class DashboardController : ControllerBase
         }
 
         var isSuperManager = User.HasClaim("managerTier", "Super");
+        if (ownerId.HasValue && !isSuperManager)
+        {
+            return Forbid();
+        }
+
         var propertyIds = _db.Properties
             .AsNoTracking()
             .Where(property => isSuperManager || property.OwnerManagerId == managerId)
+            .Where(property => ownerId == null || property.OwnerManagerId == ownerId)
             .Select(property => property.Id);
 
         if (selectedPropertyIds is { Length: > 0 })

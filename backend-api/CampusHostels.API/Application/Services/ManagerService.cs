@@ -284,6 +284,15 @@ public class ManagerService : IManagerService
                 function.IsActive && function.Function == FunctionType.ManageProperties)));
     }
 
+    public Task<bool> CanManageUsersAsync(Guid managerId)
+    {
+        return _db.Managers.AnyAsync(manager =>
+            manager.ManagerId == managerId &&
+            manager.IsActive &&
+            (manager.Tier == ManagerTier.Super || manager.Functions.Any(function =>
+                function.IsActive && function.Function == FunctionType.ManageUsers)));
+    }
+
     public async Task<ManagerProfileDto> UpdateManagerAsync(Guid managerId, ManagerUpdateDto dto)
     {
         var manager = await _db.Managers

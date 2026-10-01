@@ -15,6 +15,9 @@ export interface DashboardSummary {
   activeTenancyAgreements: number
   activeTenants?: number
   activeTenanciesNotFullyPaid?: number
+  averageRating?: number | null
+  ratingCount?: number
+  ratingPercentage?: number | null
   year: number
 }
 

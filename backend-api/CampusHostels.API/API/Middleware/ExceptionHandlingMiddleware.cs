@@ -27,6 +27,13 @@ public class ExceptionHandlingMiddleware
         {
             await _next(context);
         }
+        catch (OperationCanceledException) when (context.RequestAborted.IsCancellationRequested)
+        {
+            // The client went away (e.g. the admin UI cancelled a superseded filter/search request).
+            // Not an error, and there is nobody left to respond to.
+            _logger.LogDebug("Request {Method} {Path} was cancelled by the client",
+                             context.Request.Method, context.Request.Path);
+        }
         catch (Exception ex)
         {
             // Log full exception for internal debugging

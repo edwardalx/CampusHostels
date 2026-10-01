@@ -27,10 +27,10 @@ export function RecentReservationsTable({ reservations }: RecentReservationsTabl
         <tbody>
           {reservations.map(([tenant, room, stay, status]) => (
             <tr key={tenant}>
-              <td>{tenant}</td>
-              <td>{room}</td>
-              <td>{stay}</td>
-              <td>
+              <td data-label="Tenant">{tenant}</td>
+              <td data-label="Room">{room}</td>
+              <td data-label="Stay">{stay}</td>
+              <td data-label="Status">
                 <span
                   className={`table-status ${status === 'Confirmed' ? 'confirmed' : status === 'Checked in' ? 'checked-in' : 'pending'}`}
                 >

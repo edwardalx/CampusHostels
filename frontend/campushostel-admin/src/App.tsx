@@ -8,6 +8,8 @@ import { ManagersListPage } from './components/ManagersListPage'
 import { CreatePropertyPage } from './components/CreatePropertyPage'
 import { CreateUnitPage } from './components/CreateUnitPage'
 import { PropertiesPage } from './components/PropertiesPage'
+import { TenantsPage } from './components/TenantsPage'
+import { PaymentsPage } from './components/PaymentsPage'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import { DashboardProvider } from './context/DashboardContext'
 import { FunctionType } from './type/manager'
@@ -56,6 +58,26 @@ function App() {
         element={
           <ProtectedRoute>
             <CreateUnitPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/tenants"
+        element={
+          <ProtectedRoute requiredFunction={FunctionType.ManageUsers}>
+            <DashboardProvider>
+              <TenantsPage />
+            </DashboardProvider>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/payments"
+        element={
+          <ProtectedRoute>
+            <DashboardProvider>
+              <PaymentsPage />
+            </DashboardProvider>
           </ProtectedRoute>
         }
       />

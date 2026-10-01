@@ -7,6 +7,7 @@ import {
   useState,
   type ReactNode,
 } from 'react'
+import { useLocation } from 'react-router-dom'
 import { fetchDashboardSummary, fetchOccupancyTrend } from '../services/DashboardService'
 import type { DashboardSummary, OccupancyTrendPoint } from '../type/dashboard'
 import { useAuth } from './AuthContext'
@@ -17,6 +18,8 @@ interface DashboardContextValue {
   isLoading: boolean
   error: string | null
   selectedPropertyIds: number[]
+  ownerFilter: string
+  setOwnerFilter: (ownerId: string) => void
   togglePropertySelection: (propertyId: number) => void
   refresh: () => Promise<void>
 }
@@ -37,6 +40,12 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
       return []
     }
   })
+  // The same provider instance survives navigation between pages, so the owner filter is keyed to
+  // the page it was chosen on. Opening another page starts from "All owners" rather than silently
+  // carrying a restriction over.
+  const { pathname } = useLocation()
+  const [ownerChoice, setOwnerChoice] = useState({ pathname, ownerId: '' })
+  const ownerFilter = ownerChoice.pathname === pathname ? ownerChoice.ownerId : ''
   const [summary, setSummary] = useState<DashboardSummary | null>(null)
   const [occupancyTrend, setOccupancyTrend] = useState<OccupancyTrendPoint[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -52,8 +61,8 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
 
     try {
       const [nextSummary, nextTrend] = await Promise.all([
-        fetchDashboardSummary(request.signal, selectedPropertyIds),
-        fetchOccupancyTrend(request.signal, selectedPropertyIds),
+        fetchDashboardSummary(request.signal, selectedPropertyIds, ownerFilter || undefined),
+        fetchOccupancyTrend(request.signal, selectedPropertyIds, ownerFilter || undefined),
       ])
       setSummary(nextSummary)
       setOccupancyTrend(nextTrend)
@@ -65,7 +74,13 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     } finally {
       if (!request.signal.aborted) setIsLoading(false)
     }
-  }, [selectedPropertyIds])
+  }, [selectedPropertyIds, ownerFilter])
+
+  // Changing owner clears the card selection: selected properties may belong to another owner.
+  function setOwnerFilter(ownerId: string) {
+    setOwnerChoice({ pathname, ownerId })
+    setSelectedPropertyIds([])
+  }
 
   function togglePropertySelection(propertyId: number) {
     setSelectedPropertyIds((currentSelection) =>
@@ -88,7 +103,7 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
 
   return (
     <DashboardContext.Provider
-      value={{ summary, occupancyTrend, isLoading, error, selectedPropertyIds, togglePropertySelection, refresh }}
+      value={{ summary, occupancyTrend, isLoading, error, selectedPropertyIds, ownerFilter, setOwnerFilter, togglePropertySelection, refresh }}
     >
       {children}
     </DashboardContext.Provider>

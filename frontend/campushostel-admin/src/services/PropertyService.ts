@@ -22,9 +22,21 @@ export async function createProperty(payload: PropertyCreatePayload): Promise<Pr
   return data
 }
 
-export async function fetchManagedProperties(signal?: AbortSignal): Promise<ManagedProperty[]> {
+export interface ManagedPropertyQuery {
+  ownerId?: string
+  sortOccupancy?: 'asc' | 'desc'
+}
+
+export async function fetchManagedProperties(
+  signal?: AbortSignal,
+  query: ManagedPropertyQuery = {},
+): Promise<ManagedProperty[]> {
   const token = getStoredManagerToken()
-  const response = await fetch(`${baseUrl}/managed`, {
+  const params = new URLSearchParams()
+  if (query.ownerId) params.set('ownerId', query.ownerId)
+  if (query.sortOccupancy) params.set('sortOccupancy', query.sortOccupancy)
+  const queryString = params.toString()
+  const response = await fetch(`${baseUrl}/managed${queryString ? `?${queryString}` : ''}`, {
     headers: { Authorization: `Bearer ${token}` },
     signal,
   })

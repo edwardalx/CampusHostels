@@ -41,7 +41,7 @@ public class PropertiesController : ControllerBase
 
     [Authorize(Policy = "RequireManager")]
     [HttpGet("managed")]
-    public async Task<IActionResult> GetManaged()
+    public async Task<IActionResult> GetManaged([FromQuery] Guid? ownerId = null, [FromQuery] string? sortOccupancy = null)
     {
         if (!Guid.TryParse(User.FindFirst("managerId")?.Value, out var managerId))
         {
@@ -54,7 +54,22 @@ public class PropertiesController : ControllerBase
         }
 
         var isSuperManager = User.HasClaim("managerTier", "Super");
-        var properties = await _repo.GetForManagerAsync(isSuperManager ? null : managerId);
+        if (sortOccupancy is not null
+            && !sortOccupancy.Equals("asc", StringComparison.OrdinalIgnoreCase)
+            && !sortOccupancy.Equals("desc", StringComparison.OrdinalIgnoreCase))
+        {
+            return BadRequest(new { error = "sortOccupancy must be 'asc' or 'desc'." });
+        }
+
+        var properties = (await _repo.GetForManagerAsync(isSuperManager ? null : managerId)).ToList();
+
+        // Owner filtering is a super-manager feature; other managers only ever see their own properties.
+        if (ownerId.HasValue)
+        {
+            if (!isSuperManager) return Forbid();
+            properties = properties.Where(property => property.OwnerManagerId == ownerId.Value).ToList();
+        }
+
         var propertyIds = properties.Select(property => property.Id).ToArray();
         var now = DateTime.UtcNow;
         var today = now.Date;
@@ -119,7 +134,14 @@ public class PropertiesController : ControllerBase
             };
         });
 
-        return Ok(dtos);
+        if (sortOccupancy is not null)
+        {
+            dtos = sortOccupancy.Equals("asc", StringComparison.OrdinalIgnoreCase)
+                ? dtos.OrderBy(dto => dto.OccupancyPercentage).ThenBy(dto => dto.Name)
+                : dtos.OrderByDescending(dto => dto.OccupancyPercentage).ThenBy(dto => dto.Name);
+        }
+
+        return Ok(dtos.ToList());
     }
 
     [HttpGet("{id:int}")]
