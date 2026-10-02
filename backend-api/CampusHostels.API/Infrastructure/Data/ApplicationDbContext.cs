@@ -20,6 +20,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<PasswordResetToken> PasswordResetTokens { get; set; }
     public DbSet<Rating> Ratings { get; set; }
     public DbSet<MaintenanceRequest> MaintenanceRequests { get; set; }
+    public DbSet<ManagerPushSubscription> ManagerPushSubscriptions { get; set; }
     // public DbSet<Review> Reviews { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -98,6 +99,16 @@ public class ApplicationDbContext : DbContext
             // map one-to-many with payments
             entity.HasMany(e => e.Payments).WithOne(p => p.TenancyAgreement).HasForeignKey(p => p.TenancyAgreementId).OnDelete(DeleteBehavior.SetNull);
             entity.HasOne(e => e.User).WithMany().HasForeignKey(e => e.TenantId).HasPrincipalKey(u => u.TenantId).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<ManagerPushSubscription>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Endpoint).HasMaxLength(2048).IsRequired();
+            entity.Property(e => e.P256dh).HasMaxLength(256).IsRequired();
+            entity.Property(e => e.Auth).HasMaxLength(64).IsRequired();
+            entity.HasIndex(e => e.Endpoint).IsUnique();
+            entity.HasIndex(e => e.ManagerId);
         });
 
         // MaintenanceRequest configuration

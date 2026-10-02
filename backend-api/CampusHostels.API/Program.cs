@@ -108,6 +108,8 @@ builder.Services.AddScoped<EmailService>(); // Not interface-based since it's on
 builder.Services.AddScoped<IEmailSender, SmtpEmailSender>(); // Register IEmailSender to resolve to EmailService
 builder.Services.AddScoped<IPasswordResetService, PasswordResetService>();
 builder.Services.AddScoped<IReviewRating, ReviewRatingService>();
+builder.Services.AddHttpClient<IPushNotificationService, PushNotificationService>();
+builder.Services.AddScoped<IManagerActivityNotifier, ManagerActivityNotifier>();
 #endregion
 
 #region Background Service

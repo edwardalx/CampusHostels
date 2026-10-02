@@ -1,4 +1,5 @@
 using CampusHostels.API.Application.DTOs;
+using CampusHostels.API.Application.Interfaces;
 using CampusHostels.API.Domain.Entities;
 using CampusHostels.API.Domain.Enums;
 using CampusHostels.API.Infrastructure.Data;
@@ -16,10 +17,12 @@ public class MaintenanceController : ControllerBase
     private const int MyRequestsLimit = 50;
 
     private readonly ApplicationDbContext _db;
+    private readonly IManagerActivityNotifier _notifier;
 
-    public MaintenanceController(ApplicationDbContext db)
+    public MaintenanceController(ApplicationDbContext db, IManagerActivityNotifier notifier)
     {
         _db = db;
+        _notifier = notifier;
     }
 
     // ---------------------------------------------------------------- tenants
@@ -98,6 +101,8 @@ public class MaintenanceController : ControllerBase
 
         _db.MaintenanceRequests.Add(request);
         await _db.SaveChangesAsync(cancellationToken);
+
+        _notifier.Notify(request.PropertyId, "New maintenance request", $"Category: {request.Category}", "/manager/maintenance");
 
         return Created($"api/Maintenance/{request.Id}", new { id = request.Id, status = request.Status.ToString() });
     }

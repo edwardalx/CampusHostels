@@ -16,9 +16,11 @@ public class TenancyService : ITenancyService
     private readonly IUnitRepository _unitRepo;
     private readonly ILogger<TenancyService> _logger;
     private readonly IMapper _mapper;
+    private readonly IManagerActivityNotifier _notifier;
 
-    public TenancyService(ITenancyRepository repo, IMapper mapper, ApplicationDbContext db, IUnitRepository unitRepo, ILogger<TenancyService> logger)
+    public TenancyService(ITenancyRepository repo, IMapper mapper, ApplicationDbContext db, IUnitRepository unitRepo, ILogger<TenancyService> logger, IManagerActivityNotifier notifier)
     {
+        _notifier = notifier;
         _repo = repo;
         _mapper = mapper;
         _unitRepo = unitRepo;
@@ -46,6 +48,8 @@ public class TenancyService : ITenancyService
 
         var created = await _repo.AddAsync(entity);
         await _repo.SaveChangesAsync();
+
+        _notifier.Notify(dto.PropertyId, "New booking", $"A new booking was made for room {unit?.RoomNumber ?? "-"}.", "/manager/reports");
 
         return created;
     }

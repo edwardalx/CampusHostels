@@ -3,6 +3,8 @@ import { useAuth } from '../context/AuthContext'
 import { useDashboard } from '../context/DashboardContext'
 import { FunctionType, type FunctionType as FunctionTypeValue } from '../type/manager'
 import { useLocation, useNavigate } from 'react-router-dom'
+import { PushToggle } from './PushToggle'
+import { disablePush } from '../services/pushService'
 import { getAlertCounts, startAlertPolling, subscribeToAlerts } from '../services/alertsStore'
 
 interface NavItem {
@@ -89,7 +91,8 @@ export function Sidebar() {
       <div className="sidebar-card account-card">
         <p className="eyebrow">Signed in as</p>
         <strong>{manager?.firstName} {manager?.lastName}</strong>
-        <button className="nav-item" onClick={logout}>
+        <PushToggle />
+        <button className="nav-item" onClick={() => void disablePush().finally(logout)}>
           Log out
         </button>
       </div>

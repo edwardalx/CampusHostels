@@ -18,7 +18,7 @@ public class PaymentServiceTests
 {
     private static PaymentService CreateService(ApplicationDbContext context)
     {
-        return new PaymentService(context, new StubPaystackService(), CreateConfig(), new StubTenancyRepository());
+        return new PaymentService(context, new StubPaystackService(), CreateConfig(), new StubTenancyRepository(), new NoOpNotifier());
     }
 
     private static IConfiguration CreateConfig()
@@ -156,4 +156,9 @@ public sealed class StubTenancyRepository : ITenancyRepository
     public Task<List<TenancyAgreement>> GetActiveTenanciesByUnitAsync(int propertyId, int unitId) => Task.FromResult(new List<TenancyAgreement>());
 
     public Task SaveChangesAsync() => Task.CompletedTask;
+}
+
+public sealed class NoOpNotifier : IManagerActivityNotifier
+{
+    public void Notify(int propertyId, string title, string body, string url) { }
 }

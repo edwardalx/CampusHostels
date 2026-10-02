@@ -20,10 +20,12 @@ public class PaymentService : IPaymentService
     private readonly IPaystackService _paystack;
     private readonly ITenancyRepository _repo;
     private readonly string _baseUrl;
+    private readonly IManagerActivityNotifier _notifier;
 
 
-    public PaymentService(ApplicationDbContext db, IPaystackService paystack, IConfiguration config, ITenancyRepository repo)
+    public PaymentService(ApplicationDbContext db, IPaystackService paystack, IConfiguration config, ITenancyRepository repo, IManagerActivityNotifier notifier)
     {
+        _notifier = notifier;
         _db = db;
         _repo = repo;
         _paystack = paystack;
@@ -225,6 +227,8 @@ public class PaymentService : IPaymentService
 
 
         await _db.SaveChangesAsync();
+
+        _notifier.Notify(tenancy.Unit!.PropertyId, "Payment received", $"{payment.Currency} {payment.Amount:N2} paid for room {tenancy.Unit.RoomNumber ?? "-"}.", "/manager/payments");
 
         return dto;
     }
