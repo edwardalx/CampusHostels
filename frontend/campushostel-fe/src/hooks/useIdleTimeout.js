@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import Swal from "sweetalert2";
 
 const IDLE_TIME = 5 * 60 * 1000; // 15 minutes
@@ -8,7 +8,7 @@ export const useIdleTimeout = (onLogout) => {
   const logoutTimer = useRef(null);
   const warningTimer = useRef(null);
 
-  const resetTimers = () => {
+  const resetTimers = useCallback(() => {
     const clearTimers = () => {
       clearTimeout(logoutTimer.current);
       clearTimeout(warningTimer.current);
@@ -63,7 +63,7 @@ export const useIdleTimeout = (onLogout) => {
       Swal.close();
       onLogout();
     }, IDLE_TIME);
-  };
+  }, [onLogout]);
 
   useEffect(() => {
     const events = ["mousemove", "keydown", "click", "scroll"];
@@ -77,7 +77,7 @@ export const useIdleTimeout = (onLogout) => {
       clearTimeout(warningTimer.current);
       events.forEach((event) => window.removeEventListener(event, resetTimers));
     };
-  }, []);
+  }, [resetTimers]);
 };
 
 export const setTokenExpiryTimeout = (onLogout) => {

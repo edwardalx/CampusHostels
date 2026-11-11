@@ -141,7 +141,7 @@ export default function HomePage() {
         ? JSON.parse(localStorage.getItem("user"))
         : null,
     );
-  }, [selectedHostel, showReviewForm]);
+  }, [selectedHostel, setStoreUser, showReviewForm]);
 
   return (
     <div className="flex flex-1 flex-col bg-secondary-light-gray">

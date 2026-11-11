@@ -65,7 +65,7 @@ export default function Payments() {
       }
     }
     fetchSelectedHostel();
-  }, []);
+  }, [hostelId, roomId]);
 
   const handleCreateTenancy = async () => {
     try {

@@ -19,7 +19,7 @@ export default function TenancyAgreement() {
     };
 
     fetchData();
-  }, []);
+  }, [storedTenantId.tenantId]);
 
   if (error) {
     return (

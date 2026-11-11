@@ -29,6 +29,8 @@ const STATUS_LABELS = {
 };
 
 const emptyForm = { tenancyAgreementId: "", category: "Plumbing", title: "", description: "" };
+const fetchMaintenanceData = () =>
+  Promise.all([getMyMaintenanceTenancies(), getMyMaintenanceRequests()]);
 
 export default function MaintenancePage() {
   const [tenancies, setTenancies] = useState([]);
@@ -38,31 +40,36 @@ export default function MaintenancePage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
 
-  const load = async () => {
-    try {
-      const [myTenancies, myRequests] = await Promise.all([
-        getMyMaintenanceTenancies(),
-        getMyMaintenanceRequests(),
-      ]);
-      setTenancies(myTenancies);
-      setRequests(myRequests);
-      // Pre-select when there is only one choice.
-      setForm((current) => ({
-        ...current,
-        tenancyAgreementId:
-          current.tenancyAgreementId ||
-          (myTenancies.length === 1 ? String(myTenancies[0].tenancyAgreementId) : ""),
-      }));
-      setError("");
-    } catch (loadError) {
-      setError(loadError.message || "Unable to load maintenance requests");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   useEffect(() => {
-    load();
+    let isMounted = true;
+
+    fetchMaintenanceData()
+      .then(([myTenancies, myRequests]) => {
+        if (!isMounted) return;
+
+        setTenancies(myTenancies);
+        setRequests(myRequests);
+        // Pre-select when there is only one choice.
+        setForm((current) => ({
+          ...current,
+          tenancyAgreementId:
+            current.tenancyAgreementId ||
+            (myTenancies.length === 1 ? String(myTenancies[0].tenancyAgreementId) : ""),
+        }));
+        setError("");
+      })
+      .catch((loadError) => {
+        if (isMounted) {
+          setError(loadError.message || "Unable to load maintenance requests");
+        }
+      })
+      .finally(() => {
+        if (isMounted) setIsLoading(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const update = (field) => (event) =>
@@ -80,7 +87,14 @@ export default function MaintenancePage() {
       });
       toast.success("Your request has been sent to the property manager.");
       setForm((current) => ({ ...emptyForm, tenancyAgreementId: current.tenancyAgreementId }));
-      await load();
+      try {
+        const [myTenancies, myRequests] = await fetchMaintenanceData();
+        setTenancies(myTenancies);
+        setRequests(myRequests);
+        setError("");
+      } catch (loadError) {
+        setError(loadError.message || "Unable to load maintenance requests");
+      }
     } catch (submitError) {
       toast.error(submitError.message || "Unable to submit your request");
     } finally {
