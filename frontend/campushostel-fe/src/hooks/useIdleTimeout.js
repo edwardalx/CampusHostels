@@ -8,7 +8,7 @@ export const useIdleTimeout = (onLogout) => {
   const logoutTimer = useRef(null);
   const warningTimer = useRef(null);
 
-  const resetTimers = useCallback(() => {
+  const resetTimers = useCallback(function resetTimers() {
     const clearTimers = () => {
       clearTimeout(logoutTimer.current);
       clearTimeout(warningTimer.current);
